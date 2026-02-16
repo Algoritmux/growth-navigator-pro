@@ -82,8 +82,8 @@ const HeroSection = () => {
               className="text-base px-8 py-6"
               asChild
             >
-              <a href="#metodologia">
-                Entender a metodologia
+              <a href="#materiais">
+                Ver conteúdos e materiais
                 <ArrowRight className="ml-2 w-4 h-4" />
               </a>
             </Button>
@@ -93,7 +93,7 @@ const HeroSection = () => {
               className="text-base px-8 py-6 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary"
               asChild
             >
-              <a href="#contato">Falar com Guilherme</a>
+              <a href="#mentorias">Mentorias e palestras</a>
             </Button>
           </motion.div>
         </div>
