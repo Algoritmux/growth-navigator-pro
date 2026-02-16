@@ -32,7 +32,7 @@ const LeadMagnetSection = () => {
             Insights semanais sobre crescimento previsível
           </h2>
           <p className="text-muted-foreground text-lg mb-10">
-            Receba artigos estratégicos sobre marketing, vendas e dados — direto do campo de batalha, sem teoria genérica.
+            Receba artigos estratégicos sobre marketing, vendas e dados — direto da prática, sem teoria genérica.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">

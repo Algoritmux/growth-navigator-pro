@@ -4,9 +4,10 @@ import { ArrowRight, BookOpen, Brain, BarChart3, Handshake, Lightbulb } from "lu
 const categories = [
   { icon: BarChart3, label: "Growth Marketing", count: 12 },
   { icon: Brain, label: "IA aplicada aos negócios", count: 8 },
-  { icon: Lightbulb, label: "Estrutura Comercial", count: 10 },
-  { icon: Handshake, label: "Negociação Estratégica", count: 6 },
-  { icon: BookOpen, label: "Estratégia Empresarial", count: 9 },
+  { icon: Lightbulb, label: "Estratégia Comercial", count: 10 },
+  { icon: Handshake, label: "Negociação", count: 6 },
+  { icon: BookOpen, label: "Liderança e Gestão", count: 9 },
+  { icon: BookOpen, label: "Reflexões Estratégicas", count: 7 },
 ];
 
 const featuredArticles = [
@@ -32,7 +33,7 @@ const featuredArticles = [
 
 const ContentSection = () => {
   return (
-    <section id="conteudo" className="py-24 bg-background">
+    <section id="insights" className="py-24 bg-background">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           className="max-w-2xl mb-16"
@@ -41,9 +42,9 @@ const ContentSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Insights & Conteúdo</span>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Blog & Insights</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-4">
-            Conhecimento que gera vantagem competitiva
+            Hub de conhecimento estratégico
           </h2>
           <p className="text-muted-foreground text-lg">
             Artigos estratégicos sobre crescimento, dados e inteligência aplicada a negócios.
