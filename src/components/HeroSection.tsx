@@ -12,22 +12,22 @@ const HeroSection = () => {
       <motion.div
         className="absolute top-1/4 right-[15%] w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center animate-pulse-glow hidden lg:flex"
         animate={{ y: [0, -15, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-      >
+        transition={{ duration: 4, repeat: Infinity }}>
+
         <BarChart3 className="w-7 h-7 text-accent" />
       </motion.div>
       <motion.div
         className="absolute bottom-1/3 right-[25%] w-14 h-14 rounded-xl bg-primary-glow/10 flex items-center justify-center hidden lg:flex"
         animate={{ y: [0, 12, 0] }}
-        transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-      >
+        transition={{ duration: 5, repeat: Infinity, delay: 1 }}>
+
         <Brain className="w-6 h-6 text-primary-glow" />
       </motion.div>
       <motion.div
         className="absolute top-[40%] right-[8%] w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center hidden lg:flex"
         animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, delay: 0.5 }}
-      >
+        transition={{ duration: 3.5, repeat: Infinity, delay: 0.5 }}>
+
         <TrendingUp className="w-5 h-5 text-accent" />
       </motion.div>
 
@@ -40,8 +40,8 @@ const HeroSection = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-          >
+            transition={{ duration: 0.7 }}>
+
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               Growth Marketing · IA · Inteligência Comercial
@@ -52,8 +52,8 @@ const HeroSection = () => {
             className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1] mb-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-          >
+            transition={{ duration: 0.7, delay: 0.15 }}>
+
             Crescimento empresarial exige{" "}
             <span className="text-accent">dados, estrutura</span> e{" "}
             <span className="text-accent">inteligência estratégica</span>
@@ -63,25 +63,25 @@ const HeroSection = () => {
             className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mb-10 leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-          >
-            Transformo operações comerciais e de marketing em motores de crescimento
-            previsível — com metodologia proprietária, dados e inteligência artificial
-            aplicada a negócios reais.
+            transition={{ duration: 0.7, delay: 0.3 }}>Founder na Algoritmux e Meta de Vendas
+
+
+
+
           </motion.p>
 
           <motion.div
             className="flex flex-col sm:flex-row gap-4"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.45 }}
-          >
+            transition={{ duration: 0.7, delay: 0.45 }}>
+
             <Button
               variant="accent"
               size="lg"
               className="text-base px-8 py-6"
-              asChild
-            >
+              asChild>
+
               <a href="#materiais">
                 Ver conteúdos e materiais
                 <ArrowRight className="ml-2 w-4 h-4" />
@@ -91,15 +91,15 @@ const HeroSection = () => {
               variant="hero-outline"
               size="lg"
               className="text-base px-8 py-6 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-              asChild
-            >
+              asChild>
+
               <a href="#mentorias">Mentorias e palestras</a>
             </Button>
           </motion.div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default HeroSection;
