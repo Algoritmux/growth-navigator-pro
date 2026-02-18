@@ -42,10 +42,10 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}>
 
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              Growth Marketing · IA · Inteligência Comercial
-            </span>
+            
+
+
+
           </motion.div>
 
           <motion.h1
