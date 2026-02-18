@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import guilhermeAbout from "@/assets/guilherme-about.jpg";
 
 const AboutSection = () => {
   return (
@@ -12,12 +13,17 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="relative">
-              <div className="w-full aspect-[4/5] rounded-2xl bg-gradient-primary overflow-hidden relative">
-                <div className="absolute inset-0 grid-pattern opacity-20" />
+              <div className="w-full aspect-[4/5] rounded-2xl overflow-hidden relative">
+                <img 
+                  src={guilhermeAbout} 
+                  alt="Guilherme - Consultor de Growth" 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute inset-0 flex items-end p-8">
-                  <div className="text-primary-foreground">
-                    <div className="text-6xl font-bold mb-1">23+</div>
-                    <div className="text-sm text-primary-foreground/70 uppercase tracking-wider">anos de experiência</div>
+                  <div className="text-white">
+                    <div className="text-6xl font-bold mb-1">17+</div>
+                    <div className="text-sm text-white/70 uppercase tracking-wider">anos de experiência</div>
                   </div>
                 </div>
               </div>
