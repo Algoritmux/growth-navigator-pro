@@ -10,15 +10,15 @@ const AboutSection = () => {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+            transition={{ duration: 0.6 }}>
+
             <div className="relative">
               <div className="w-full aspect-[4/5] rounded-2xl overflow-hidden relative">
-                <img 
-                  src={guilhermeAbout} 
-                  alt="Guilherme - Consultor de Growth" 
-                  className="w-full h-full object-cover"
-                />
+                <img
+                  src={guilhermeAbout}
+                  alt="Guilherme - Consultor de Growth"
+                  className="w-full h-full object-cover" />
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute inset-0 flex items-end p-8">
                   <div className="text-white">
@@ -29,19 +29,19 @@ const AboutSection = () => {
               </div>
               <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-2xl bg-accent/10 flex items-center justify-center shadow-elevated">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">IA</div>
-                  <div className="text-xs text-muted-foreground">aplicada</div>
+                  <div className="text-2xl font-bold text-accent">
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                  </div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}>
+
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">Sobre</span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-6">
               Do marketing tradicional à{" "}
@@ -69,22 +69,22 @@ const AboutSection = () => {
 
             <div className="grid grid-cols-2 gap-4 mt-10">
               {[
-                { value: "200+", label: "Projetos entregues" },
-                { value: "R$50M+", label: "Em receita gerada" },
-                { value: "15+", label: "Segmentos atendidos" },
-                { value: "8x", label: "ROI médio dos projetos" },
-              ].map((item, i) => (
-                <div key={i} className="p-4 rounded-xl bg-secondary">
+              { value: "200+", label: "Projetos entregues" },
+              { value: "R$50M+", label: "Em receita gerada" },
+              { value: "15+", label: "Segmentos atendidos" },
+              { value: "8x", label: "ROI médio dos projetos" }].
+              map((item, i) =>
+              <div key={i} className="p-4 rounded-xl bg-secondary">
                   <div className="text-2xl font-bold text-primary">{item.value}</div>
                   <div className="text-sm text-muted-foreground mt-1">{item.label}</div>
                 </div>
-              ))}
+              )}
             </div>
           </motion.div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default AboutSection;

@@ -84,16 +84,16 @@ const HeroSection = () => {
             <div className="relative">
               <div className="absolute -inset-4 rounded-2xl bg-accent/10 blur-2xl" />
               <img
-                src={guilhermeHero}
+
                 alt="Guilherme Correia — Especialista em Growth Marketing"
-                className="relative rounded-2xl w-[400px] object-cover shadow-2xl border border-border/20"
-              />
+                className="relative rounded-2xl w-[400px] object-cover shadow-2xl border border-border/20" src="/lovable-uploads/606e2cad-5dfb-431c-abb3-3ac14f7825e8.png" />
+
             </div>
           </motion.div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default HeroSection;
