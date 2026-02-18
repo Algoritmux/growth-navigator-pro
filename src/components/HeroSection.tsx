@@ -63,11 +63,8 @@ const HeroSection = () => {
             className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mb-10 leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}>Founder na Algoritmux e Meta de Vendas
-
-
-
-
+            transition={{ duration: 0.7, delay: 0.3 }}>
+            Integro marketing, vendas e inteligência artificial para construir operações comerciais previsíveis e escaláveis. Founder na Algoritmux e Meta de Vendas.
           </motion.p>
 
           <motion.div
