@@ -1,15 +1,16 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
-  { label: "Sobre", href: "#sobre" },
-  { label: "Materiais", href: "#materiais" },
-  { label: "Insights", href: "#insights" },
-  { label: "Mentorias", href: "#mentorias" },
-  { label: "Resultados", href: "#resultados" },
+  { label: "Sobre", href: "#sobre", isRoute: false },
+  { label: "Materiais", href: "/biblioteca", isRoute: true },
+  { label: "Insights", href: "#insights", isRoute: false },
+  { label: "Mentorias", href: "#mentorias", isRoute: false },
+  { label: "Resultados", href: "#resultados", isRoute: false },
 ];
 
 const Header = () => {
@@ -40,16 +41,26 @@ const Header = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={(e) => handleNavClick(e, item.href)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              {item.label}
-            </a>
-          ))}
+          {navItems.map((item) =>
+            item.isRoute ? (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={(e) => handleNavClick(e, item.href)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+              >
+                {item.label}
+              </a>
+            )
+          )}
         </nav>
 
         <div className="hidden md:block">
@@ -72,16 +83,27 @@ const Header = () => {
             className="md:hidden bg-background border-b border-border"
           >
             <nav className="flex flex-col p-4 gap-3">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={(e) => handleNavClick(e, item.href)}
-                  className="text-sm text-muted-foreground hover:text-foreground py-2 font-medium"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navItems.map((item) =>
+                item.isRoute ? (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-muted-foreground hover:text-foreground py-2 font-medium"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={(e) => handleNavClick(e, item.href)}
+                    className="text-sm text-muted-foreground hover:text-foreground py-2 font-medium"
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
               <Button variant="hero" size="sm" asChild className="mt-2">
                 <a href="#contato">Falar com Guilherme</a>
               </Button>
