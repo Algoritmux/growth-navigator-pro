@@ -1,37 +1,77 @@
 import { motion } from "framer-motion";
 import { ArrowRight, BookOpen, Brain, BarChart3, Handshake, Lightbulb } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { getPublishedPosts } from "@/lib/blogStore";
 
-const categories = [
-  { icon: BarChart3, label: "Growth Marketing", count: 12 },
-  { icon: Brain, label: "IA aplicada aos negócios", count: 8 },
-  { icon: Lightbulb, label: "Estratégia Comercial", count: 10 },
-  { icon: Handshake, label: "Negociação", count: 6 },
-  { icon: BookOpen, label: "Liderança e Gestão", count: 9 },
-  { icon: BookOpen, label: "Reflexões Estratégicas", count: 7 },
-];
+/**
+ * Mapeia as categorias internas do blog (store) para os labels da Home
+ * Ajuste aqui se quiser mudar nomes.
+ */
+const CATEGORY_LABEL: Record<string, string> = {
+  GTM: "Growth Marketing",
+  ICP: "Reflexões Estratégicas",
+  Oferta: "Estratégia Comercial",
+  Sales: "Negociação",
+  Growth: "Growth Marketing",
+  IA: "IA aplicada aos negócios",
+};
 
-const featuredArticles = [
-  {
-    category: "Growth Marketing",
-    title: "Por que 90% das estratégias de growth falham — e como evitar os mesmos erros",
-    excerpt: "O growth marketing vai além de hacks isolados. Entenda o framework que conecta dados, execução e resultado.",
-    readTime: "8 min",
-  },
-  {
-    category: "IA aplicada",
-    title: "Como usar IA para prever churn e aumentar retenção em 40%",
-    excerpt: "Modelos preditivos aplicados a bases reais de clientes para antecipar cancelamentos e agir proativamente.",
-    readTime: "6 min",
-  },
-  {
-    category: "Inteligência Comercial",
-    title: "O funil não morreu — ele evoluiu. A nova arquitetura de vendas B2B",
-    excerpt: "Da prospecção à expansão de conta: como estruturar uma operação comercial orientada por dados.",
-    readTime: "10 min",
-  },
+/**
+ * Ícones por label (igual ao layout atual)
+ */
+const ICON_BY_LABEL: Record<string, any> = {
+  "Growth Marketing": BarChart3,
+  "IA aplicada aos negócios": Brain,
+  "Estratégia Comercial": Lightbulb,
+  "Negociação": Handshake,
+  "Liderança e Gestão": BookOpen,
+  "Reflexões Estratégicas": BookOpen,
+};
+
+const ORDERED_LABELS = [
+  "Growth Marketing",
+  "IA aplicada aos negócios",
+  "Estratégia Comercial",
+  "Negociação",
+  "Liderança e Gestão",
+  "Reflexões Estratégicas",
 ];
 
 const ContentSection = () => {
+  // ✅ Puxa do MESMO lugar que o /blog
+  const posts = getPublishedPosts();
+
+  // ✅ chips com contagem real
+  const categories = (() => {
+    const counts = new Map<string, number>();
+
+    for (const p of posts) {
+      const label = CATEGORY_LABEL[p.category] ?? p.category;
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+
+    return ORDERED_LABELS
+      .filter((label) => (counts.get(label) ?? 0) > 0)
+      .map((label) => {
+        const icon = ICON_BY_LABEL[label] ?? BookOpen;
+        return { icon, label, count: counts.get(label) ?? 0 };
+      });
+  })();
+
+  // ✅ 3 mais recentes (mantém o “featured” da Home)
+  const featuredArticles = posts
+    .slice()
+    .sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1))
+    .slice(0, 3)
+    .map((p) => ({
+      slug: p.slug,
+      category: (CATEGORY_LABEL[p.category] ?? p.category) as string,
+      title: p.title,
+      excerpt: p.excerpt,
+      readTime: p.readTime,
+    }));
+
   return (
     <section id="insights" className="py-24 bg-background">
       <div className="container mx-auto px-4 lg:px-8">
@@ -42,7 +82,9 @@ const ContentSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Blog & Insights</span>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">
+            Blog & Insights
+          </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-4">
             Hub de conhecimento estratégico
           </h2>
@@ -51,7 +93,7 @@ const ContentSection = () => {
           </p>
         </motion.div>
 
-        {/* Categories */}
+        {/* Categories (contagem real) */}
         <div className="flex flex-wrap gap-3 mb-12">
           {categories.map((cat, i) => (
             <motion.button
@@ -61,6 +103,11 @@ const ContentSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
+              // opcional: ao clicar, manda pro /blog já filtrado via querystring
+              onClick={() => {
+                // mantém comportamento simples: vai pro /blog (lá você filtra)
+                window.location.href = `/blog`;
+              }}
             >
               <cat.icon className="w-4 h-4" />
               {cat.label}
@@ -69,29 +116,67 @@ const ContentSection = () => {
           ))}
         </div>
 
-        {/* Featured Articles */}
+        {/* Featured Articles (clicável e linkado no post) */}
         <div className="grid md:grid-cols-3 gap-6">
           {featuredArticles.map((article, i) => (
-            <motion.article
-              key={i}
-              className="group p-6 rounded-2xl bg-card border border-border hover:shadow-elevated transition-all duration-300 cursor-pointer"
+            <motion.div
+              key={article.slug}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <span className="text-xs font-semibold text-accent uppercase tracking-wider">{article.category}</span>
-              <h3 className="text-lg font-bold text-foreground mt-3 mb-3 group-hover:text-primary transition-colors leading-snug">
-                {article.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{article.excerpt}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{article.readTime} de leitura</span>
-                <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </motion.article>
+              <Link to={`/blog/${article.slug}`} className="block">
+                <article className="group p-6 rounded-2xl bg-card border border-border hover:shadow-elevated transition-all duration-300 cursor-pointer">
+                  <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+                    {article.category}
+                  </span>
+                  <h3 className="text-lg font-bold text-foreground mt-3 mb-3 group-hover:text-primary transition-colors leading-snug">
+                    {article.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    {article.excerpt}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {article.readTime} de leitura
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </article>
+              </Link>
+            </motion.div>
           ))}
         </div>
+
+        <motion.div
+          className="mt-16 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-primary transition-all text-sm group"
+            asChild
+          >
+            <Link to="/blog">
+              Ver todos os artigos do blog
+              <ArrowRight className="w-4 h-4 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
+          </Button>
+        </motion.div>
+
+        {/* Estado vazio (se ainda não tem posts no store) */}
+        {featuredArticles.length === 0 && (
+          <div className="mt-10 rounded-2xl border bg-card p-8 text-center">
+            <div className="text-lg font-bold text-foreground">Sem artigos ainda</div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Crie um post em <span className="font-semibold">/admin/blog</span> para aparecer aqui automaticamente.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

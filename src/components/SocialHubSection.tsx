@@ -2,12 +2,12 @@ import { motion } from "framer-motion";
 import { Instagram, Youtube, Headphones, BookOpen, Linkedin, FileText, ArrowUpRight } from "lucide-react";
 
 const channels = [
-  { icon: Instagram, label: "Instagram", desc: "Conteúdo diário sobre growth e estratégia", href: "#" },
-  { icon: Youtube, label: "YouTube", desc: "Vídeos aprofundados e cases reais", href: "#" },
+  { icon: Instagram, label: "Instagram", desc: "@guilherme.a.correia", href: "https://www.instagram.com/guilherme.a.correia/" },
+  { icon: Youtube, label: "YouTube", desc: "Vídeos e cases reais de Growth", href: "https://www.youtube.com/@guilherme.a.correia" },
   { icon: Headphones, label: "Podcast", desc: "Conversas estratégicas sobre negócios", href: "#" },
-  { icon: BookOpen, label: "Blog / Insights", desc: "Artigos e reflexões estratégicas", href: "#insights" },
-  { icon: Linkedin, label: "LinkedIn", desc: "Networking e conteúdo executivo", href: "#" },
-  { icon: FileText, label: "Publicações", desc: "Livros, e-books e materiais exclusivos", href: "#materiais" },
+  { icon: BookOpen, label: "Blog / Insights", desc: "Artigos e reflexões estratégicas", href: "/blog" },
+  { icon: Linkedin, label: "Newsletter LinkedIn", desc: "Assine para insights semanais", href: "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577" },
+  { icon: FileText, label: "Publicações", desc: "Livros, e-books e materiais exclusivos", href: "/biblioteca" },
 ];
 
 const SocialHubSection = () => {

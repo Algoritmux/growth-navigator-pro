@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Users, Mic, GraduationCap, ArrowRight } from "lucide-react";
+import { Users, Mic, GraduationCap, ArrowRight, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const blocks = [
   {
@@ -16,10 +17,10 @@ const blocks = [
     features: ["Conteúdo customizado", "Formatos presencial e online", "Material de apoio exclusivo", "Workshops práticos"],
   },
   {
-    icon: GraduationCap,
-    title: "Instituto de Mentoria",
-    desc: "Programas de formação estruturados para profissionais e equipes que querem dominar growth marketing, inteligência comercial e estratégia orientada por dados.",
-    features: ["Programas de 8 a 16 semanas", "Turmas exclusivas", "Certificação", "Comunidade de alumni"],
+    icon: Rocket,
+    title: "Consultoria de GTM (Go-To-Market)",
+    desc: "Estratégia e execução de Go-To-Market para empresas que querem lançar, reposicionar ou escalar produtos e serviços com previsibilidade, alinhando marketing, vendas e operação a partir de dados.",
+    features: ["Diagnóstico completo de mercado", "Estratégia de aquisição, canais e pricing", "Alinhamento entre marketing, vendas e produto", "Acompanhamento estratégico e plano de execução"],
   },
 ];
 
@@ -34,9 +35,9 @@ const MentorshipSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Mentorias, Palestras & Instituto</span>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Mentorias, Palestras & Consultorias</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-4">
-            Jornada de evolução
+            Contrate meus serviços
           </h2>
           <p className="text-muted-foreground text-lg">
             Da absorção de conteúdo à transformação real. Escolha o formato que faz sentido para o seu momento.
@@ -66,10 +67,15 @@ const MentorshipSection = () => {
                   </li>
                 ))}
               </ul>
-              <Button variant="ghost" size="sm" className="text-primary group-hover:text-accent transition-colors p-0 justify-start" asChild>
-                <a href="#contato">
-                  Saber mais <ArrowRight className="w-4 h-4 ml-1" />
-                </a>
+              <Button
+                variant="accent"
+                size="sm"
+                className="w-full rounded-xl group/btn text-white hover:text-white mt-auto"
+                asChild
+              >
+                <Link to="/servicos">
+                  Saber mais <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                </Link>
               </Button>
             </motion.div>
           ))}

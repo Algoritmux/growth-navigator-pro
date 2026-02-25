@@ -8,7 +8,7 @@ const HeroSection = () => {
     <section className="relative min-h-screen flex items-center overflow-hidden bg-hero">
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 grid-pattern opacity-30" />
-      
+
       {/* Floating elements */}
       <motion.div
         className="absolute top-1/4 right-[15%] w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center animate-pulse-glow hidden lg:flex"
@@ -41,8 +41,8 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15 }}>
-              Crescimento empresarial exige{" "}
-              <span className="text-accent">dados, estrutura</span> e{" "}
+              Growth Marketing focado em{" "}
+              <span className="text-accent">dados</span> e{" "}
               <span className="text-accent">inteligência estratégica</span>
             </motion.h1>
 
@@ -86,7 +86,7 @@ const HeroSection = () => {
               <img
 
                 alt="Guilherme Correia — Especialista em Growth Marketing"
-                className="relative rounded-2xl w-[400px] object-cover shadow-2xl border border-border/20" src="/lovable-uploads/606e2cad-5dfb-431c-abb3-3ac14f7825e8.png" />
+                className="relative rounded-2xl w-[480px] object-cover shadow-2xl border border-border/20" src="/lovable-uploads/606e2cad-5dfb-431c-abb3-3ac14f7825e8.png" />
 
             </div>
           </motion.div>

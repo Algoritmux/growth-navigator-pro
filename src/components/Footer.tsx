@@ -12,13 +12,19 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex items-center gap-6">
-            {["LinkedIn", "Instagram", "YouTube"].map((social) => (
+            {[
+              { label: "LinkedIn", href: "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577" },
+              { label: "Instagram", href: "https://www.instagram.com/guilherme.a.correia/" },
+              { label: "YouTube", href: "https://www.youtube.com/@guilherme.a.correia" }
+            ].map((social) => (
               <a
-                key={social}
-                href="#"
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm text-background/40 hover:text-accent transition-colors"
               >
-                {social}
+                {social.label}
               </a>
             ))}
           </div>

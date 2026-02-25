@@ -1,0 +1,203 @@
+import {
+    BookOpen,
+    FileText,
+    Layout,
+    Lightbulb,
+    Search,
+    Presentation,
+    GraduationCap,
+} from "lucide-react";
+
+export type MaterialType =
+    | "Livro"
+    | "E-book"
+    | "Framework"
+    | "Guia Estratégico"
+    | "Pesquisa"
+    | "Apresentação"
+    | "Estudo Exclusivo";
+
+export type MaterialCategoryValue = "all" | MaterialType;
+
+export type MaterialItem = {
+    id: string;
+    type: MaterialType;
+    title: string;
+    desc: string;
+    tags: string[];
+
+    slug?: string;
+
+    href?: string;       // link externo (pago)
+    published?: boolean; // aparece na /biblioteca
+    coverImage?: string; // url da capa
+    ctaLabel?: string;   // texto do botão
+};
+
+export const MATERIAL_CATEGORIES: {
+    icon: any;
+    label: string;
+    value: MaterialCategoryValue;
+}[] = [
+        { icon: BookOpen, label: "Todos", value: "all" },
+        { icon: BookOpen, label: "Livros", value: "Livro" },
+        { icon: FileText, label: "E-books", value: "E-book" },
+        { icon: Layout, label: "Frameworks", value: "Framework" },
+        { icon: Lightbulb, label: "Guias Estratégicos", value: "Guia Estratégico" },
+        { icon: Search, label: "Pesquisas", value: "Pesquisa" },
+        { icon: Presentation, label: "Apresentações", value: "Apresentação" },
+        { icon: GraduationCap, label: "Estudos Exclusivos", value: "Estudo Exclusivo" },
+    ];
+
+const STORAGE_KEY = "gc_materials_v1";
+
+const SEED_MATERIALS: MaterialItem[] = [
+    {
+        id: "growth-driven",
+        type: "Livro",
+        title: "Growth-Driven: O Framework do Crescimento Previsível",
+        desc: "O método completo para transformar operações comerciais em motores de crescimento escalável.",
+        tags: ["Growth Marketing", "Estratégia"],
+        slug: "growth-driven",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#"', // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "ia-vendas-b2b",
+        type: "E-book",
+        title: "Guia Prático de IA Aplicada a Vendas B2B",
+        desc: "Como usar inteligência artificial para prever churn, qualificar leads e escalar receita.",
+        tags: ["IA", "Vendas B2B"],
+        slug: "ia-vendas-b2b",
+        href: "#",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "canvas-maturidade",
+        type: "Framework",
+        title: "Canvas de Maturidade Comercial",
+        desc: "Ferramenta visual para diagnosticar o nível de estruturação da sua operação de vendas.",
+        tags: ["Estratégia Comercial"],
+        slug: "canvas-maturidade",
+        href: "#",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "arquitetura-vendas",
+        type: "Guia Estratégico",
+        title: "Da Prospecção à Expansão: Arquitetura de Vendas Moderna",
+        desc: "Guia completo sobre como estruturar cada etapa do funil para máxima previsibilidade.",
+        tags: ["Vendas", "Growth"],
+        slug: "arquitetura-vendas",
+        href: "#",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "panorama-growth-2025",
+        type: "Pesquisa",
+        title: "Panorama Growth Brasil 2025",
+        desc: "Dados exclusivos sobre maturidade de growth marketing em empresas brasileiras.",
+        tags: ["Growth Marketing", "Dados"],
+        slug: "panorama-growth-2025",
+        href: "#",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "keynote-futuro",
+        type: "Apresentação",
+        title: "Keynote: O Futuro do Marketing é Comercial",
+        desc: "Slides da palestra sobre a convergência entre marketing, vendas e dados.",
+        tags: ["Marketing", "Vendas"],
+        slug: "keynote-futuro",
+        href: "#",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        // href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+    {
+        id: "case-triplicar-receita",
+        type: "Estudo Exclusivo",
+        title: "Case: Como Triplicar Receita em 8 Meses com Growth",
+        desc: "Estudo detalhado de uma operação real transformada pelo framework Growth-Driven.",
+        tags: ["Growth", "Case"],
+        slug: "case-triplicar-receita",
+        published: true,
+        coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
+        //  href: "#", // se for pago, coloque o link externo real aqui
+        ctaLabel: "Acessar material",
+    },
+];
+
+function safeParse(json: string | null) {
+    try {
+        return json ? (JSON.parse(json) as MaterialItem[]) : null;
+    } catch {
+        return null;
+    }
+}
+
+export function loadMaterials(): MaterialItem[] {
+    if (typeof window === "undefined") return SEED_MATERIALS;
+    const data = safeParse(localStorage.getItem(STORAGE_KEY));
+    if (Array.isArray(data) && data.length) return data;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_MATERIALS));
+    return SEED_MATERIALS;
+}
+
+export function saveMaterials(items: MaterialItem[]) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+export function getAllMaterials(): MaterialItem[] {
+    return loadMaterials();
+}
+
+export function getPublishedMaterials(): MaterialItem[] {
+    return getAllMaterials().filter((m) => m.published);
+}
+
+export function getMaterialBySlug(slug: string): MaterialItem | undefined {
+    return getAllMaterials().find((m) => m.slug === slug);
+}
+
+export function createMaterial(data: Omit<MaterialItem, "id">) {
+    const items = getAllMaterials();
+    const newItem: MaterialItem = {
+        ...data,
+        id: `mat_${Math.random().toString(16).slice(2)}_${Date.now()}`,
+    };
+    saveMaterials([newItem, ...items]);
+    return newItem;
+}
+
+export function updateMaterial(id: string, data: Partial<Omit<MaterialItem, "id">>) {
+    const items = getAllMaterials();
+    const next = items.map((m) => (m.id === id ? { ...m, ...data } : m));
+    saveMaterials(next);
+}
+
+export function deleteMaterial(id: string) {
+    const items = getAllMaterials().filter((m) => m.id !== id);
+    saveMaterials(items);
+}
+
+export function countMaterialsByCategory(value: MaterialCategoryValue) {
+    if (value === "all") return getAllMaterials().length;
+    return getAllMaterials().filter((m) => m.type === value).length;
+}

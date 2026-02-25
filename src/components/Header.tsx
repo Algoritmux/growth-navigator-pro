@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { label: "Sobre", href: "#sobre" },
@@ -13,12 +14,20 @@ const navItems = [
 
 const Header = () => {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    const target = document.querySelector(href);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      if (location.pathname !== "/") {
+        navigate("/" + href);
+        return;
+      }
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
     setOpen(false);
   };
@@ -26,9 +35,9 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
-        <a href="#" className="text-xl font-bold text-foreground tracking-tight">
+        <Link to="/" className="text-xl font-bold text-foreground tracking-tight">
           Guilherme<span className="text-accent">.</span>Correia
-        </a>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (

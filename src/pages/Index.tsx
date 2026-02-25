@@ -10,10 +10,25 @@ import SocialHubSection from "@/components/SocialHubSection";
 import LeadMagnetSection from "@/components/LeadMagnetSection";
 import FinalCTASection from "@/components/FinalCTASection";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <SEO
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": "Guilherme Correia",
+          "jobTitle": "Profissional de Growth Marketing",
+          "url": "https://guilhermecorreia.com.br",
+          "description": "Profissional de Growth Marketing e Estrategista de IA. Ajudo empresas a escala através de frameworks de crescimento previsível.",
+          "sameAs": [
+            "https://www.linkedin.com/in/guilhermecorreia/"
+          ],
+          "knowsAbout": ["Growth Marketing", "Inteligência Artificial", "Go-To-Market", "Vendas"]
+        }}
+      />
       <Header />
       <HeroSection />
       <ProblemSection />

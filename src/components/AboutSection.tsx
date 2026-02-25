@@ -16,7 +16,7 @@ const AboutSection = () => {
               <div className="w-full aspect-[4/5] rounded-2xl overflow-hidden relative">
                 <img
                   src={guilhermeAbout}
-                  alt="Guilherme - Consultor de Growth"
+                  alt="Guilherme - Especialista em Growth Marketing"
                   className="w-full h-full object-cover" />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -39,46 +39,46 @@ const AboutSection = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}>
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}>
 
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">Sobre</span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-6">
-              Do marketing tradicional à{" "}
-              <span className="text-gradient-primary">engenharia de crescimento</span>
+              Do marketing tradicional ao{" "}
+              <span className="text-gradient-primary">Growth Marketing</span>
             </h2>
             <div className="space-y-5 text-muted-foreground leading-relaxed">
               <p>
-                Há mais de duas décadas, comecei no marketing quando ele ainda era analógico. 
-                Passei por agências, lideranças em empresas de médio e grande porte e construí 
+                Há quase duas décadas, comecei no marketing quando ele ainda era analógico.
+                Comecei fazendo marketing para minhas empresas e construí
                 estratégias que geraram milhões em receita.
               </p>
               <p>
-                Mas em algum momento percebi que o marketing sozinho não era suficiente. 
-                A verdadeira alavanca de crescimento estava na <strong className="text-foreground">interseção entre 
-                dados, vendas e estratégia</strong>. Foi quando migrei do marketing tradicional para 
-                o <strong className="text-foreground">growth orientado a dados</strong> — integrando inteligência 
+                Mas em algum momento percebi que o marketing sozinho não era suficiente.
+                A verdadeira alavanca de crescimento estava na <strong className="text-foreground">interseção entre
+                  dados, vendas e estratégia</strong>. Foi quando migrei do marketing tradicional para
+                o <strong className="text-foreground">growth orientado a dados</strong> — integrando inteligência
                 artificial, estrutura comercial e modelagem preditiva.
               </p>
               <p>
-                Hoje, minha missão é clara: transformar empresas em máquinas de crescimento 
-                previsível, usando ciência de dados, automação inteligente e frameworks 
+                Hoje, minha missão é clara: transformar empresas em máquinas de crescimento
+                previsível, usando ciência de dados, automação inteligente e frameworks
                 proprietários testados em operações reais.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-10">
               {[
-              { value: "200+", label: "Projetos entregues" },
-              { value: "R$50M+", label: "Em receita gerada" },
-              { value: "15+", label: "Segmentos atendidos" },
-              { value: "8x", label: "ROI médio dos projetos" }].
-              map((item, i) =>
-              <div key={i} className="p-4 rounded-xl bg-secondary">
-                  <div className="text-2xl font-bold text-primary">{item.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{item.label}</div>
-                </div>
-              )}
+                { value: "200+", label: "Projetos entregues" },
+                { value: "R$25M+", label: "Em receita gerada" },
+                { value: "30", label: "Segmentos atendidos" },
+                { value: "8x", label: "ROI médio dos projetos" }].
+                map((item, i) =>
+                  <div key={i} className="p-4 rounded-xl bg-secondary">
+                    <div className="text-2xl font-bold text-primary">{item.value}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{item.label}</div>
+                  </div>
+                )}
             </div>
           </motion.div>
         </div>
