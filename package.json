@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy": "npm run build && node scripts/deploy.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -75,9 +76,11 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.3.1",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "ftp-deploy": "^2.4.7",
     "globals": "^15.15.0",
     "jsdom": "^20.0.3",
     "lovable-tagger": "^1.1.13",
