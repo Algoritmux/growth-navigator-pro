@@ -14,9 +14,9 @@ const steps = [
 
 const MethodologySection = () => {
   return (
-    <section id="metodologia" className="py-24 bg-hero relative overflow-hidden">
-      <div className="absolute inset-0 dot-pattern opacity-20" />
-      <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[120px]" />
+    <section id="metodologia" className="py-24 bg-background relative overflow-hidden border-t border-border">
+      <div className="absolute inset-0 dot-pattern opacity-[0.05]" />
+      <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <motion.div
@@ -27,10 +27,10 @@ const MethodologySection = () => {
           transition={{ duration: 0.6 }}
         >
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Metodologia Proprietária</span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-primary-foreground mt-3 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-3 mb-4">
             Framework Growth-Driven
           </h2>
-          <p className="text-primary-foreground/60 text-lg">
+          <p className="text-muted-foreground text-lg">
             8 etapas interconectadas que transformam operações comerciais em sistemas de crescimento previsível e escalável.
           </p>
         </motion.div>
@@ -39,20 +39,20 @@ const MethodologySection = () => {
           {steps.map((step, i) => (
             <motion.div
               key={step.title}
-              className="group p-6 rounded-2xl bg-primary-foreground/5 border border-primary-foreground/10 backdrop-blur-sm hover:bg-primary-foreground/10 transition-all duration-300"
+              className="group p-6 rounded-2xl bg-card border border-border hover:shadow-soft hover:border-accent/20 transition-all duration-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-                  <step.icon className="w-5 h-5 text-accent" />
+                <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center">
+                  <step.icon className="w-5 h-5 text-primary" />
                 </div>
-                <span className="text-xs font-mono text-primary-foreground/40">0{i + 1}</span>
+                <span className="text-xs font-mono text-muted-foreground/40">0{i + 1}</span>
               </div>
-              <h3 className="text-lg font-bold text-primary-foreground mb-2">{step.title}</h3>
-              <p className="text-sm text-primary-foreground/50 leading-relaxed">{step.desc}</p>
+              <h3 className="text-lg font-bold text-foreground mb-2">{step.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
             </motion.div>
           ))}
         </div>

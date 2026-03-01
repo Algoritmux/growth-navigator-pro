@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { getPublishedMaterials, MATERIAL_CATEGORIES } from "@/lib/materials-store";
+import SEO from "@/components/SEO";
 
 export default function MaterialPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -37,6 +38,23 @@ export default function MaterialPage() {
 
     return (
         <main className="min-h-screen bg-background text-foreground">
+            <SEO
+                title={material.title}
+                description={material.desc}
+                jsonLd={{
+                    "@context": "https://schema.org",
+                    "@type": "CreativeWork",
+                    "name": material.title,
+                    "headline": material.title,
+                    "description": material.desc,
+                    "author": {
+                        "@type": "Person",
+                        "name": "Guilherme Correia"
+                    },
+                    "genre": material.type,
+                    "keywords": material.tags.join(", ")
+                }}
+            />
             <section className="mx-auto w-full max-w-5xl px-5 py-10">
                 <div className="mb-6 flex items-center justify-between">
                     <Button asChild variant="ghost" className="gap-2">

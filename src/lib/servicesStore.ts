@@ -1,11 +1,12 @@
 import { Users, Mic, Rocket } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export type Service = {
     slug: string;
     title: string;
     description: string;
     features: string[];
-    icon: any;
+    icon: LucideIcon;
     ctaLabel: string;
 };
 

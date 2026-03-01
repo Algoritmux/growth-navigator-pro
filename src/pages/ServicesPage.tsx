@@ -53,7 +53,7 @@ export default function ServicesPage() {
                 {/* Hero Section */}
                 <section className="relative pt-32 pb-20 overflow-hidden bg-hero">
                     <div className="absolute inset-0 dot-pattern opacity-20" />
-                    <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[120px]" />
+                    <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]" />
 
                     <div className="container mx-auto px-4 lg:px-8 relative z-10 text-center">
                         <motion.div
@@ -160,15 +160,15 @@ export default function ServicesPage() {
                 })}
 
                 {/* Social Proof / Testimonials */}
-                <section className="py-24 bg-foreground relative overflow-hidden">
+                <section className="py-24 bg-card relative overflow-hidden border-y border-border">
                     <div className="absolute top-0 left-0 w-full h-1 bg-accent/20" />
 
                     <div className="container mx-auto px-4 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl sm:text-4xl font-bold text-background mb-4">
+                            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
                                 O que dizem sobre o trabalho
                             </h2>
-                            <p className="text-background/50 text-lg">
+                            <p className="text-muted-foreground text-lg">
                                 Prova social de quem já passou pelo processo de transformação.
                             </p>
                         </div>
@@ -177,7 +177,7 @@ export default function ServicesPage() {
                             {testimonials.map((t, i) => (
                                 <motion.div
                                     key={i}
-                                    className="p-8 rounded-3xl bg-background/5 border border-background/10 backdrop-blur-sm"
+                                    className="p-8 rounded-3xl bg-background border border-border hover:shadow-soft transition-all duration-300"
                                     initial={{ opacity: 0, y: 20 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -188,7 +188,7 @@ export default function ServicesPage() {
                                             <Star key={i} className="w-4 h-4 fill-accent text-accent" />
                                         ))}
                                     </div>
-                                    <p className="text-background/80 text-lg italic mb-8 leading-relaxed">
+                                    <p className="text-foreground/80 text-lg italic mb-8 leading-relaxed">
                                         "{t.text}"
                                     </p>
                                     <div className="flex items-center gap-4">
@@ -196,8 +196,8 @@ export default function ServicesPage() {
                                             {t.avatar}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-background uppercase tracking-wider text-sm">{t.name}</div>
-                                            <div className="text-xs text-background/40">{t.role}</div>
+                                            <div className="font-bold text-foreground uppercase tracking-wider text-sm">{t.name}</div>
+                                            <div className="text-xs text-muted-foreground">{t.role}</div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -209,13 +209,13 @@ export default function ServicesPage() {
                 {/* Final CTA Section */}
                 <section className="py-24 relative overflow-hidden">
                     <div className="container mx-auto px-4 lg:px-8 relative z-10 text-center">
-                        <div className="max-w-4xl mx-auto p-12 rounded-[40px] bg-hero border border-primary-foreground/10 text-primary-foreground relative overflow-hidden">
-                            <div className="absolute inset-0 dot-pattern opacity-10" />
+                        <div className="max-w-4xl mx-auto p-12 rounded-[40px] bg-background border border-border text-foreground relative overflow-hidden shadow-soft">
+                            <div className="absolute inset-0 dot-pattern opacity-[0.05]" />
 
                             <h2 className="text-3xl sm:text-5xl font-bold mb-6">
                                 Vamos acelerar sua operação comercial?
                             </h2>
-                            <p className="text-primary-foreground/60 text-lg mb-10 max-w-2xl mx-auto">
+                            <p className="text-muted-foreground text-lg mb-10 max-w-2xl mx-auto">
                                 Agende uma conversa diagnóstica para entendermos qual o melhor caminho para o seu momento atual.
                             </p>
 
@@ -226,7 +226,7 @@ export default function ServicesPage() {
                                         Chamar no WhatsApp
                                     </a>
                                 </Button>
-                                <Button variant="hero-outline" size="lg" className="rounded-xl px-10 py-7 text-lg group" asChild>
+                                <Button variant="outline" size="lg" className="rounded-xl px-10 py-7 text-lg group border-border" asChild>
                                     <a href="#">
                                         <Calendar className="mr-2 w-5 h-5 opacity-50 group-hover:opacity-100" />
                                         Ver agenda / Calendly

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import guilhermeAbout from "@/assets/guilherme-about.jpg";
+import guilhermeAbout from "@/assets/guilherme-about-new.jpg";
+import logoGC from "@/assets/logo-gc.png";
 
 const AboutSection = () => {
   return (
@@ -28,12 +29,7 @@ const AboutSection = () => {
                 </div>
               </div>
               <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-2xl bg-accent/10 flex items-center justify-center shadow-elevated">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                  </div>
-                </div>
+                <img src={logoGC} alt="Logo Guilherme Correia" className="w-20 h-auto object-contain" />
               </div>
             </div>
           </motion.div>
@@ -49,21 +45,18 @@ const AboutSection = () => {
             </h2>
             <div className="space-y-5 text-muted-foreground leading-relaxed">
               <p>
-                Há quase duas décadas, comecei no marketing quando ele ainda era analógico.
-                Comecei fazendo marketing para minhas empresas e construí
-                estratégias que geraram milhões em receita.
+                Há quase duas décadas, iniciei minha trajetória no marketing quando o mercado ainda era majoritariamente analógico.
+                Comecei aplicando marketing nos meus próprios negócios e desenvolvendo estratégias que, ao longo do tempo, geraram milhões em receita.
               </p>
               <p>
-                Mas em algum momento percebi que o marketing sozinho não era suficiente.
-                A verdadeira alavanca de crescimento estava na <strong className="text-foreground">interseção entre
-                  dados, vendas e estratégia</strong>. Foi quando migrei do marketing tradicional para
-                o <strong className="text-foreground">growth orientado a dados</strong> — integrando inteligência
-                artificial, estrutura comercial e modelagem preditiva.
+                Com a evolução das operações, ficou claro que o marketing, isoladamente, não sustentava crescimento consistente.
+                A verdadeira alavanca estava na <strong className="text-foreground">interseção entre dados, vendas e estratégia</strong>. Foi nesse momento que migrei do marketing tradicional para o <strong className="text-foreground">growth orientado a dados</strong>, integrando inteligência artificial, estrutura comercial e modelagem preditiva.
               </p>
               <p>
-                Hoje, minha missão é clara: transformar empresas em máquinas de crescimento
-                previsível, usando ciência de dados, automação inteligente e frameworks
-                proprietários testados em operações reais.
+                Essa visão foi consolidada na prática como fundador da <strong className="text-foreground">Algoritmux</strong> e da <strong className="text-foreground">Meta de Vendas</strong>, e como cofundador da <strong className="text-foreground">Bluenote Brasil</strong>, onde aplico diariamente frameworks, automação inteligente e ciência de dados em operações reais.
+              </p>
+              <p>
+                Hoje, minha missão é clara: transformar empresas em máquinas de crescimento previsível, conectando estratégia, tecnologia e execução para escalar resultados de forma sustentável.
               </p>
             </div>
 

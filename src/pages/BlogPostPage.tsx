@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPostBySlug } from "@/lib/blogStore";
+import SEO from "@/components/SEO";
 
 function simpleMarkdownToHtml(md: string) {
     // conversor BEM simples (pra agora). Depois trocamos por react-markdown.
@@ -35,6 +36,24 @@ export default function BlogPostPage() {
 
     return (
         <main className="min-h-screen bg-background text-foreground">
+            <SEO
+                title={post.title}
+                description={post.excerpt}
+                jsonLd={{
+                    "@context": "https://schema.org",
+                    "@type": "BlogPosting",
+                    "headline": post.title,
+                    "description": post.excerpt,
+                    "author": {
+                        "@type": "Person",
+                        "name": "Guilherme Correia"
+                    },
+                    "datePublished": post.dateISO,
+                    "dateModified": post.updatedAtISO || post.dateISO,
+                    "articleSection": post.category,
+                    "keywords": post.tags.join(", ")
+                }}
+            />
             <section className="mx-auto w-full max-w-3xl px-5 py-10">
                 <Link to="/blog" className="text-sm text-muted-foreground hover:underline">
                     ← Voltar para o blog

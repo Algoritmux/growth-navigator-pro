@@ -9,7 +9,8 @@ import {
     upsertPost,
 } from "@/lib/blogStore";
 import { useAuth } from "@/lib/auth";
-import { LogOut } from "lucide-react";
+import { LogOut, BookOpen, Plus, Search } from "lucide-react";
+import AdminHeader from "@/components/AdminHeader";
 
 const categories: BlogCategory[] = ["GTM", "ICP", "Oferta", "Sales", "Growth", "IA"];
 
@@ -68,36 +69,30 @@ export default function BlogAdminPage() {
 
     return (
         <main className="min-h-screen bg-background text-foreground">
-            <section className="mx-auto w-full max-w-6xl px-5 py-10">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h1 className="text-3xl font-bold">Admin do Blog</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Crie/edite posts. Lista e página do post sincronizam automaticamente.
-                        </p>
-                    </div>
+            <AdminHeader />
 
-                    <div className="flex items-center gap-2">
+            <section className="mx-auto w-full max-w-6xl px-5 py-10">
+                <header className="border-b bg-card mb-6 rounded-2xl border px-5 py-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold flex items-center gap-3">
+                                <BookOpen className="h-6 w-6 text-primary" />
+                                Gestão do Blog
+                            </h1>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Crie, edite e organize seus artigos e insights.
+                            </p>
+                        </div>
+
                         <button
                             onClick={startNew}
-                            className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+                            className="flex items-center gap-2 bg-primary text-primary-foreground shadow-lg h-11 px-6 rounded-xl font-semibold hover:opacity-90 transition-all"
                         >
-                            + Novo post
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (confirm("Deseja sair da área administrativa?")) {
-                                    window.location.href = "/";
-                                    setTimeout(() => localStorage.removeItem("admin_user"), 100);
-                                }
-                            }}
-                            className="h-10 rounded-xl border bg-card px-4 text-sm flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Sair
+                            <Plus className="h-5 w-5" />
+                            Novo Post
                         </button>
                     </div>
-                </div>
+                </header>
 
                 <div className="mt-6 grid gap-4 lg:grid-cols-2">
                     {/* LISTA */}

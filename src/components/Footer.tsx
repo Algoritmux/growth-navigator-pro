@@ -1,13 +1,16 @@
+import logoGC from "@/assets/logo-gc.png";
+
 const Footer = () => {
   return (
     <footer className="py-12 bg-foreground">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <a href="#" className="text-lg font-bold text-background tracking-tight">
-              Guilherme<span className="text-accent">.</span>Correia
+          <div className="flex flex-col items-center md:items-start">
+            <a href="#" className="flex items-center gap-2 text-lg font-bold text-background tracking-tight group">
+              <img src={logoGC} alt="Logo" className="h-7 w-auto object-contain" />
+              <span>Guilherme<span className="text-accent">.</span>Correia</span>
             </a>
-            <p className="text-sm text-background/40 mt-1">
+            <p className="text-sm text-background/40 mt-1 text-center md:text-left">
               Growth Marketing · Inteligência Comercial · IA
             </p>
           </div>

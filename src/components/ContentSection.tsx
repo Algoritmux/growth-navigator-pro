@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, BookOpen, Brain, BarChart3, Handshake, Lightbulb } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getPublishedPosts } from "@/lib/blogStore";
@@ -20,7 +21,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 /**
  * Ícones por label (igual ao layout atual)
  */
-const ICON_BY_LABEL: Record<string, any> = {
+const ICON_BY_LABEL: Record<string, LucideIcon> = {
   "Growth Marketing": BarChart3,
   "IA aplicada aos negócios": Brain,
   "Estratégia Comercial": Lightbulb,
@@ -173,7 +174,7 @@ const ContentSection = () => {
           <div className="mt-10 rounded-2xl border bg-card p-8 text-center">
             <div className="text-lg font-bold text-foreground">Sem artigos ainda</div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Crie um post em <span className="font-semibold">/admin/blog</span> para aparecer aqui automaticamente.
+              Crie um post em <span className="font-semibold text-primary">/admin</span> para aparecer aqui automaticamente.
             </p>
           </div>
         )}

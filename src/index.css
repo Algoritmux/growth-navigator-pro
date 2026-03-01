@@ -7,56 +7,64 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 260 20% 10%;
+    --foreground: 268 66% 10%;
 
-    --card: 260 10% 98%;
-    --card-foreground: 260 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 268 66% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 20% 10%;
+    --popover-foreground: 268 66% 10%;
 
-    --primary: 268 60% 22%;
+    --primary: 268 66% 21%;
+    /* #331259 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 15% 95%;
-    --secondary-foreground: 260 20% 10%;
+    --secondary: 268 15% 96%;
+    --secondary-foreground: 268 66% 21%;
 
-    --muted: 260 10% 96%;
-    --muted-foreground: 260 8% 45%;
+    --muted: 268 10% 95%;
+    --muted-foreground: 268 20% 45%;
 
-    --accent: 160 65% 40%;
+    --accent: 286 83% 38%;
+    /* #8A10AF - Bright Purple */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 100% 60%;
+    /* #FF3131 - Red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 260 10% 90%;
-    --input: 260 10% 90%;
-    --ring: 268 60% 22%;
+    --border: 268 20% 90%;
+    --input: 268 20% 90%;
+    --ring: 268 66% 21%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
+
+    /* Brand Primary: #331259 */
+    /* Brand Purple: #8A10AF */
+    --brand-purple: 286 83% 38%;
+    /* Brand Yellow: #FFD10C */
+    --brand-yellow: 47 100% 52%;
 
     /* Custom tokens */
     --primary-light: 268 50% 35%;
-    --primary-glow: 268 80% 60%;
-    --tech-green: 160 65% 40%;
-    --tech-green-light: 160 50% 92%;
-    --surface-elevated: 260 15% 99%;
-    --gradient-primary: linear-gradient(135deg, hsl(268 60% 22%), hsl(268 50% 35%));
-    --gradient-hero: linear-gradient(160deg, hsl(268 60% 22%) 0%, hsl(268 40% 12%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(160 65% 40%), hsl(160 50% 50%));
-    --shadow-soft: 0 4px 24px -4px hsl(268 60% 22% / 0.08);
-    --shadow-elevated: 0 12px 40px -8px hsl(268 60% 22% / 0.12);
-    --shadow-glow: 0 0 30px hsl(268 80% 60% / 0.15);
+    --primary-glow: 286 83% 60%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --gradient-primary: linear-gradient(135deg, hsl(268 66% 21%), hsl(286 83% 38%));
+    --gradient-hero: linear-gradient(180deg, #000000 0%, #1A1A1A 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(286 83% 38%), hsl(286 70% 50%));
+
+    --shadow-soft: 0 4px 24px -4px hsl(268 66% 21% / 0.06);
+    --shadow-elevated: 0 12px 40px -8px hsl(268 66% 21% / 0.1);
+    --shadow-glow: 0 0 30px hsl(286 83% 38% / 0.2);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 268 66% 15%;
+    --sidebar-primary: 268 66% 21%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 268 10% 96%;
+    --sidebar-accent-foreground: 268 66% 21%;
+    --sidebar-border: 268 20% 92%;
+    --sidebar-ring: 268 66% 21%;
   }
 }
 
@@ -70,7 +78,12 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply tracking-tight font-bold;
   }
 }
@@ -111,14 +124,23 @@
   }
 
   .grid-pattern {
-    background-image: 
-      linear-gradient(hsl(268 60% 80% / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(268 60% 80% / 0.08) 1px, transparent 1px);
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 
   .dot-pattern {
-    background-image: radial-gradient(hsl(268 60% 80% / 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(0 0% 100% / 0.1) 1px, transparent 1px);
     background-size: 24px 24px;
+  }
+
+  .bg-brand-purple {
+    background-color: hsl(var(--brand-purple));
+  }
+
+  .premium-portrait {
+    filter: brightness(1.02) contrast(1.05) saturate(0.9) hue-rotate(-5deg);
+    transition: all 0.3s ease;
   }
 }

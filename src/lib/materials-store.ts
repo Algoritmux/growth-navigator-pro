@@ -7,6 +7,7 @@ import {
     Presentation,
     GraduationCap,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export type MaterialType =
     | "Livro"
@@ -35,7 +36,7 @@ export type MaterialItem = {
 };
 
 export const MATERIAL_CATEGORIES: {
-    icon: any;
+    icon: LucideIcon;
     label: string;
     value: MaterialCategoryValue;
 }[] = [

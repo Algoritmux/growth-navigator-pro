@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Users, Mic, GraduationCap, ArrowRight, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { ContactDialog } from "./ContactDialog";
 
 const blocks = [
   {
@@ -67,16 +67,15 @@ const MentorshipSection = () => {
                   </li>
                 ))}
               </ul>
-              <Button
-                variant="accent"
-                size="sm"
-                className="w-full rounded-xl group/btn text-white hover:text-white mt-auto"
-                asChild
-              >
-                <Link to="/servicos">
-                  Saber mais <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
+              <ContactDialog title={`Solicitar: ${block.title}`}>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  className="w-full rounded-xl group/btn mt-auto text-white hover:text-white"
+                >
+                  Solicitar um contato <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                </Button>
+              </ContactDialog>
             </motion.div>
           ))}
         </div>

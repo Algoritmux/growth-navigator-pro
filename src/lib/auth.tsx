@@ -1,29 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+export type AdminUser = {
+    token: string;
+    email: string;
+    name?: string;
+    picture?: string;
+};
+
 interface AuthContextType {
-    user: any;
-    login: (credentialResponse: any) => void;
+    user: AdminUser | null;
+    login: (credentialResponse: AdminUser) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ALLOWED_EMAILS = ["guilherme.pubmkt@gmail.com"];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<any>(null);
-
-    const isEmailAllowed = (email: string) => ALLOWED_EMAILS.includes(email.toLowerCase());
+    const [user, setUser] = useState<AdminUser | null>(null);
 
     useEffect(() => {
         const savedUser = localStorage.getItem("admin_user");
         if (savedUser) {
-            setUser(JSON.parse(savedUser));
+            setUser(JSON.parse(savedUser) as AdminUser);
         }
     }, []);
 
-    const login = (userData: any) => {
+    const login = (userData: AdminUser) => {
         setUser(userData);
         localStorage.setItem("admin_user", JSON.stringify(userData));
     };

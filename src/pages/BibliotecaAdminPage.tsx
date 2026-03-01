@@ -1,10 +1,11 @@
 // src/pages/BibliotecaAdminPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Pencil, Eye, EyeOff, Search, LogOut } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Eye, EyeOff, Search, LogOut, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
+import AdminHeader from "@/components/AdminHeader";
 
 import {
     MaterialItem,
@@ -133,39 +134,24 @@ export default function BibliotecaAdminPage() {
 
     return (
         <main className="min-h-screen bg-background text-foreground">
-            {/* topbar */}
-            <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-                <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-                    <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link to="/" className="gap-2">
-                                <ArrowLeft className="h-4 w-4" />
-                                Voltar ao site
-                            </Link>
-                        </Button>
-                        <div className="text-sm text-muted-foreground">Admin</div>
+            <AdminHeader />
+
+            <header className="border-b bg-card mt-6 mx-auto max-w-6xl rounded-2xl border px-5 py-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold flex items-center gap-3">
+                            <Library className="h-6 w-6 text-primary" />
+                            Gestão da Biblioteca
+                        </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Cadastre materiais e escolha o que será publicado.
+                        </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button onClick={openNew} className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Novo material
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                if (confirm("Deseja sair da área administrativa?")) {
-                                    window.location.href = "/";
-                                    setTimeout(() => localStorage.removeItem("admin_user"), 100);
-                                }
-                            }}
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Sair
-                        </Button>
-                    </div>
+                    <Button onClick={openNew} className="gap-2 shadow-lg h-11 px-6 rounded-xl">
+                        <Plus className="h-5 w-5" />
+                        Novo Material
+                    </Button>
                 </div>
             </header>
 

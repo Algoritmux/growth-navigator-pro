@@ -25,6 +25,7 @@ import {
     countMaterialsByCategory,
     MaterialCategoryValue,
 } from "@/lib/materials-store";
+import logoGC from "@/assets/logo-gc.png";
 
 function BibliotecaSidebar({
     activeCategory,
@@ -112,8 +113,9 @@ export default function Biblioteca() {
                         <div className="flex items-center justify-between h-16 px-4 lg:px-8">
                             <div className="flex items-center gap-3">
                                 <SidebarTrigger className="text-foreground" />
-                                <Link to="/" className="text-xl font-bold text-foreground tracking-tight">
-                                    Guilherme<span className="text-accent">.</span>Correia
+                                <Link to="/" className="flex items-center gap-2 text-xl font-bold text-foreground tracking-tight group">
+                                    <img src={logoGC} alt="Logo" className="h-8 w-auto object-contain" />
+                                    <span>Guilherme<span className="text-accent">.</span>Correia</span>
                                 </Link>
                             </div>
 
