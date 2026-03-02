@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getPublishedPosts } from "@/lib/blogStore";
+import { extractFirstImageSrc } from "@/lib/markdown";
 
 /**
  * Mapeia as categorias internas do blog (store) para os labels da Home
@@ -71,6 +72,7 @@ const ContentSection = () => {
       title: p.title,
       excerpt: p.excerpt,
       readTime: p.readTime,
+      image: extractFirstImageSrc(p.content),
     }));
 
   return (
@@ -129,6 +131,16 @@ const ContentSection = () => {
             >
               <Link to={`/blog/${article.slug}`} className="block">
                 <article className="group p-6 rounded-2xl bg-card border border-border hover:shadow-elevated transition-all duration-300 cursor-pointer">
+                  {article.image && (
+                    <div className="relative mb-4 overflow-hidden rounded-xl border border-border/70 bg-muted/30">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        loading="lazy"
+                        className="h-44 w-full object-cover transition-[transform,filter] duration-300 group-hover:scale-[1.02] [filter:grayscale(1)_sepia(1)_hue-rotate(235deg)_saturate(7)_brightness(0.72)_contrast(1.1)] group-hover:[filter:none]"
+                      />
+                    </div>
+                  )}
                   <span className="text-xs font-semibold text-accent uppercase tracking-wider">
                     {article.category}
                   </span>

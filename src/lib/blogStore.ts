@@ -10,6 +10,13 @@ export type BlogPost = {
     category: BlogCategory;
     tags: string[];
     content: string; // markdown simples (por enquanto)
+    editorSettings?: {
+        font?: "theme" | "arial" | "georgia" | "times";
+        fontSize?: number;
+        lineHeight?: number;
+        paragraphSpaceBefore?: number;
+        paragraphSpaceAfter?: number;
+    };
     published: boolean;
     updatedAtISO: string;
 };
