@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, Brain, TrendingUp } from "lucide-react";
 import guilhermeHero from "@/assets/guilherme-hero.png";
@@ -83,11 +83,18 @@ const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.3 }}>
             <div className="relative">
               <div className="absolute -inset-12 rounded-full bg-primary/20 blur-3xl opacity-60 pointer-events-none" />
-              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
+              <div className="relative w-[430px] xl:w-[460px]">
                 <img
                   src={guilhermeHero}
-                  alt="Guilherme Correia — Especialista em Growth Marketing"
-                  className="w-[520px] object-cover"
+                  alt="Guilherme Correia - Especialista em Growth Marketing"
+                  className="w-full h-auto object-contain drop-shadow-[0_24px_52px_rgba(0,0,0,0.55)]"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(122% 96% at 50% 34%, rgba(0,0,0,0) 68%, rgba(0,0,0,0.08) 90%, rgba(0,0,0,0.16) 100%), linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 14%, rgba(0,0,0,0) 86%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0) 74%, rgba(0,0,0,0.12) 100%)",
+                  }}
                 />
               </div>
             </div>
@@ -99,3 +106,4 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+
