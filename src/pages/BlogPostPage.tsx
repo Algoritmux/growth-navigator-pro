@@ -4,7 +4,7 @@ import { getPostBySlug } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
 import { contentToHtml, extractFirstImageSrc } from "@/lib/markdown";
 import authorAvatar from "@/assets/guilherme-about-new.jpg";
-import { ArrowRight, Facebook, Linkedin, Mail, MessageCircle, Twitter } from "lucide-react";
+import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from "lucide-react";
 
 type TocItem = {
   id: string;
@@ -26,6 +26,14 @@ const DEFAULT_POST_EDITOR_SETTINGS = {
   paragraphSpaceBefore: 8,
   paragraphSpaceAfter: 12,
 };
+
+function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M12 2a10 10 0 0 0-8.76 14.81L2 22l5.32-1.2A10 10 0 1 0 12 2Zm5.86 14.23c-.24.68-1.4 1.3-1.95 1.34-.5.04-1.13.06-1.83-.16a16.06 16.06 0 0 1-5.98-3.73 12.97 12.97 0 0 1-2.4-3.2c-.51-.93-.52-1.78-.02-2.52.23-.34.5-.52.78-.52h.56c.18 0 .42-.07.66.5.24.57.82 1.97.9 2.11.07.14.12.3.02.48-.1.18-.15.3-.3.47-.14.17-.3.38-.43.5-.14.14-.28.3-.12.58.17.29.74 1.22 1.58 1.97 1.1.98 2.03 1.29 2.32 1.43.29.14.46.12.62-.07.16-.19.7-.82.89-1.1.19-.29.38-.24.65-.14.27.1 1.68.8 1.97.95.29.14.48.21.55.33.07.12.07.72-.17 1.4Z" />
+    </svg>
+  );
+}
 
 function formatDisplayDate(dateISO: string) {
   const date = new Date(`${dateISO}T00:00:00`);
@@ -337,7 +345,7 @@ export default function BlogPostPage() {
                     aria-label="Compartilhar no WhatsApp"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <WhatsAppIcon className="h-4 w-4" />
                   </a>
                   <a
                     href={shareLinks.facebook}

@@ -6,21 +6,23 @@ import { AuthProvider } from "./lib/auth";
 import App from "./App";
 import "./index.css";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+const PLACEHOLDER_GOOGLE_CLIENT_ID = "your-google-client-id.apps.googleusercontent.com";
 
-// Fallback para não derrubar a aplicação quando o .env ainda não foi criado.
+// Ignore placeholder values from .env to avoid invalid_client at runtime.
 const RESOLVED_GOOGLE_CLIENT_ID =
-    GOOGLE_CLIENT_ID?.trim() ||
-    "934848081124-584769e5ibh5jgrjptmaka4tpa9uvq1k.apps.googleusercontent.com";
+  GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== PLACEHOLDER_GOOGLE_CLIENT_ID
+    ? GOOGLE_CLIENT_ID
+    : "934848081124-584769e5ibh5jgrjptmaka4tpa9uvq1k.apps.googleusercontent.com";
 
 createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-        <BrowserRouter>
-            <GoogleOAuthProvider clientId={RESOLVED_GOOGLE_CLIENT_ID}>
-                <AuthProvider>
-                    <App />
-                </AuthProvider>
-            </GoogleOAuthProvider>
-        </BrowserRouter>
-    </React.StrictMode>
+  <React.StrictMode>
+    <BrowserRouter>
+      <GoogleOAuthProvider clientId={RESOLVED_GOOGLE_CLIENT_ID}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </GoogleOAuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>
 );
