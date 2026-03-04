@@ -47,6 +47,36 @@ Escreva seu conteúdo aqui em Markdown.
         published: true,
         updatedAtISO: "2026-02-18",
     },
+    {
+        id: "p2",
+        slug: "Go-to-Market: por que bons produtos fracassam",
+        title: "Go-to-Market: por que bons produtos fracassam",
+        excerpt:
+            "Go-to-Market e a estrategia que define para quem sua solucao realmente e, como o cliente percebe valor e qual caminho reduz o atrito ate a compra.",
+        dateISO: "2026-03-01",
+        readTime: "8 min",
+        category: "GTM",
+        tags: ["gtm", "posicionamento", "playbook"],
+        content: `# Go-to-Market: por que bons produtos fracassam
+
+Um bom produto nao garante tracao. Sem um Go-to-Market bem executado, a proposta de valor nao chega ao ICP correto.
+
+## Onde os lancamentos travam
+- Mensagem generica para publico amplo
+- Canal certo com oferta errada
+- Time comercial sem playbook claro
+
+## Como destravar
+1. Defina ICP e dor prioritaria
+2. Reforce proposta de valor com prova
+3. Estruture canal + abordagem + objecoes
+4. Meça taxa de conversao por etapa
+
+## Resultado esperado
+Menos atrito na jornada, ciclos mais curtos e previsibilidade para escalar aquisicao e receita.`,
+        published: true,
+        updatedAtISO: "2026-03-01",
+    },
 ];
 
 function safeParse(json: string | null) {
@@ -59,7 +89,18 @@ function safeParse(json: string | null) {
 
 export function loadPosts(): BlogPost[] {
     const data = safeParse(localStorage.getItem(STORAGE_KEY));
-    if (Array.isArray(data) && data.length) return data;
+    if (Array.isArray(data) && data.length) {
+        // Keep user-created posts and append missing seeded posts on existing browsers.
+        const seenIds = new Set(data.map((post) => post.id));
+        const seenSlugs = new Set(data.map((post) => post.slug));
+        const missingSeeds = seedPosts.filter((seed) => !seenIds.has(seed.id) && !seenSlugs.has(seed.slug));
+        if (missingSeeds.length > 0) {
+            const merged = [...data, ...missingSeeds];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            return merged;
+        }
+        return data;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seedPosts));
     return seedPosts;
 }
