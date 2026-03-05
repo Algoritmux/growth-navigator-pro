@@ -30,6 +30,7 @@ type FormState = {
     type: MaterialType;
     title: string;
     desc: string;
+    coverImage: string;
     tagsText: string; // "tag1, tag2"
     href: string;
     slug: string;
@@ -41,6 +42,7 @@ function itemToForm(m?: MaterialItem): FormState {
         type: m?.type ?? "Livro",
         title: m?.title ?? "",
         desc: m?.desc ?? "",
+        coverImage: m?.coverImage ?? "",
         tagsText: (m?.tags ?? []).join(", "),
         href: m?.href ?? "",
         slug: m?.slug ?? "",
@@ -105,6 +107,7 @@ export default function BibliotecaAdminPage() {
             type: form.type,
             title: form.title.trim(),
             desc: form.desc.trim(),
+            coverImage: form.coverImage.trim(),
             tags: parseTags(form.tagsText),
             href: form.href.trim(),
             slug: form.slug.trim(),
@@ -263,6 +266,15 @@ export default function BibliotecaAdminPage() {
                                     value={form.desc}
                                     onChange={(e) => setForm((s) => ({ ...s, desc: e.target.value }))}
                                     className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
+                                />
+                            </label>
+
+                            <label className="grid gap-1">
+                                <span className="text-sm text-muted-foreground">Imagem do material (URL) — opcional</span>
+                                <Input
+                                    value={form.coverImage}
+                                    onChange={(e) => setForm((s) => ({ ...s, coverImage: e.target.value }))}
+                                    placeholder="https://.../capa.jpg"
                                 />
                             </label>
 

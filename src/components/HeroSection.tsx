@@ -5,7 +5,7 @@ import guilhermeHero from "@/assets/guilherme-hero.png";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-hero">
+    <section className="relative min-h-[66svh] lg:min-h-[68svh] flex items-center overflow-hidden bg-hero">
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 grid-pattern opacity-20" />
 
@@ -33,9 +33,9 @@ const HeroSection = () => {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[120px]" />
       <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-accent/10 blur-[100px]" />
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-24 pb-16">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-20 lg:pt-14 pb-6 lg:pb-0">
+        <div className="grid lg:min-h-[calc(68svh-4rem)] lg:grid-cols-2 gap-10 items-center lg:items-stretch">
+          <div className="lg:flex lg:flex-col lg:justify-center">
             <motion.h1
               className="text-4xl sm:text-5xl font-bold text-primary-foreground leading-[1.1] mb-6 font-sans lg:text-5xl"
               initial={{ opacity: 0, y: 30 }}
@@ -77,27 +77,20 @@ const HeroSection = () => {
 
           {/* Hero Image */}
           <motion.div
-            className="hidden lg:flex justify-center"
+            className="hidden lg:flex lg:self-stretch justify-center lg:justify-end"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}>
-            <div className="relative">
+            <div className="relative h-full w-full">
               <div className="absolute -inset-12 rounded-full bg-primary/20 blur-3xl opacity-60 pointer-events-none" />
-              <div className="relative w-[430px] xl:w-[460px]">
-                <div className="pointer-events-none absolute -bottom-6 left-1/2 z-0 h-10 w-[80%] -translate-x-1/2 rounded-full bg-black/80 blur-2xl" />
-                <div className="pointer-events-none absolute -bottom-2 left-1/2 z-[1] h-5 w-[64%] -translate-x-1/2 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                <img
-                  src={guilhermeHero}
-                  alt="Guilherme Correia - Especialista em Growth Marketing"
-                  className="relative z-30 w-full h-auto object-contain drop-shadow-[0_24px_52px_rgba(0,0,0,0.55)]"
-                />
-                <div
-                  className="pointer-events-none absolute inset-0 z-20"
-                  style={{
-                    background:
-                      "radial-gradient(122% 96% at 50% 34%, rgba(0,0,0,0) 68%, rgba(0,0,0,0.08) 90%, rgba(0,0,0,0.16) 100%), linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 14%, rgba(0,0,0,0) 86%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0) 74%, rgba(0,0,0,0.12) 100%)",
-                  }}
-                />
+              <div className="relative h-full w-full">
+                <div className="relative z-30 ml-auto h-full w-auto">
+                  <img
+                    src={guilhermeHero}
+                    alt="Guilherme Correia - Especialista em Growth Marketing"
+                    className="premium-portrait h-full w-auto object-contain object-bottom"
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
@@ -108,4 +101,5 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+
 

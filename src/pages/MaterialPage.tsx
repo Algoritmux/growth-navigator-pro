@@ -71,13 +71,22 @@ export default function MaterialPage() {
 
                 <div className="rounded-2xl border bg-card p-6 md:p-8">
                     <div className="flex flex-col gap-6 md:flex-row md:items-start">
-                        {/* Imagem / capa (placeholder por enquanto) */}
+                        {/* Imagem / capa */}
                         <div className="w-full md:w-[320px]">
-                            <div className="aspect-[4/3] w-full rounded-2xl border bg-muted flex items-center justify-center">
-                                <span className="text-sm text-muted-foreground">
-                                    Capa/Imagem do material
-                                </span>
-                            </div>
+                            {material.coverImage ? (
+                                <img
+                                    src={material.coverImage}
+                                    alt={`Capa de ${material.title}`}
+                                    className="aspect-[4/3] w-full rounded-2xl border object-cover"
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <div className="aspect-[4/3] w-full rounded-2xl border bg-muted flex items-center justify-center">
+                                    <span className="text-sm text-muted-foreground">
+                                        Capa/Imagem do material
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Conteúdo */}
