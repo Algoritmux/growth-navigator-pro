@@ -9,26 +9,28 @@ const companies = [
     {
         name: "Algoritmux",
         logo: algoritmuxLogo,
-        valueProp: "Tração escalável com dados e UX",
-        support: "Agência focada em conversão e experiência de compra.",
+        valueProp: "Growth Marketing",
+        support:
+            "Estruturação de setup digital, tráfego de performance e automações para transformar marketing em um motor previsível de geração de demanda.",
         link: "https://algoritmux.com.br",
-        gradient: "from-[#000000] to-[#1A1A1A]"
+        gradient: "from-[#000000] to-[#1A1A1A]",
     },
     {
-        name: "Blue Note",
+        name: "BlueNote",
         logo: bluenoteLogo,
-        valueProp: "Vendas e Negociação sob demanda",
-        support: "Treinamentos estratégicos para acelerar resultados e times.",
+        valueProp: "Treinamentos e Capacitações",
+        support: "Empresa especializada em treinamentos e capacitações em gestão, marketing e vendas, credenciada pelo SEBRAE-SP.",
         link: "https://bluenote.com.br",
-        gradient: "from-[#050505] to-[#202020]"
+        gradient: "from-[#050505] to-[#202020]",
     },
     {
         name: "Meta de Vendas",
         logo: metadevendasLogo,
-        valueProp: "Escalabilidade e Previsibilidade",
-        support: "Estruturação de processos e tecnologia para vender mais.",
+        valueProp: "Inteligência Comercial",
+        support:
+            "Implantamos processos, tecnologia e gestão comercial para transformar vendas em uma operação previsível e escalável.",
         link: "https://metadevendas.com.br",
-        gradient: "from-[#0A0A0A] to-[#252525]"
+        gradient: "from-[#0A0A0A] to-[#252525]",
     },
 ];
 
@@ -52,7 +54,8 @@ const CompaniesSection = () => {
                         O próximo nível do seu sucesso começa aqui
                     </h2>
                     <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                        Três frentes complementares que aplicam uma metodologia validada para estruturar, acelerar e escalar sua operação.
+                        Três frentes complementares que aplicam uma metodologia validada para estruturar, acelerar e escalar
+                        sua operação.
                     </p>
                 </motion.div>
 
@@ -75,12 +78,10 @@ const CompaniesSection = () => {
                             </div>
 
                             <div className="text-center mb-10 flex-1 flex flex-col justify-center">
-                                <h3 className="text-xl font-bold text-white mb-3">
-                                    {company.valueProp}
-                                </h3>
-                                <p className="text-sm text-primary-foreground/50 leading-relaxed font-light">
-                                    {company.support}
-                                </p>
+                                <h3 className="text-xl font-bold text-white mb-3">{company.valueProp}</h3>
+                                {company.support ? (
+                                    <p className="text-sm text-primary-foreground/50 leading-relaxed font-light">{company.support}</p>
+                                ) : null}
                             </div>
 
                             <Button
