@@ -84,13 +84,15 @@ const HeroSection = () => {
             <div className="relative">
               <div className="absolute -inset-12 rounded-full bg-primary/20 blur-3xl opacity-60 pointer-events-none" />
               <div className="relative w-[430px] xl:w-[460px]">
+                <div className="pointer-events-none absolute -bottom-6 left-1/2 z-0 h-10 w-[80%] -translate-x-1/2 rounded-full bg-black/80 blur-2xl" />
+                <div className="pointer-events-none absolute -bottom-2 left-1/2 z-[1] h-5 w-[64%] -translate-x-1/2 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 <img
                   src={guilhermeHero}
                   alt="Guilherme Correia - Especialista em Growth Marketing"
-                  className="w-full h-auto object-contain drop-shadow-[0_24px_52px_rgba(0,0,0,0.55)]"
+                  className="relative z-30 w-full h-auto object-contain drop-shadow-[0_24px_52px_rgba(0,0,0,0.55)]"
                 />
                 <div
-                  className="pointer-events-none absolute inset-0"
+                  className="pointer-events-none absolute inset-0 z-20"
                   style={{
                     background:
                       "radial-gradient(122% 96% at 50% 34%, rgba(0,0,0,0) 68%, rgba(0,0,0,0.08) 90%, rgba(0,0,0,0.16) 100%), linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 14%, rgba(0,0,0,0) 86%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0) 74%, rgba(0,0,0,0.12) 100%)",

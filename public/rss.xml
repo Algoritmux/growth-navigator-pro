@@ -1,67 +1,67 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Guilherme Correia - Publicações & Materiais</title>
+    <title>Guilherme Correia - PublicaÃ§Ãµes & Materiais</title>
     <link>https://guilhermecorreia.com.br</link>
-    <description>Growth Marketing, IA e Estratégia Comercial</description>
+    <description>Growth Marketing, IA e EstratÃ©gia Comercial</description>
     <language>pt-br</language>
-    <lastBuildDate>Sun, 01 Mar 2026 22:15:01 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 05 Mar 2026 04:04:39 GMT</lastBuildDate>
     <atom:link href="https://guilhermecorreia.com.br/rss.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title><![CDATA[Growth-Driven: O Framework do Crescimento Previsível]]></title>
+      <title><![CDATA[Growth-Driven: O Framework do Crescimento PrevisÃ­vel]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/growth-driven</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/growth-driven</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[O método completo para transformar operações comerciais em motores de crescimento escalável.]]></description>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[O mÃ©todo completo para transformar operaÃ§Ãµes comerciais em motores de crescimento escalÃ¡vel.]]></description>
       <category>Livro</category>
     </item>
     <item>
-      <title><![CDATA[Guia Prático de IA Aplicada a Vendas B2B]]></title>
+      <title><![CDATA[Guia PrÃ¡tico de IA Aplicada a Vendas B2B]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/ia-vendas-b2b</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/ia-vendas-b2b</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[Como usar inteligência artificial para prever churn, qualificar leads e escalar receita.]]></description>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[Como usar inteligÃªncia artificial para prever churn, qualificar leads e escalar receita.]]></description>
       <category>E-book</category>
     </item>
     <item>
       <title><![CDATA[Canvas de Maturidade Comercial]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/canvas-maturidade</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/canvas-maturidade</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[Ferramenta visual para diagnosticar o nível de estruturação da sua operação de vendas.]]></description>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[Ferramenta visual para diagnosticar o nÃ­vel de estruturaÃ§Ã£o da sua operaÃ§Ã£o de vendas.]]></description>
       <category>Framework</category>
     </item>
     <item>
-      <title><![CDATA[Da Prospecção à Expansão: Arquitetura de Vendas Moderna]]></title>
+      <title><![CDATA[Da ProspecÃ§Ã£o Ã  ExpansÃ£o: Arquitetura de Vendas Moderna]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/arquitetura-vendas</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/arquitetura-vendas</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[Guia completo sobre como estruturar cada etapa do funil para máxima previsibilidade.]]></description>
-      <category>Guia Estratégico</category>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[Guia completo sobre como estruturar cada etapa do funil para mÃ¡xima previsibilidade.]]></description>
+      <category>Guia EstratÃ©gico</category>
     </item>
     <item>
       <title><![CDATA[Panorama Growth Brasil 2025]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/panorama-growth-2025</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/panorama-growth-2025</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
       <description><![CDATA[Dados exclusivos sobre maturidade de growth marketing em empresas brasileiras.]]></description>
       <category>Pesquisa</category>
     </item>
     <item>
-      <title><![CDATA[Keynote: O Futuro do Marketing é Comercial]]></title>
+      <title><![CDATA[Keynote: O Futuro do Marketing Ã© Comercial]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/keynote-futuro</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/keynote-futuro</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[Slides da palestra sobre a convergência entre marketing, vendas e dados.]]></description>
-      <category>Apresentação</category>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[Slides da palestra sobre a convergÃªncia entre marketing, vendas e dados.]]></description>
+      <category>ApresentaÃ§Ã£o</category>
     </item>
     <item>
       <title><![CDATA[Case: Como Triplicar Receita em 8 Meses com Growth]]></title>
       <link>https://guilhermecorreia.com.br/biblioteca/case-triplicar-receita</link>
       <guid>https://guilhermecorreia.com.br/biblioteca/case-triplicar-receita</guid>
-      <pubDate>Sun, 01 Mar 2026 22:15:01 GMT</pubDate>
-      <description><![CDATA[Estudo detalhado de uma operação real transformada pelo framework Growth-Driven.]]></description>
+      <pubDate>Thu, 05 Mar 2026 04:04:39 GMT</pubDate>
+      <description><![CDATA[Estudo detalhado de uma operaÃ§Ã£o real transformada pelo framework Growth-Driven.]]></description>
       <category>Estudo Exclusivo</category>
     </item>
   </channel>
