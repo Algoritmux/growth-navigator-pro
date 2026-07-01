@@ -90,7 +90,7 @@ const CompaniesSection = () => {
                                 asChild
                             >
                                 <a href={company.link} target="_blank" rel="noopener noreferrer">
-                                    Quero conhecer
+                                    SAIBA MAIS
                                     <ArrowRight className="ml-2 w-4 h-4" />
                                 </a>
                             </Button>

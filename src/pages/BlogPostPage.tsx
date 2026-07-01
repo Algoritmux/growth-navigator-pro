@@ -327,7 +327,7 @@ export default function BlogPostPage() {
                   type="submit"
                   className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                 >
-                  Receber
+                  ENVIAR
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </form>

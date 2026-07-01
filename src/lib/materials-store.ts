@@ -152,12 +152,36 @@ function safeParse(json: string | null) {
     }
 }
 
+function stripRemovedPromptCover(items: MaterialItem[]) {
+    let changed = false;
+
+    const next = items.map((item) => {
+        if (/^prompt de vendas\b/i.test(item.title) && item.coverImage === "/covers/prompt-de-vendas.svg") {
+            changed = true;
+            return { ...item, coverImage: "" };
+        }
+
+        return item;
+    });
+
+    return { changed, items: next };
+}
+
 export function loadMaterials(): MaterialItem[] {
-    if (typeof window === "undefined") return SEED_MATERIALS;
+    if (typeof window === "undefined") return stripRemovedPromptCover(SEED_MATERIALS).items;
     const data = safeParse(localStorage.getItem(STORAGE_KEY));
-    if (Array.isArray(data) && data.length) return data;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_MATERIALS));
-    return SEED_MATERIALS;
+
+    if (Array.isArray(data) && data.length) {
+        const normalized = stripRemovedPromptCover(data);
+        if (normalized.changed) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized.items));
+        }
+        return normalized.items;
+    }
+
+    const seeded = stripRemovedPromptCover(SEED_MATERIALS).items;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    return seeded;
 }
 
 export function saveMaterials(items: MaterialItem[]) {

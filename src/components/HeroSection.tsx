@@ -5,7 +5,7 @@ import guilhermeHero from "@/assets/guilherme-hero.png";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[66svh] lg:min-h-[68svh] flex items-center overflow-hidden bg-hero">
+    <section className="hero-full-mask relative min-h-[66svh] lg:min-h-[68svh] flex items-center overflow-hidden bg-hero">
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 grid-pattern opacity-20" />
 
@@ -41,9 +41,9 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15 }}>
-              Growth Marketing focado em{" "}
+              As decisões precisam ser baseadas em{" "}
               <span className="text-accent">dados</span> e{" "}
-              <span className="text-accent">inteligência estratégica</span>
+              <span className="text-accent">estratégia</span>
             </motion.h1>
 
             <motion.p
@@ -51,7 +51,7 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}>
-              Integro marketing, vendas e inteligência artificial para construir operações comerciais previsíveis e escaláveis. Founder na Algoritmux e Meta de Vendas.
+              Eu estruturo sistemas de crescimento e inteligência que transformam negócios e projetos em operações previsíveis.
             </motion.p>
 
             <motion.div
@@ -59,7 +59,7 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45 }}>
-              <Button variant="accent" size="lg" className="text-base px-8 py-6 text-primary hover:text-primary" asChild>
+              <Button variant="accent" size="lg" className="text-base px-8 py-6 text-white hover:text-white" asChild>
                 <a href="#materiais">
                   Ver conteúdos e materiais
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -77,14 +77,38 @@ const HeroSection = () => {
 
           {/* Hero Image */}
           <motion.div
-            className="hidden lg:flex lg:self-stretch justify-center lg:justify-end"
+            className="hidden lg:flex lg:self-stretch justify-center lg:justify-end relative z-20 lg:origin-bottom lg:scale-[1.06]"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}>
             <div className="relative h-full w-full">
-              <div className="absolute -inset-12 rounded-full bg-primary/20 blur-3xl opacity-60 pointer-events-none" />
+              <div className="absolute -inset-14 rounded-full bg-primary/20 blur-3xl opacity-75 pointer-events-none" />
               <div className="relative h-full w-full">
-                <div className="relative z-30 ml-auto h-full w-auto">
+                <motion.div
+                  className="absolute left-0 top-[20%] z-20 hidden h-12 w-12 -translate-x-1/2 rounded-xl border border-primary/25 bg-primary/10 backdrop-blur-sm lg:flex items-center justify-center"
+                  animate={{ y: [0, -9, 0] }}
+                  transition={{ duration: 3.8, repeat: Infinity }}>
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </motion.div>
+                <motion.div
+                  className="absolute right-[8%] top-[10%] z-20 hidden h-11 w-11 rounded-xl border border-accent/25 bg-accent/10 backdrop-blur-sm lg:flex items-center justify-center"
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ duration: 4.3, repeat: Infinity, delay: 0.6 }}>
+                  <TrendingUp className="h-4 w-4 text-accent" />
+                </motion.div>
+                <motion.div
+                  className="absolute bottom-[16%] left-[10%] z-20 hidden h-12 w-12 rounded-xl border border-primary/20 bg-primary/10 backdrop-blur-sm lg:flex items-center justify-center"
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 4.7, repeat: Infinity, delay: 1.1 }}>
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </motion.div>
+                <motion.div
+                  className="absolute bottom-[30%] right-0 z-20 hidden h-11 w-11 translate-x-1/2 rounded-xl border border-primary/20 bg-primary/10 backdrop-blur-sm lg:flex items-center justify-center"
+                  animate={{ y: [0, -7, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, delay: 0.4 }}>
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                </motion.div>
+                <div className="relative z-30 ml-auto h-full w-auto lg:translate-x-2">
                   <img
                     src={guilhermeHero}
                     alt="Guilherme Correia - Especialista em Growth Marketing"

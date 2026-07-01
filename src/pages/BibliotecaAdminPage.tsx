@@ -1,7 +1,7 @@
 // src/pages/BibliotecaAdminPage.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Pencil, Eye, EyeOff, Search, LogOut, Library } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Eye, EyeOff, Search, LogOut, Library, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -64,6 +64,7 @@ export default function BibliotecaAdminPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [form, setForm] = useState<FormState>(itemToForm());
+    const coverUploadRef = useRef<HTMLInputElement | null>(null);
 
     function refresh() {
         setItems(getAllMaterials());
@@ -97,6 +98,33 @@ export default function BibliotecaAdminPage() {
 
     function close() {
         setIsOpen(false);
+    }
+
+    function handleCoverUpload(file: File | null) {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            alert("Selecione um arquivo de imagem.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = typeof reader.result === "string" ? reader.result : "";
+            if (!result) {
+                alert("Nao foi possivel carregar a imagem.");
+                return;
+            }
+
+            setForm((s) => ({ ...s, coverImage: result }));
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeCoverImage() {
+        setForm((s) => ({ ...s, coverImage: "" }));
+        if (coverUploadRef.current) {
+            coverUploadRef.current.value = "";
+        }
     }
 
     function save() {
@@ -230,8 +258,8 @@ export default function BibliotecaAdminPage() {
 
             {/* modal simples */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-                    <div className="w-full max-w-xl rounded-2xl border bg-card p-5">
+                <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4">
+                    <div className="mx-auto w-full max-w-xl rounded-2xl border bg-card p-5 max-h-[calc(100svh-2rem)] overflow-y-auto">
                         <div className="flex items-center justify-between">
                             <div className="text-lg font-bold">{editingId ? "Editar material" : "Novo material"}</div>
                             <Button variant="ghost" onClick={close}>
@@ -277,6 +305,48 @@ export default function BibliotecaAdminPage() {
                                     placeholder="https://.../capa.jpg"
                                 />
                             </label>
+
+                            <div className="grid gap-3 rounded-xl border bg-background/60 p-3">
+                                <input
+                                    ref={coverUploadRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleCoverUpload(e.target.files?.[0] ?? null)}
+                                />
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={() => coverUploadRef.current?.click()}
+                                    >
+                                        <ImagePlus className="h-4 w-4" />
+                                        Enviar imagem
+                                    </Button>
+
+                                    {form.coverImage ? (
+                                        <Button type="button" variant="ghost" onClick={removeCoverImage}>
+                                            Remover imagem
+                                        </Button>
+                                    ) : null}
+                                </div>
+
+                                {form.coverImage ? (
+                                    <div className="overflow-hidden rounded-xl border bg-muted">
+                                        <img
+                                            src={form.coverImage}
+                                            alt="Preview da capa do material"
+                                            className="h-48 w-full object-contain"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-40 items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground">
+                                        Nenhuma imagem selecionada
+                                    </div>
+                                )}
+                            </div>
 
                             <label className="grid gap-1">
                                 <span className="text-sm text-muted-foreground">Tags (separadas por vírgula)</span>

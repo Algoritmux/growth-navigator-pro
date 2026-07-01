@@ -53,7 +53,7 @@ const LeadMagnetSection = () => {
               className="flex-1 h-12 px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <Button type="submit" variant="hero" className="h-12 px-6">
-              Receber <ArrowRight className="w-4 h-4 ml-1" />
+              ENVIAR <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
           <p className="text-xs text-muted-foreground mt-4">
