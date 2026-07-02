@@ -2,17 +2,38 @@ import { motion } from "framer-motion";
 import { Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { toast } from "sonner";
+import { subscribeNewsletter } from "@/lib/leadsApi";
 
 const LeadMagnetSection = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Future: connect to email service
-    alert("Obrigado! Em breve você receberá os insights.");
-    setName("");
-    setEmail("");
+    setLoading(true);
+
+    try {
+      await subscribeNewsletter({
+        name,
+        email,
+        source: "lead-magnet-section",
+      });
+
+      toast.success("Inscrição realizada!", {
+        description: "Obrigado. Seus dados foram salvos com sucesso.",
+      });
+
+      setName("");
+      setEmail("");
+    } catch (error) {
+      toast.error("Não foi possível salvar sua inscrição.", {
+        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,8 +73,8 @@ const LeadMagnetSection = () => {
               required
               className="flex-1 h-12 px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <Button type="submit" variant="hero" className="h-12 px-6">
-              ENVIAR <ArrowRight className="w-4 h-4 ml-1" />
+            <Button type="submit" variant="hero" className="h-12 px-6" disabled={loading}>
+              {loading ? "ENVIANDO..." : "ENVIAR"} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
           <p className="text-xs text-muted-foreground mt-4">

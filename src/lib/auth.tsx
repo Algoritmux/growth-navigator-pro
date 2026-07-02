@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 export type AdminUser = {
     token: string;
@@ -16,20 +16,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<AdminUser | null>(null);
+function getSavedAdminUser(): AdminUser | null {
+    if (typeof window === "undefined") return null;
 
-    useEffect(() => {
+    try {
         const savedUser = localStorage.getItem("admin_user");
-        if (savedUser) {
-            try {
-                setUser(JSON.parse(savedUser) as AdminUser);
-            } catch (error) {
-                console.error("Failed to parse admin_user from localStorage", error);
-                localStorage.removeItem("admin_user");
-            }
-        }
-    }, []);
+        return savedUser ? (JSON.parse(savedUser) as AdminUser) : null;
+    } catch (error) {
+        console.error("Failed to parse admin_user from localStorage", error);
+        localStorage.removeItem("admin_user");
+        return null;
+    }
+}
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [user, setUser] = useState<AdminUser | null>(() => getSavedAdminUser());
 
     const login = (userData: AdminUser) => {
         setUser(userData);

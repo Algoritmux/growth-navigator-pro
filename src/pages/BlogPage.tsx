@@ -1,5 +1,5 @@
-import { getPublishedPosts } from "@/lib/blogStore";
-import { useMemo, useState } from "react";
+import { fetchPostsFromApi, type BlogPost } from "@/lib/blogStore";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractFirstImageSrc } from "@/lib/markdown";
@@ -17,11 +17,31 @@ function formatDatePtBR(dateISO: string) {
 }
 
 export default function BlogPage() {
-  const posts = getPublishedPosts();
   const isMobile = useIsMobile();
 
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("Todos");
+
+  useEffect(() => {
+    let active = true;
+
+    fetchPostsFromApi(true)
+      .then((data) => {
+        if (active) setPosts(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -134,7 +154,13 @@ export default function BlogPage() {
           })}
         </div>
 
-        {filtered.length === 0 && (
+        {isLoading && (
+          <div className="mt-8 rounded-2xl border bg-card p-8 text-center">
+            <div className="text-lg font-bold">Carregando posts...</div>
+          </div>
+        )}
+
+        {!isLoading && filtered.length === 0 && (
           <div className="mt-8 rounded-2xl border bg-card p-8 text-center">
             <div className="text-lg font-bold">Nada encontrado.</div>
             <p className="mt-2 text-sm text-muted-foreground">Tente outro termo ou categoria.</p>

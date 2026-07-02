@@ -1,16 +1,55 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import { getPublishedMaterials, MATERIAL_CATEGORIES } from "@/lib/materials-store";
+import { fetchMaterialBySlugFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
 import SEO from "@/components/SEO";
 
 export default function MaterialPage() {
     const { slug } = useParams<{ slug: string }>();
+    const [material, setMaterial] = useState<MaterialItem | undefined>();
+    const [isLoading, setIsLoading] = useState(true);
 
-    const material = getPublishedMaterials().find((m) => m.slug === slug);
+    useEffect(() => {
+        let active = true;
 
-    if (!material) {
+        if (!slug) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        fetchMaterialBySlugFromApi(slug)
+            .then((data) => {
+                if (active) setMaterial(data);
+            })
+            .catch((error) => {
+                console.error(error);
+                if (active) setMaterial(undefined);
+            })
+            .finally(() => {
+                if (active) setIsLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [slug]);
+
+    if (isLoading) {
+        return (
+            <main className="min-h-screen bg-background text-foreground">
+                <section className="mx-auto w-full max-w-4xl px-5 py-10">
+                    <div className="rounded-2xl border bg-card p-8">
+                        <h1 className="text-2xl font-bold">Carregando material...</h1>
+                    </div>
+                </section>
+            </main>
+        );
+    }
+
+    if (!material || !material.published) {
         return (
             <main className="min-h-screen bg-background text-foreground">
                 <section className="mx-auto w-full max-w-4xl px-5 py-10">

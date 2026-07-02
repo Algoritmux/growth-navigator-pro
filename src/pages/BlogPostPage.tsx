@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getPostBySlug } from "@/lib/blogStore";
+import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
 import { contentToHtml, extractFirstImageSrc } from "@/lib/markdown";
 import authorAvatar from "@/assets/guilherme-about-new.jpg";
 import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from "lucide-react";
+import { toast } from "sonner";
+import { subscribeNewsletter } from "@/lib/leadsApi";
 
 type TocItem = {
   id: string;
@@ -58,14 +60,16 @@ function slugify(text: string) {
 
 export default function BlogPostPage() {
   const { slug } = useParams();
-  const post = slug ? getPostBySlug(slug) : undefined;
 
   const articleRef = useRef<HTMLElement | null>(null);
+  const [post, setPost] = useState<BlogPost | undefined>();
+  const [isLoadingPost, setIsLoadingPost] = useState(true);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [activeHeading, setActiveHeading] = useState("");
   const [readProgress, setReadProgress] = useState(0);
   const [newsletterName, setNewsletterName] = useState("");
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
 
   const coverImage = useMemo(() => extractFirstImageSrc(post?.content ?? ""), [post?.content]);
   const articleHtml = useMemo(() => {
@@ -109,6 +113,32 @@ export default function BlogPostPage() {
     "[&_p]:[margin-top:var(--post-p-before)] [&_p]:[margin-bottom:var(--post-p-after)]",
     "prose-img:rounded-md prose-img:shadow-sm",
   ].join(" ");
+
+  useEffect(() => {
+    let active = true;
+
+    if (!slug) {
+      setIsLoadingPost(false);
+      return;
+    }
+
+    setIsLoadingPost(true);
+    fetchPostBySlugFromApi(slug)
+      .then((data) => {
+        if (active) setPost(data);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) setPost(undefined);
+      })
+      .finally(() => {
+        if (active) setIsLoadingPost(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   useEffect(() => {
     const article = articleRef.current;
@@ -163,6 +193,19 @@ export default function BlogPostPage() {
     };
   }, [articleHtml]);
 
+  if (isLoadingPost) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <section className="mx-auto w-full max-w-3xl px-5 py-10">
+          <Link to="/blog" className="text-sm text-muted-foreground hover:underline">
+            &larr; Voltar para o blog
+          </Link>
+          <h1 className="mt-4 text-2xl font-bold">Carregando post...</h1>
+        </section>
+      </main>
+    );
+  }
+
   if (!post || !post.published) {
     return (
       <main className="min-h-screen bg-background text-foreground">
@@ -184,10 +227,32 @@ export default function BlogPostPage() {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function handleNewsletterSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleNewsletterSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!newsletterName.trim() || !newsletterEmail.trim()) return;
-    window.open("https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577", "_blank");
+
+    setIsSubmittingNewsletter(true);
+
+    try {
+      await subscribeNewsletter({
+        name: newsletterName,
+        email: newsletterEmail,
+        source: "blog-post-sidebar",
+      });
+
+      toast.success("Inscrição realizada!", {
+        description: "Obrigado. Seus dados foram salvos com sucesso.",
+      });
+
+      setNewsletterName("");
+      setNewsletterEmail("");
+    } catch (error) {
+      toast.error("Não foi possível salvar sua inscrição.", {
+        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
+      });
+    } finally {
+      setIsSubmittingNewsletter(false);
+    }
   }
 
   return (
@@ -325,9 +390,10 @@ export default function BlogPostPage() {
                 />
                 <button
                   type="submit"
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                  disabled={isSubmittingNewsletter}
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  ENVIAR
+                  {isSubmittingNewsletter ? "ENVIANDO..." : "ENVIAR"}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </form>

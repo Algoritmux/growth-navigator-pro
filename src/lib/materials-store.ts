@@ -51,6 +51,11 @@ export const MATERIAL_CATEGORIES: {
     ];
 
 const STORAGE_KEY = "gc_materials_v1";
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
+        ? "http://localhost/growth-navigator-pro/backend/api"
+        : "/backend/api");
 
 const SEED_MATERIALS: MaterialItem[] = [
     {
@@ -225,4 +230,73 @@ export function deleteMaterial(id: string) {
 export function countMaterialsByCategory(value: MaterialCategoryValue) {
     if (value === "all") return getAllMaterials().length;
     return getAllMaterials().filter((m) => m.type === value).length;
+}
+
+function mapApiMaterial(material: Record<string, any>): MaterialItem {
+    return {
+        id: String(material.id),
+        type: (material.type || "Livro") as MaterialType,
+        title: String(material.title || ""),
+        desc: String(material.desc || material.description || ""),
+        tags: Array.isArray(material.tags) ? material.tags : [],
+        slug: material.slug ? String(material.slug) : "",
+        href: material.href ? String(material.href) : "",
+        published: Boolean(material.published),
+        coverImage: material.coverImage ? String(material.coverImage) : "",
+        ctaLabel: material.ctaLabel ? String(material.ctaLabel) : "Acessar material",
+    };
+}
+
+async function readApiResponse<T>(response: Response): Promise<T> {
+    const data = await response.json();
+
+    if (!response.ok || data?.success === false) {
+        throw new Error(data?.message || "Erro na API.");
+    }
+
+    return data as T;
+}
+
+export async function fetchMaterialsFromApi(publishedOnly = false): Promise<MaterialItem[]> {
+    const url = `${API_BASE_URL}/materials/list.php${publishedOnly ? "?published=1" : ""}`;
+    const response = await fetch(url);
+    const data = await readApiResponse<{ materials: Record<string, any>[] }>(response);
+
+    return data.materials.map(mapApiMaterial);
+}
+
+export async function fetchMaterialBySlugFromApi(slug: string): Promise<MaterialItem | undefined> {
+    const response = await fetch(`${API_BASE_URL}/materials/show.php?slug=${encodeURIComponent(slug)}`);
+    const data = await readApiResponse<{ material: Record<string, any> }>(response);
+
+    return mapApiMaterial(data.material);
+}
+
+export async function saveMaterialToApi(material: Partial<MaterialItem> & Pick<MaterialItem, "title" | "desc" | "type">): Promise<{ id: string; slug: string }> {
+    const response = await fetch(`${API_BASE_URL}/materials/save.php`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(material),
+    });
+
+    const data = await readApiResponse<{ id: number | string; slug: string }>(response);
+
+    return {
+        id: String(data.id),
+        slug: data.slug,
+    };
+}
+
+export async function deleteMaterialFromApi(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/materials/delete.php`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+    });
+
+    await readApiResponse(response);
 }
