@@ -3,8 +3,9 @@ import { ArrowRight, BookOpen, Brain, BarChart3, Handshake, Lightbulb } from "lu
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getPublishedPosts } from "@/lib/blogStore";
+import { fetchPostsFromApi, type BlogPost } from "@/lib/blogStore";
 import { extractFirstImageSrc } from "@/lib/markdown";
+import { useEffect, useState } from "react";
 
 /**
  * Mapeia as categorias internas do blog (store) para os labels da Home
@@ -41,8 +42,23 @@ const ORDERED_LABELS = [
 ];
 
 const ContentSection = () => {
-  // ✅ Puxa do MESMO lugar que o /blog
-  const posts = getPublishedPosts();
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchPostsFromApi(true)
+      .then((data) => {
+        if (active) setPosts(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // ✅ chips com contagem real
   const categories = (() => {

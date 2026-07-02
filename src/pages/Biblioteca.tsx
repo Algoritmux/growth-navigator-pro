@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Filter, Search } from "lucide-react";
@@ -20,9 +20,8 @@ import {
 
 import {
     MATERIAL_CATEGORIES,
-    getPublishedMaterials,
-    getAllMaterials,
-    countMaterialsByCategory,
+    fetchMaterialsFromApi,
+    type MaterialItem,
     MaterialCategoryValue,
 } from "@/lib/materials-store";
 import logoGC from "@/assets/logo-gc.png";
@@ -30,10 +29,17 @@ import logoGC from "@/assets/logo-gc.png";
 function BibliotecaSidebar({
     activeCategory,
     onCategoryChange,
+    items,
 }: {
     activeCategory: MaterialCategoryValue;
     onCategoryChange: (val: MaterialCategoryValue) => void;
+    items: MaterialItem[];
 }) {
+    function countMaterialsByCategory(value: MaterialCategoryValue) {
+        if (value === "all") return items.length;
+        return items.filter((item) => item.type === value).length;
+    }
+
     return (
         <Sidebar className="border-r border-border bg-card pt-16">
             <SidebarContent>
@@ -75,15 +81,35 @@ function BibliotecaSidebar({
 }
 
 export default function Biblioteca() {
+    const [items, setItems] = useState<MaterialItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeCategory, setActiveCategory] =
         useState<MaterialCategoryValue>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
+    useEffect(() => {
+        let active = true;
+
+        fetchMaterialsFromApi(true)
+            .then((data) => {
+                if (active) setItems(data);
+            })
+            .catch((error) => {
+                console.error(error);
+            })
+            .finally(() => {
+                if (active) setIsLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
     const filtered = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
-        const publishedItems = getPublishedMaterials();
 
-        return publishedItems.filter((item) => {
+        return items.filter((item) => {
             const matchesCategory = activeCategory === "all" || item.type === activeCategory;
 
             const matchesSearch =
@@ -94,7 +120,7 @@ export default function Biblioteca() {
 
             return matchesCategory && matchesSearch;
         });
-    }, [activeCategory, searchQuery]);
+    }, [activeCategory, items, searchQuery]);
 
     const activeCategoryLabel =
         MATERIAL_CATEGORIES.find((c) => c.value === activeCategory)?.label || "Todos";
@@ -105,6 +131,7 @@ export default function Biblioteca() {
                 <BibliotecaSidebar
                     activeCategory={activeCategory}
                     onCategoryChange={setActiveCategory}
+                    items={items}
                 />
 
                 <main className="flex-1 pt-16">
@@ -175,7 +202,14 @@ export default function Biblioteca() {
                         </motion.div>
 
                         {/* Grid */}
-                        {filtered.length === 0 ? (
+                        {isLoading ? (
+                            <div className="text-center py-20">
+                                <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                                <p className="text-muted-foreground text-lg">
+                                    Carregando materiais...
+                                </p>
+                            </div>
+                        ) : filtered.length === 0 ? (
                             <div className="text-center py-20">
                                 <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                                 <p className="text-muted-foreground text-lg">

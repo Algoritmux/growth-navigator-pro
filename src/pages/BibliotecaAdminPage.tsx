@@ -10,10 +10,9 @@ import AdminHeader from "@/components/AdminHeader";
 import {
     MaterialItem,
     MaterialType,
-    getAllMaterials,
-    createMaterial,
-    updateMaterial,
-    deleteMaterial,
+    deleteMaterialFromApi,
+    fetchMaterialsFromApi,
+    saveMaterialToApi,
 } from "@/lib/materials-store";
 
 const TYPES: MaterialType[] = [
@@ -59,6 +58,8 @@ function parseTags(tagsText: string) {
 
 export default function BibliotecaAdminPage() {
     const [items, setItems] = useState<MaterialItem[]>([]);
+    const [isLoadingItems, setIsLoadingItems] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [q, setQ] = useState("");
 
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,8 +67,17 @@ export default function BibliotecaAdminPage() {
     const [form, setForm] = useState<FormState>(itemToForm());
     const coverUploadRef = useRef<HTMLInputElement | null>(null);
 
-    function refresh() {
-        setItems(getAllMaterials());
+    async function refresh() {
+        setIsLoadingItems(true);
+        try {
+            const data = await fetchMaterialsFromApi(false);
+            setItems(data);
+        } catch (error) {
+            console.error(error);
+            alert("Não foi possível carregar os materiais do banco.");
+        } finally {
+            setIsLoadingItems(false);
+        }
     }
 
     useEffect(() => {
@@ -127,11 +137,12 @@ export default function BibliotecaAdminPage() {
         }
     }
 
-    function save() {
+    async function save() {
         if (!form.title.trim()) return alert("Título é obrigatório.");
         if (!form.desc.trim()) return alert("Descrição é obrigatória.");
 
-        const payload = {
+        const payload: MaterialItem = {
+            id: editingId ?? "",
             type: form.type,
             title: form.title.trim(),
             desc: form.desc.trim(),
@@ -142,25 +153,38 @@ export default function BibliotecaAdminPage() {
             published: form.published,
         };
 
-        if (!editingId) {
-            createMaterial(payload);
-        } else {
-            updateMaterial(editingId, payload);
+        setIsSaving(true);
+        try {
+            await saveMaterialToApi(payload);
+            await refresh();
+            close();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Não foi possível salvar o material.");
+        } finally {
+            setIsSaving(false);
         }
-
-        refresh();
-        close();
     }
 
-    function togglePublish(m: MaterialItem) {
-        updateMaterial(m.id, { published: !m.published });
-        refresh();
+    async function togglePublish(m: MaterialItem) {
+        try {
+            await saveMaterialToApi({ ...m, published: !m.published });
+            await refresh();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Não foi possível atualizar o material.");
+        }
     }
 
-    function remove(m: MaterialItem) {
+    async function remove(m: MaterialItem) {
         if (!confirm(`Excluir "${m.title}"?`)) return;
-        deleteMaterial(m.id);
-        refresh();
+        try {
+            await deleteMaterialFromApi(m.id);
+            await refresh();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Não foi possível excluir o material.");
+        }
     }
 
     return (
@@ -248,7 +272,13 @@ export default function BibliotecaAdminPage() {
                         </div>
                     ))}
 
-                    {filtered.length === 0 && (
+                    {isLoadingItems && (
+                        <div className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">
+                            Carregando materiais do banco...
+                        </div>
+                    )}
+
+                    {!isLoadingItems && filtered.length === 0 && (
                         <div className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">
                             Nenhum material encontrado.
                         </div>
@@ -391,7 +421,9 @@ export default function BibliotecaAdminPage() {
                                 <Button variant="outline" onClick={close}>
                                     Cancelar
                                 </Button>
-                                <Button onClick={save}>Salvar</Button>
+                                <Button onClick={save} disabled={isSaving}>
+                                    {isSaving ? "Salvando..." : "Salvar"}
+                                </Button>
                             </div>
                         </div>
                     </div>

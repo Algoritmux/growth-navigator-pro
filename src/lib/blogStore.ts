@@ -23,6 +23,12 @@ export type BlogPost = {
 
 const STORAGE_KEY = "gc_blog_posts_v1";
 
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
+        ? "http://localhost/growth-navigator-pro/backend/api"
+        : "/backend/api");
+
 const seedPosts: BlogPost[] = [
     {
         id: "p1",
@@ -131,6 +137,86 @@ export function upsertPost(post: BlogPost) {
 export function deletePost(id: string) {
     const posts = getAllPosts().filter((p) => p.id !== id);
     savePosts(posts);
+}
+
+function mapApiPost(post: Record<string, any>): BlogPost {
+    const publishedDate = String(post.published_at || post.created_at || "").slice(0, 10);
+    const updatedDate = String(post.updated_at || post.created_at || "").slice(0, 10);
+
+    return {
+        id: String(post.id),
+        slug: String(post.slug || ""),
+        title: String(post.title || ""),
+        excerpt: String(post.excerpt || ""),
+        dateISO: publishedDate || new Date().toISOString().slice(0, 10),
+        readTime: String(post.read_time || "5 min"),
+        category: (post.category || "GTM") as BlogCategory,
+        tags: Array.isArray(post.tags) ? post.tags : [],
+        content: String(post.content || ""),
+        editorSettings: {
+            font: post.editor_font || "theme",
+            fontSize: Number(post.editor_font_size || 18),
+            lineHeight: Number(post.editor_line_height || 1.15),
+            paragraphSpaceBefore: Number(post.paragraph_space_before || 8),
+            paragraphSpaceAfter: Number(post.paragraph_space_after || 12),
+        },
+        published: Boolean(post.published),
+        updatedAtISO: updatedDate || publishedDate || new Date().toISOString().slice(0, 10),
+    };
+}
+
+async function readApiResponse<T>(response: Response): Promise<T> {
+    const data = await response.json();
+
+    if (!response.ok || data?.success === false) {
+        throw new Error(data?.message || "Erro na API.");
+    }
+
+    return data as T;
+}
+
+export async function fetchPostsFromApi(publishedOnly = false): Promise<BlogPost[]> {
+    const url = `${API_BASE_URL}/blog/list.php${publishedOnly ? "?published=1" : ""}`;
+    const response = await fetch(url);
+    const data = await readApiResponse<{ posts: Record<string, any>[] }>(response);
+
+    return data.posts.map(mapApiPost);
+}
+
+export async function fetchPostBySlugFromApi(slug: string): Promise<BlogPost | undefined> {
+    const response = await fetch(`${API_BASE_URL}/blog/show.php?slug=${encodeURIComponent(slug)}`);
+    const data = await readApiResponse<{ post: Record<string, any> }>(response);
+
+    return mapApiPost(data.post);
+}
+
+export async function savePostToApi(post: BlogPost): Promise<{ id: string; slug: string }> {
+    const response = await fetch(`${API_BASE_URL}/blog/save.php`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(post),
+    });
+
+    const data = await readApiResponse<{ id: number | string; slug: string }>(response);
+
+    return {
+        id: String(data.id),
+        slug: data.slug,
+    };
+}
+
+export async function deletePostFromApi(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/blog/delete.php`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+    });
+
+    await readApiResponse(response);
 }
 
 export function makeSlug(input: string) {

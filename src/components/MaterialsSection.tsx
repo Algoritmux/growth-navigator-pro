@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { getPublishedMaterials, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
+import { fetchMaterialsFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -23,7 +23,24 @@ const chunkMaterials = (items: MaterialItem[], size: number) => {
 };
 
 const MaterialsSection = () => {
-  const materials = getPublishedMaterials();
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchMaterialsFromApi(true)
+      .then((data) => {
+        if (active) setMaterials(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const mobileMaterials = materials.slice(0, 3);
   const materialPages = useMemo(() => chunkMaterials(materials, ITEMS_PER_PAGE), [materials]);
   const hasMultiplePages = materialPages.length > 1;

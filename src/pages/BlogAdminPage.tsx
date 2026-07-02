@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEv
 import {
   type BlogCategory,
   type BlogPost,
-  deletePost,
-  getAllPosts,
+  deletePostFromApi,
+  fetchPostsFromApi,
   makeId,
   makeSlug,
-  upsertPost,
+  savePostToApi,
 } from "@/lib/blogStore";
 import {
   AlignCenter,
@@ -109,7 +109,9 @@ function fontKeyFromFamily(fontFamily: string): EditorFont {
 }
 
 export default function BlogAdminPage() {
-  const [refresh, setRefresh] = useState(0);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [isSavingPost, setIsSavingPost] = useState(false);
   const [q, setQ] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -141,8 +143,6 @@ export default function BlogAdminPage() {
   const selectionRangeRef = useRef<Range | null>(null);
   const spacingMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const posts = useMemo(() => getAllPosts(), [refresh]);
-
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return posts;
@@ -154,9 +154,22 @@ export default function BlogAdminPage() {
 
   const previewHtml = useMemo(() => contentToHtml(editorHtml), [editorHtml]);
 
-  function refreshList() {
-    setRefresh((r) => r + 1);
+  async function refreshList() {
+    setIsLoadingPosts(true);
+    try {
+      const data = await fetchPostsFromApi(false);
+      setPosts(data);
+    } catch (error) {
+      console.error(error);
+      alert("Não foi possível carregar os posts do banco.");
+    } finally {
+      setIsLoadingPosts(false);
+    }
   }
+
+  useEffect(() => {
+    refreshList();
+  }, []);
 
   function openNew() {
     setEditingId(null);
@@ -239,7 +252,7 @@ export default function BlogAdminPage() {
     return editorRef.current?.textContent?.trim() || "";
   }
 
-  function save() {
+  async function save() {
     const title = form.title.trim();
     if (!title) {
       alert("Titulo e obrigatorio.");
@@ -270,24 +283,42 @@ export default function BlogAdminPage() {
       updatedAtISO: today,
     };
 
-    upsertPost(payload);
-    refreshList();
-    closeModal();
+    setIsSavingPost(true);
+    try {
+      await savePostToApi(payload);
+      await refreshList();
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Não foi possível salvar o post.");
+    } finally {
+      setIsSavingPost(false);
+    }
   }
 
-  function remove(post: BlogPost) {
+  async function remove(post: BlogPost) {
     if (!confirm(`Excluir "${post.title}"?`)) return;
-    deletePost(post.id);
-    refreshList();
+    try {
+      await deletePostFromApi(post.id);
+      await refreshList();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Não foi possível excluir o post.");
+    }
   }
 
-  function togglePublish(post: BlogPost) {
-    upsertPost({
-      ...post,
-      published: !post.published,
-      updatedAtISO: new Date().toISOString().slice(0, 10),
-    });
-    refreshList();
+  async function togglePublish(post: BlogPost) {
+    try {
+      await savePostToApi({
+        ...post,
+        published: !post.published,
+        updatedAtISO: new Date().toISOString().slice(0, 10),
+      });
+      await refreshList();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Não foi possível atualizar o post.");
+    }
   }
 
   function syncEditorHtml() {
@@ -748,7 +779,13 @@ export default function BlogAdminPage() {
             </div>
           ))}
 
-          {filtered.length === 0 && (
+          {isLoadingPosts && (
+            <div className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">
+              Carregando posts do banco...
+            </div>
+          )}
+
+          {!isLoadingPosts && filtered.length === 0 && (
             <div className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">
               Nenhum post encontrado.
             </div>
@@ -1097,7 +1134,9 @@ export default function BlogAdminPage() {
                 <Button variant="outline" onClick={closeModal}>
                   Cancelar
                 </Button>
-                <Button onClick={save}>Salvar</Button>
+                <Button onClick={save} disabled={isSavingPost}>
+                  {isSavingPost ? "Salvando..." : "Salvar"}
+                </Button>
               </div>
             </div>
           </div>

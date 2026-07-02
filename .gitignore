@@ -7,10 +7,33 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies / build
 node_modules
 dist
 dist-ssr
 *.local
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Backend local/sensitive configs
+backend/config/*.local.php
+backend/config/*secret*.php
+backend/config/*smtp*.php
+backend/config/mail.php
+
+# Database dumps / backups
+*.sql.gz
+*.sql.zip
+*.dump
+*.backup
+*_backup.sql
+*-backup.sql
+
+# API local test files
+backend/api/**/test-*.html
 
 # Editor directories and files
 .vscode/*
