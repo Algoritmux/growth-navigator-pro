@@ -11,6 +11,14 @@ function applyCors(): void
         'http://127.0.0.1:5173',
     ];
 
+    $configuredOrigins = getenv('CORS_ALLOWED_ORIGINS') ?: '';
+    foreach (explode(',', $configuredOrigins) as $configuredOrigin) {
+        $configuredOrigin = trim($configuredOrigin);
+        if ($configuredOrigin !== '') {
+            $allowedOrigins[] = $configuredOrigin;
+        }
+    }
+
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
     if (in_array($origin, $allowedOrigins, true)) {

@@ -90,7 +90,7 @@ function mapPostPayload(post: BlogPost) {
 }
 
 export async function fetchAllBlogPosts() {
-  const data = await apiRequest<BlogListResponse>("/blog/list.php");
+  const data = await apiRequest<BlogListResponse>("/blog/list.php", { auth: true });
   return data.posts.map(mapApiPost);
 }
 
@@ -107,6 +107,7 @@ export async function fetchBlogPostBySlug(slug: string) {
 export async function saveBlogPost(post: BlogPost) {
   return apiRequest<BlogSaveResponse>("/blog/save.php", {
     method: "POST",
+    auth: true,
     body: mapPostPayload(post),
   });
 }
@@ -114,6 +115,7 @@ export async function saveBlogPost(post: BlogPost) {
 export async function deleteBlogPost(id: string | number) {
   return apiRequest<BlogDeleteResponse>("/blog/delete.php", {
     method: "POST",
+    auth: true,
     body: { id: Number(id) },
   });
 }

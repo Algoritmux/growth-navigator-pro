@@ -6,9 +6,11 @@ require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/response.php';
 require_once __DIR__ . '/../../config/request.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 applyCors();
 requirePost();
+requireAdmin();
 
 try {
     $data = getJsonInput();

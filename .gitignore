@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+build
+.vite
 *.local
 
 # Environment files
@@ -18,6 +20,7 @@ dist-ssr
 !.env.example
 
 # Backend local/sensitive configs
+mail.php
 backend/config/*.local.php
 backend/config/*secret*.php
 backend/config/*smtp*.php
@@ -32,6 +35,7 @@ backend/config/mail.php
 *-backup.sql
 
 # API local test files
+test-*.html
 backend/api/**/test-*.html
 
 # Editor directories and files

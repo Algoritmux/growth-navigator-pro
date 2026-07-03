@@ -1,30 +1,11 @@
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth";
+import { decodeJwtPayload } from "@/lib/authSession";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-
-type DecodedJwt = {
-    email?: string;
-    name?: string;
-    picture?: string;
-};
-
-// Helper simple to decode JWT on client side
-const decodeJwt = (token: string): DecodedJwt | null => {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload) as DecodedJwt;
-    } catch {
-        return null;
-    }
-};
 
 const LoginPage = () => {
     const { login } = useAuth();
@@ -39,10 +20,10 @@ const LoginPage = () => {
             return;
         }
 
-        const decoded = decodeJwt(credential);
+        const decoded = decodeJwtPayload(credential);
         const email = decoded?.email;
 
-        if (!email || email.toLowerCase() !== "guilherme.pubmkt@gmail.com") {
+        if (!email || email.toLowerCase() !== "guilherme.pubmkt@gmail.com" || decoded?.email_verified === false || decoded?.email_verified === "false") {
             toast.error("Acesso Negado", {
                 description: "Este e-mail não possui permissão para acessar a área administrativa."
             });

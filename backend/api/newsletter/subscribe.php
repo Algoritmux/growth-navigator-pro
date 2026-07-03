@@ -53,7 +53,7 @@ try {
         'success' => true,
         'message' => 'Inscrição salva com sucesso.',
         'email_sent' => $emailSent,
-        'email_error' => $emailError,
+        'email_error' => isDevelopmentEnvironment() ? $emailError : null,
     ]);
 } catch (Throwable $error) {
     sendError('Erro ao salvar inscrição.', 500, [

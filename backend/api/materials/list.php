@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/response.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 applyCors();
 
@@ -31,6 +32,10 @@ function mapMaterial(array $material): array
 try {
     $connection = getConnection();
     $publishedOnly = ($_GET['published'] ?? '') === '1';
+
+    if (!$publishedOnly) {
+        requireAdmin();
+    }
 
     $sql = 'SELECT * FROM materials';
 

@@ -59,7 +59,7 @@ try {
         'message' => 'Lead salvo com sucesso.',
         'id' => (int) $connection->lastInsertId(),
         'email_sent' => $emailSent,
-        'email_error' => $emailError,
+        'email_error' => isDevelopmentEnvironment() ? $emailError : null,
     ], 201);
 } catch (Throwable $error) {
     sendError('Erro ao salvar lead.', 500, [

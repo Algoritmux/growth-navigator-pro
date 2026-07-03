@@ -1,3 +1,5 @@
+import { getAdminAuthHeaders } from "./authSession";
+
 export type LeadPayload = {
   name: string;
   email: string;
@@ -80,14 +82,18 @@ export async function subscribeToNewsletter(payload: NewsletterPayload) {
 }
 
 export async function fetchLeads(): Promise<Lead[]> {
-  const response = await fetch(`${API_BASE_URL}/leads/list.php`);
+  const response = await fetch(`${API_BASE_URL}/leads/list.php`, {
+    headers: getAdminAuthHeaders(),
+  });
   const data = await readApiResponse<{ leads: Lead[] }>(response);
 
   return data.leads;
 }
 
 export async function fetchNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
-  const response = await fetch(`${API_BASE_URL}/newsletter/list.php`);
+  const response = await fetch(`${API_BASE_URL}/newsletter/list.php`, {
+    headers: getAdminAuthHeaders(),
+  });
   const data = await readApiResponse<{ subscribers: NewsletterSubscriber[] }>(response);
 
   return data.subscribers;
@@ -98,6 +104,7 @@ export async function updateLeadStatus(id: string, status: LeadStatus) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAdminAuthHeaders(),
     },
     body: JSON.stringify({ id, status }),
   });

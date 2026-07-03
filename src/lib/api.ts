@@ -1,3 +1,5 @@
+import { getAdminAuthHeaders } from "./authSession";
+
 const DEFAULT_API_BASE_URL = "http://localhost/growth-navigator-pro/backend/api";
 
 export const API_BASE_URL = (
@@ -7,6 +9,7 @@ export const API_BASE_URL = (
 type RequestOptions = {
   method?: "GET" | "POST";
   body?: unknown;
+  auth?: boolean;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -16,6 +19,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
+      ...(options.auth ? getAdminAuthHeaders() : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });

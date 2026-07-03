@@ -8,6 +8,7 @@ import {
     GraduationCap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getAdminAuthHeaders } from "./authSession";
 
 export type MaterialType =
     | "Livro"
@@ -259,7 +260,9 @@ async function readApiResponse<T>(response: Response): Promise<T> {
 
 export async function fetchMaterialsFromApi(publishedOnly = false): Promise<MaterialItem[]> {
     const url = `${API_BASE_URL}/materials/list.php${publishedOnly ? "?published=1" : ""}`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        headers: publishedOnly ? undefined : getAdminAuthHeaders(),
+    });
     const data = await readApiResponse<{ materials: Record<string, any>[] }>(response);
 
     return data.materials.map(mapApiMaterial);
@@ -277,6 +280,7 @@ export async function saveMaterialToApi(material: Partial<MaterialItem> & Pick<M
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...getAdminAuthHeaders(),
         },
         body: JSON.stringify(material),
     });
@@ -294,6 +298,7 @@ export async function deleteMaterialFromApi(id: string): Promise<void> {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...getAdminAuthHeaders(),
         },
         body: JSON.stringify({ id }),
     });
