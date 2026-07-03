@@ -3,7 +3,7 @@ import { Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
-import { subscribeNewsletter } from "@/lib/leadsApi";
+import { subscribeToNewsletter } from "@/lib/leadsApi";
 
 const LeadMagnetSection = () => {
   const [name, setName] = useState("");
@@ -15,14 +15,14 @@ const LeadMagnetSection = () => {
     setLoading(true);
 
     try {
-      await subscribeNewsletter({
+      await subscribeToNewsletter({
         name,
         email,
-        source: "lead-magnet-section",
+        source: "home-lead-magnet",
       });
 
       toast.success("Inscrição realizada!", {
-        description: "Obrigado. Seus dados foram salvos com sucesso.",
+        description: "Obrigado! Em breve você receberá os insights.",
       });
 
       setName("");

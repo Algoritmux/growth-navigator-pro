@@ -1,6 +1,4 @@
-import { apiRequest } from "./api";
-
-export type CreateLeadInput = {
+export type LeadPayload = {
   name: string;
   email: string;
   phone?: string;
@@ -9,28 +7,48 @@ export type CreateLeadInput = {
   source?: string;
 };
 
-export type NewsletterInput = {
+export type NewsletterPayload = {
   name?: string;
   email: string;
   source?: string;
 };
 
-type ApiResponse = {
-  success: boolean;
-  message: string;
-  id?: number;
-};
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
+    ? "http://localhost/growth-navigator-pro/backend/api"
+    : "/backend/api");
 
-export async function createLead(input: CreateLeadInput): Promise<ApiResponse> {
-  return apiRequest<ApiResponse>("/leads/create.php", {
-    method: "POST",
-    body: input,
-  });
+async function readApiResponse<T>(response: Response): Promise<T> {
+  const data = await response.json();
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.message || "Erro na API.");
+  }
+
+  return data as T;
 }
 
-export async function subscribeNewsletter(input: NewsletterInput): Promise<ApiResponse> {
-  return apiRequest<ApiResponse>("/newsletter/subscribe.php", {
+export async function createLead(payload: LeadPayload) {
+  const response = await fetch(`${API_BASE_URL}/leads/create.php`, {
     method: "POST",
-    body: input,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
+
+  return readApiResponse(response);
+}
+
+export async function subscribeToNewsletter(payload: NewsletterPayload) {
+  const response = await fetch(`${API_BASE_URL}/newsletter/subscribe.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return readApiResponse(response);
 }
