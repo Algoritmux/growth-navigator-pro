@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Library, LogOut, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, BookOpen, Library, LogOut, ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
@@ -55,7 +55,7 @@ export default function AdminPage() {
                     </p>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 w-full max-w-5xl">
+                <div className="grid gap-8 md:grid-cols-3 w-full max-w-6xl">
                     <Link
                         to="/admin/blog"
                         className="group relative flex flex-col items-center text-center overflow-hidden rounded-[3rem] border bg-card/50 backdrop-blur-sm p-12 transition-all hover:shadow-[0_20px_50px_rgba(var(--primary-rgb),0.1)] hover:border-primary/50 hover:-translate-y-2 ring-1 ring-border"
@@ -84,6 +84,22 @@ export default function AdminPage() {
                             Frameworks, e-books e guias. Adicione valor entregando materiais exclusivos para sua audiência.
                         </p>
                         <div className="mt-10 flex items-center gap-2 text-sm font-bold text-accent opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                            ACESSAR AGORA <ArrowLeft className="h-4 w-4 rotate-180" />
+                        </div>
+                    </Link>
+
+                    <Link
+                        to="/admin/leads"
+                        className="group relative flex flex-col items-center text-center overflow-hidden rounded-[3rem] border bg-card/50 backdrop-blur-sm p-12 transition-all hover:shadow-[0_20px_50px_rgba(var(--primary-rgb),0.1)] hover:border-primary/50 hover:-translate-y-2 ring-1 ring-border"
+                    >
+                        <div className="mb-8 inline-flex h-24 w-24 items-center justify-center rounded-[2rem] bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 group-hover:rotate-6 shadow-sm">
+                            <Users className="h-12 w-12" />
+                        </div>
+                        <h2 className="text-3xl font-bold group-hover:text-primary transition-colors">Leads</h2>
+                        <p className="mt-4 text-muted-foreground leading-relaxed">
+                            Solicitações de contato e inscrições na newsletter. Acompanhe novos interessados do site.
+                        </p>
+                        <div className="mt-10 flex items-center gap-2 text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
                             ACESSAR AGORA <ArrowLeft className="h-4 w-4 rotate-180" />
                         </div>
                     </Link>

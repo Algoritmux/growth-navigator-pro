@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { ArrowLeft, LayoutDashboard, LogOut, BookOpen, Library } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, LogOut, BookOpen, Library, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminHeader() {
     const location = useLocation();
     const isBlog = location.pathname.includes("/admin/blog");
     const isLibrary = location.pathname.includes("/admin/biblioteca");
+    const isLeads = location.pathname.includes("/admin/leads");
 
     return (
         <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
@@ -43,6 +44,14 @@ export default function AdminHeader() {
                         >
                             <Library className="h-3.5 w-3.5" />
                             Biblioteca
+                        </Link>
+                        <Link
+                            to="/admin/leads"
+                            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${isLeads ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted text-muted-foreground"
+                                }`}
+                        >
+                            <Users className="h-3.5 w-3.5" />
+                            Leads
                         </Link>
                     </nav>
 

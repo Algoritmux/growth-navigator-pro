@@ -13,6 +13,30 @@ export type NewsletterPayload = {
   source?: string;
 };
 
+export type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message?: string | null;
+  service?: string | null;
+  source: string;
+  status: string;
+  crm_synced: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewsletterSubscriber = {
+  id: string;
+  name?: string | null;
+  email: string;
+  source: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+};
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
@@ -51,4 +75,18 @@ export async function subscribeToNewsletter(payload: NewsletterPayload) {
   });
 
   return readApiResponse(response);
+}
+
+export async function fetchLeads(): Promise<Lead[]> {
+  const response = await fetch(`${API_BASE_URL}/leads/list.php`);
+  const data = await readApiResponse<{ leads: Lead[] }>(response);
+
+  return data.leads;
+}
+
+export async function fetchNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+  const response = await fetch(`${API_BASE_URL}/newsletter/list.php`);
+  const data = await readApiResponse<{ subscribers: NewsletterSubscriber[] }>(response);
+
+  return data.subscribers;
 }

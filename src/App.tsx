@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import Biblioteca from "./pages/Biblioteca";
 import BibliotecaAdminPage from "./pages/BibliotecaAdminPage";
 import AdminPage from "./pages/AdminPage";
+import LeadsAdminPage from "./pages/LeadsAdminPage";
 import MaterialPage from "./pages/MaterialPage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -52,6 +53,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BibliotecaAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/leads"
+          element={
+            <ProtectedRoute>
+              <LeadsAdminPage />
             </ProtectedRoute>
           }
         />
