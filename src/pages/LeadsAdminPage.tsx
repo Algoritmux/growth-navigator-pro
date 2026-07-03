@@ -6,9 +6,18 @@ import { Input } from "@/components/ui/input";
 import {
   fetchLeads,
   fetchNewsletterSubscribers,
+  updateLeadStatus,
   type Lead,
+  type LeadStatus,
   type NewsletterSubscriber,
 } from "@/lib/leadsApi";
+
+const LEAD_STATUS_OPTIONS: Array<{ value: LeadStatus; label: string }> = [
+  { value: "novo", label: "Novo" },
+  { value: "contatado", label: "Contatado" },
+  { value: "convertido", label: "Convertido" },
+  { value: "descartado", label: "Descartado" },
+];
 
 function formatDate(value: string) {
   if (!value) return "-";
@@ -30,6 +39,7 @@ export default function LeadsAdminPage() {
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [updatingLeadId, setUpdatingLeadId] = useState<string | null>(null);
 
   async function refresh() {
     setIsLoading(true);
@@ -53,6 +63,28 @@ export default function LeadsAdminPage() {
   useEffect(() => {
     refresh();
   }, []);
+
+  async function handleStatusChange(lead: Lead, status: LeadStatus) {
+    if (lead.status === status) return;
+
+    const previousStatus = lead.status;
+    setUpdatingLeadId(lead.id);
+    setLeads((current) =>
+      current.map((item) => (item.id === lead.id ? { ...item, status } : item))
+    );
+
+    try {
+      await updateLeadStatus(lead.id, status);
+    } catch (error) {
+      setLeads((current) =>
+        current.map((item) => (item.id === lead.id ? { ...item, status: previousStatus } : item))
+      );
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Não foi possível atualizar o status.");
+    } finally {
+      setUpdatingLeadId(null);
+    }
+  }
 
   const filteredLeads = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -122,7 +154,7 @@ export default function LeadsAdminPage() {
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl border bg-card p-5">
             <div className="text-sm text-muted-foreground">Leads</div>
             <div className="mt-2 text-3xl font-bold">{leads.length}</div>
@@ -132,9 +164,15 @@ export default function LeadsAdminPage() {
             <div className="mt-2 text-3xl font-bold">{subscribers.length}</div>
           </div>
           <div className="rounded-2xl border bg-card p-5">
-            <div className="text-sm text-muted-foreground">Pendentes CRM</div>
+            <div className="text-sm text-muted-foreground">Contatados</div>
             <div className="mt-2 text-3xl font-bold">
-              {leads.filter((lead) => Number(lead.crm_synced) === 0).length}
+              {leads.filter((lead) => lead.status === "contatado").length}
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-card p-5">
+            <div className="text-sm text-muted-foreground">Convertidos</div>
+            <div className="mt-2 text-3xl font-bold">
+              {leads.filter((lead) => lead.status === "convertido").length}
             </div>
           </div>
         </div>
@@ -174,7 +212,21 @@ export default function LeadsAdminPage() {
 
                     <div className="text-sm text-muted-foreground md:text-right">
                       <div>{formatDate(lead.created_at)}</div>
-                      <div className="mt-1 capitalize">{lead.status}</div>
+                      <label className="mt-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Status
+                      </label>
+                      <select
+                        value={lead.status}
+                        disabled={updatingLeadId === lead.id}
+                        onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)}
+                        className="mt-1 h-9 rounded-lg border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                      >
+                        {LEAD_STATUS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 

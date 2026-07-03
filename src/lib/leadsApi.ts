@@ -13,6 +13,8 @@ export type NewsletterPayload = {
   source?: string;
 };
 
+export type LeadStatus = "novo" | "contatado" | "convertido" | "descartado";
+
 export type Lead = {
   id: string;
   name: string;
@@ -21,7 +23,7 @@ export type Lead = {
   message?: string | null;
   service?: string | null;
   source: string;
-  status: string;
+  status: LeadStatus;
   crm_synced: number;
   created_at: string;
   updated_at: string;
@@ -89,4 +91,16 @@ export async function fetchNewsletterSubscribers(): Promise<NewsletterSubscriber
   const data = await readApiResponse<{ subscribers: NewsletterSubscriber[] }>(response);
 
   return data.subscribers;
+}
+
+export async function updateLeadStatus(id: string, status: LeadStatus) {
+  const response = await fetch(`${API_BASE_URL}/leads/update-status.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id, status }),
+  });
+
+  return readApiResponse(response);
 }
