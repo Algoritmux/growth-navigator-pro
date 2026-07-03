@@ -1,6 +1,6 @@
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth";
-import { decodeJwtPayload } from "@/lib/authSession";
+import { validateAdminToken } from "@/lib/adminApi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
@@ -11,7 +11,7 @@ const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSuccess = (credentialResponse: CredentialResponse) => {
+    const handleSuccess = async (credentialResponse: CredentialResponse) => {
         const credential = credentialResponse.credential;
         if (!credential) {
             toast.error("Falha no login", {
@@ -20,27 +20,26 @@ const LoginPage = () => {
             return;
         }
 
-        const decoded = decodeJwtPayload(credential);
-        const email = decoded?.email;
+        try {
+            const admin = await validateAdminToken(credential);
 
-        if (!email || decoded?.email_verified === false || decoded?.email_verified === "false") {
-            toast.error("Falha no login", {
-                description: "Use uma conta Google com e-mail verificado."
+            login({
+                token: credential,
+                email: admin.email,
+                name: admin.name,
+                picture: admin.picture
+            });
+
+            toast.success("Bem-vindo!", {
+                description: `Login realizado como ${admin.name || admin.email}`
+            });
+            navigate("/admin");
+        } catch (error) {
+            toast.error("Acesso Negado", {
+                description: error instanceof Error ? error.message : "Nao foi possivel validar sua permissao administrativa."
             });
             return;
         }
-
-        login({
-            token: credential,
-            email: email,
-            name: decoded?.name,
-            picture: decoded?.picture
-        });
-
-        toast.success("Bem-vindo!", {
-            description: `Login realizado como ${decoded?.name}`
-        });
-        navigate("/admin");
     };
 
     return (
