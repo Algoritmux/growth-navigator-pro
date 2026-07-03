@@ -23,9 +23,9 @@ const LoginPage = () => {
         const decoded = decodeJwtPayload(credential);
         const email = decoded?.email;
 
-        if (!email || email.toLowerCase() !== "guilherme.pubmkt@gmail.com" || decoded?.email_verified === false || decoded?.email_verified === "false") {
-            toast.error("Acesso Negado", {
-                description: "Este e-mail não possui permissão para acessar a área administrativa."
+        if (!email || decoded?.email_verified === false || decoded?.email_verified === "false") {
+            toast.error("Falha no login", {
+                description: "Use uma conta Google com e-mail verificado."
             });
             return;
         }
