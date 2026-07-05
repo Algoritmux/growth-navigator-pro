@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
+import { getSavedAdminUser, isAdminTokenExpired, type AdminUser } from "./authSession";
 
-export type AdminUser = {
-    token: string;
-    email: string;
-    name?: string;
-    picture?: string;
-};
+export type { AdminUser } from "./authSession";
 
 interface AuthContextType {
     user: AdminUser | null;
@@ -15,19 +11,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-function getSavedAdminUser(): AdminUser | null {
-    if (typeof window === "undefined") return null;
-
-    try {
-        const savedUser = localStorage.getItem("admin_user");
-        return savedUser ? (JSON.parse(savedUser) as AdminUser) : null;
-    } catch (error) {
-        console.error("Failed to parse admin_user from localStorage", error);
-        localStorage.removeItem("admin_user");
-        return null;
-    }
-}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AdminUser | null>(() => getSavedAdminUser());
@@ -42,8 +25,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem("admin_user");
     };
 
+    const isAuthenticated = !!user && !isAdminTokenExpired(user);
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user: isAuthenticated ? user : null, login, logout, isAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

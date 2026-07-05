@@ -1,3 +1,5 @@
+import { getAdminAuthHeaders } from "./authSession";
+
 export type BlogCategory = "GTM" | "ICP" | "Oferta" | "Sales" | "Growth" | "IA";
 
 export type BlogPost = {
@@ -177,7 +179,9 @@ async function readApiResponse<T>(response: Response): Promise<T> {
 
 export async function fetchPostsFromApi(publishedOnly = false): Promise<BlogPost[]> {
     const url = `${API_BASE_URL}/blog/list.php${publishedOnly ? "?published=1" : ""}`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        headers: publishedOnly ? undefined : getAdminAuthHeaders(),
+    });
     const data = await readApiResponse<{ posts: Record<string, any>[] }>(response);
 
     return data.posts.map(mapApiPost);
@@ -195,6 +199,7 @@ export async function savePostToApi(post: BlogPost): Promise<{ id: string; slug:
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...getAdminAuthHeaders(),
         },
         body: JSON.stringify(post),
     });
@@ -212,6 +217,7 @@ export async function deletePostFromApi(id: string): Promise<void> {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...getAdminAuthHeaders(),
         },
         body: JSON.stringify({ id }),
     });

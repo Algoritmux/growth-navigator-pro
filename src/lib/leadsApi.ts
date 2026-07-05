@@ -1,6 +1,6 @@
-import { apiRequest } from "./api";
+import { getAdminAuthHeaders } from "./authSession";
 
-export type CreateLeadInput = {
+export type LeadPayload = {
   name: string;
   email: string;
   phone?: string;
@@ -9,28 +9,105 @@ export type CreateLeadInput = {
   source?: string;
 };
 
-export type NewsletterInput = {
+export type NewsletterPayload = {
   name?: string;
   email: string;
   source?: string;
 };
 
-type ApiResponse = {
-  success: boolean;
-  message: string;
-  id?: number;
+export type LeadStatus = "novo" | "contatado" | "convertido" | "descartado";
+
+export type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message?: string | null;
+  service?: string | null;
+  source: string;
+  status: LeadStatus;
+  crm_synced: number;
+  created_at: string;
+  updated_at: string;
 };
 
-export async function createLead(input: CreateLeadInput): Promise<ApiResponse> {
-  return apiRequest<ApiResponse>("/leads/create.php", {
-    method: "POST",
-    body: input,
-  });
+export type NewsletterSubscriber = {
+  id: string;
+  name?: string | null;
+  email: string;
+  source: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+};
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
+    ? "http://localhost/growth-navigator-pro/backend/api"
+    : "/backend/api");
+
+async function readApiResponse<T>(response: Response): Promise<T> {
+  const data = await response.json();
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.message || "Erro na API.");
+  }
+
+  return data as T;
 }
 
-export async function subscribeNewsletter(input: NewsletterInput): Promise<ApiResponse> {
-  return apiRequest<ApiResponse>("/newsletter/subscribe.php", {
+export async function createLead(payload: LeadPayload) {
+  const response = await fetch(`${API_BASE_URL}/leads/create.php`, {
     method: "POST",
-    body: input,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
+
+  return readApiResponse(response);
+}
+
+export async function subscribeToNewsletter(payload: NewsletterPayload) {
+  const response = await fetch(`${API_BASE_URL}/newsletter/subscribe.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return readApiResponse(response);
+}
+
+export async function fetchLeads(): Promise<Lead[]> {
+  const response = await fetch(`${API_BASE_URL}/leads/list.php`, {
+    headers: getAdminAuthHeaders(),
+  });
+  const data = await readApiResponse<{ leads: Lead[] }>(response);
+
+  return data.leads;
+}
+
+export async function fetchNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+  const response = await fetch(`${API_BASE_URL}/newsletter/list.php`, {
+    headers: getAdminAuthHeaders(),
+  });
+  const data = await readApiResponse<{ subscribers: NewsletterSubscriber[] }>(response);
+
+  return data.subscribers;
+}
+
+export async function updateLeadStatus(id: string, status: LeadStatus) {
+  const response = await fetch(`${API_BASE_URL}/leads/update-status.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAdminAuthHeaders(),
+    },
+    body: JSON.stringify({ id, status }),
+  });
+
+  return readApiResponse(response);
 }

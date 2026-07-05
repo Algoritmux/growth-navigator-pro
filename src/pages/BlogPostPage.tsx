@@ -6,7 +6,7 @@ import { contentToHtml, extractFirstImageSrc } from "@/lib/markdown";
 import authorAvatar from "@/assets/guilherme-about-new.jpg";
 import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from "lucide-react";
 import { toast } from "sonner";
-import { subscribeNewsletter } from "@/lib/leadsApi";
+import { subscribeToNewsletter } from "@/lib/leadsApi";
 
 type TocItem = {
   id: string;
@@ -234,18 +234,19 @@ export default function BlogPostPage() {
     setIsSubmittingNewsletter(true);
 
     try {
-      await subscribeNewsletter({
+      await subscribeToNewsletter({
         name: newsletterName,
         email: newsletterEmail,
         source: "blog-post-sidebar",
       });
 
       toast.success("Inscrição realizada!", {
-        description: "Obrigado. Seus dados foram salvos com sucesso.",
+        description: "Obrigado! Também abrimos a newsletter no LinkedIn.",
       });
 
       setNewsletterName("");
       setNewsletterEmail("");
+      window.open("https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577", "_blank");
     } catch (error) {
       toast.error("Não foi possível salvar sua inscrição.", {
         description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
@@ -391,7 +392,7 @@ export default function BlogPostPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingNewsletter}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                 >
                   {isSubmittingNewsletter ? "ENVIANDO..." : "ENVIAR"}
                   <ArrowRight className="h-4 w-4" />

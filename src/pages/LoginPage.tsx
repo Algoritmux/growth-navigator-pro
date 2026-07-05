@@ -1,36 +1,17 @@
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth";
+import { validateAdminToken } from "@/lib/adminApi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-type DecodedJwt = {
-    email?: string;
-    name?: string;
-    picture?: string;
-};
-
-// Helper simple to decode JWT on client side
-const decodeJwt = (token: string): DecodedJwt | null => {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload) as DecodedJwt;
-    } catch {
-        return null;
-    }
-};
-
 const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSuccess = (credentialResponse: CredentialResponse) => {
+    const handleSuccess = async (credentialResponse: CredentialResponse) => {
         const credential = credentialResponse.credential;
         if (!credential) {
             toast.error("Falha no login", {
@@ -39,27 +20,26 @@ const LoginPage = () => {
             return;
         }
 
-        const decoded = decodeJwt(credential);
-        const email = decoded?.email;
+        try {
+            const admin = await validateAdminToken(credential);
 
-        if (!email || email.toLowerCase() !== "guilherme.pubmkt@gmail.com") {
+            login({
+                token: credential,
+                email: admin.email,
+                name: admin.name,
+                picture: admin.picture
+            });
+
+            toast.success("Bem-vindo!", {
+                description: `Login realizado como ${admin.name || admin.email}`
+            });
+            navigate("/admin");
+        } catch (error) {
             toast.error("Acesso Negado", {
-                description: "Este e-mail não possui permissão para acessar a área administrativa."
+                description: error instanceof Error ? error.message : "Nao foi possivel validar sua permissao administrativa."
             });
             return;
         }
-
-        login({
-            token: credential,
-            email: email,
-            name: decoded?.name,
-            picture: decoded?.picture
-        });
-
-        toast.success("Bem-vindo!", {
-            description: `Login realizado como ${decoded?.name}`
-        });
-        navigate("/admin");
     };
 
     return (
