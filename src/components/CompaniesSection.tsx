@@ -12,7 +12,7 @@ const companies = [
         valueProp: "Growth Marketing",
         support:
             "Estruturação de setup digital, tráfego de performance e automações para transformar marketing em um motor previsível de geração de demanda.",
-        link: "https://algoritmux.com.br",
+        link: "https://algoritmux.com",
         gradient: "from-[#000000] to-[#1A1A1A]",
     },
     {

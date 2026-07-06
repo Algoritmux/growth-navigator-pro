@@ -202,7 +202,7 @@ const ContentSection = () => {
           <div className="mt-10 rounded-2xl border bg-card p-8 text-center">
             <div className="text-lg font-bold text-foreground">Sem artigos ainda</div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Crie um post em <span className="font-semibold text-primary">/admin</span> para aparecer aqui automaticamente.
+              Estamos preparando conteúdos incríveis para você. Em breve traremos novidades!
             </p>
           </div>
         )}
