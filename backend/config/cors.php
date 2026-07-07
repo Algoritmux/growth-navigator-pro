@@ -5,6 +5,11 @@ declare(strict_types=1);
 function applyCors(): void
 {
     $allowedOrigins = [
+        // Produção
+        'https://guilhermecorreia.com.br',
+        'https://www.guilhermecorreia.com.br',
+
+        // Desenvolvimento local
         'http://localhost:8080',
         'http://localhost:5173',
         'http://127.0.0.1:8080',
@@ -29,7 +34,7 @@ function applyCors(): void
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
         http_response_code(204);
         exit;
     }
