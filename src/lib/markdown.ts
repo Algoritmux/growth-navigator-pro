@@ -69,7 +69,16 @@ function createHeadingIdFactory() {
 }
 
 function looksLikeHtml(content: string) {
-  return /<\/?[a-z][\s\S]*>/i.test(content);
+  const withoutQuotedValues = content.replace(/"[^"]*"|'[^']*'/g, "");
+  return /<\/?[a-z][\s\S]*>/i.test(withoutQuotedValues);
+}
+
+function stripHtmlTags(value: string) {
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
 }
 
 function sanitizeHtml(html: string) {
@@ -340,32 +349,172 @@ function renderSpecialBlocksInHtml(html: string) {
   return rendered;
 }
 
-function htmlToText(value: string) {
-  if (typeof window !== "undefined" && typeof DOMParser !== "undefined") {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(value, "text/html");
-    return doc.body.textContent || "";
+function normalizeHtmlToMarkdown(html: string) {
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return html
+      .replace(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi, (_match, level, text) => {
+        return `${"#".repeat(Number(level))} ${stripHtmlTags(text)}`;
+      })
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_match, text) => {
+        return `- ${stripHtmlTags(text)}`;
+      })
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|section|blockquote|ul|ol)>/gi, "\n\n")
+      .replace(/<(p|div|section|blockquote|ul|ol)[^>]*>/gi, "")
+      .replace(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi, (_match, src) => {
+        return sanitizeImageUrl(src) ? `![](${src})` : "";
+      })
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (
+        _match,
+        href,
+        text,
+      ) => {
+        return `[${stripHtmlTags(text)}](${sanitizeUrl(href)})`;
+      })
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
+      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
+      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
+      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
-  return value
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/gi, " ")
-    .trim();
-}
+  const blockTags = new Set([
+    "article",
+    "aside",
+    "blockquote",
+    "div",
+    "figure",
+    "h1",
+    "h2",
+    "h3",
+    "li",
+    "ol",
+    "p",
+    "section",
+    "ul",
+  ]);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const lines: string[] = [];
 
-function renderMarkdownHeadingsInHtml(html: string) {
-  const getHeadingId = createHeadingIdFactory();
+  const pushBlank = () => {
+    if (lines.length > 0 && lines[lines.length - 1] !== "") {
+      lines.push("");
+    }
+  };
 
-  return html.replace(
-    /<(p|div)(?:\s[^>]*)?>(\s*)(#{1,3})\s+([\s\S]*?)(\s*)<\/\1>/gi,
-    (_match, _tag, _before, hashes, contentHtml, _after) => {
-      const level = hashes.length;
-      const text = htmlToText(contentHtml).trim();
-      if (!text) return "";
-      return `<h${level} id="${getHeadingId(text)}">${contentHtml.trim()}</h${level}>`;
-    },
-  );
+  const pushLines = (value: string) => {
+    const normalized = value
+      .replace(/\r\n/g, "\n")
+      .replace(/\u00a0/g, " ")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    for (const line of normalized) {
+      lines.push(line);
+    }
+  };
+
+  const serializeInline = (node: Node): string => {
+    if (node.nodeType === 3) return node.textContent || "";
+    if (node.nodeType !== 1) return "";
+
+    const element = node as Element;
+    const tag = element.tagName.toLowerCase();
+    const inner = () => Array.from(element.childNodes).map(serializeInline).join("");
+
+    if (tag === "br") return "\n";
+
+    if (tag === "img") {
+      const src = sanitizeImageUrl(element.getAttribute("src") || "");
+      if (!src) return "";
+      const alt = element.getAttribute("alt") || "";
+      return `![${alt}](${src})`;
+    }
+
+    if (tag === "a") {
+      const href = sanitizeUrl(element.getAttribute("href") || "");
+      return `[${inner().trim()}](${href})`;
+    }
+
+    if (tag === "strong" || tag === "b") return `**${inner()}**`;
+    if (tag === "em" || tag === "i") return `*${inner()}*`;
+    if (tag === "code") return `\`${inner()}\``;
+
+    return inner();
+  };
+
+  const hasBlockChildren = (element: Element) =>
+    Array.from(element.children).some((child) =>
+      blockTags.has(child.tagName.toLowerCase()),
+    );
+
+  const appendNode = (node: Node) => {
+    if (node.nodeType === 3) {
+      pushLines(node.textContent || "");
+      return;
+    }
+
+    if (node.nodeType !== 1) return;
+
+    const element = node as Element;
+    const tag = element.tagName.toLowerCase();
+
+    if (tag === "h1" || tag === "h2" || tag === "h3") {
+      pushLines(`${"#".repeat(Number(tag[1]))} ${serializeInline(element)}`);
+      pushBlank();
+      return;
+    }
+
+    if (tag === "ul" || tag === "ol") {
+      let index = 1;
+      for (const child of Array.from(element.children)) {
+        if (child.tagName.toLowerCase() !== "li") continue;
+        const marker = tag === "ol" ? `${index}.` : "-";
+        pushLines(`${marker} ${serializeInline(child)}`);
+        index += 1;
+      }
+      pushBlank();
+      return;
+    }
+
+    if (tag === "blockquote") {
+      const quoteLines = serializeInline(element)
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `> ${line}`);
+      pushLines(quoteLines.join("\n"));
+      pushBlank();
+      return;
+    }
+
+    if (tag === "p" || tag === "div" || tag === "section" || tag === "article") {
+      if (hasBlockChildren(element)) {
+        Array.from(element.childNodes).forEach(appendNode);
+      } else {
+        pushLines(serializeInline(element));
+        pushBlank();
+      }
+      return;
+    }
+
+    if (tag === "img") {
+      pushLines(serializeInline(element));
+      pushBlank();
+      return;
+    }
+
+    Array.from(element.childNodes).forEach(appendNode);
+  };
+
+  Array.from(doc.body.childNodes).forEach(appendNode);
+
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function isBlockStart(line: string) {
@@ -484,8 +633,8 @@ export function contentToHtml(content: string) {
   const trimmed = content.trim();
   if (!trimmed) return "";
   if (looksLikeHtml(trimmed)) {
-    return renderMarkdownHeadingsInHtml(
-      renderSpecialBlocksInHtml(sanitizeHtml(trimmed)),
+    return renderSpecialBlocksInHtml(
+      markdownToHtml(normalizeHtmlToMarkdown(sanitizeHtml(trimmed))),
     );
   }
   return renderSpecialBlocksInHtml(markdownToHtml(trimmed));
