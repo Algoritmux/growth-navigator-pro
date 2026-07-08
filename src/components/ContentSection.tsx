@@ -1,9 +1,17 @@
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Brain, BarChart3, Handshake, Lightbulb } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Brain,
+  BarChart3,
+  Handshake,
+  Lightbulb,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { fetchPostsFromApi, type BlogPost } from "@/lib/blogStore";
+import type { BlogPost } from "@/lib/blogStore";
+import { fetchPublishedBlogPosts } from "@/lib/blogApi";
 import { extractFirstImageSrc } from "@/lib/markdown";
 import { useEffect, useState } from "react";
 
@@ -27,7 +35,7 @@ const ICON_BY_LABEL: Record<string, LucideIcon> = {
   "Growth Marketing": BarChart3,
   "IA aplicada aos negócios": Brain,
   "Estratégia Comercial": Lightbulb,
-  "Negociação": Handshake,
+  Negociação: Handshake,
   "Liderança e Gestão": BookOpen,
   "Reflexões Estratégicas": BookOpen,
 };
@@ -47,7 +55,7 @@ const ContentSection = () => {
   useEffect(() => {
     let active = true;
 
-    fetchPostsFromApi(true)
+    fetchPublishedBlogPosts()
       .then((data) => {
         if (active) setPosts(data);
       })
@@ -69,12 +77,12 @@ const ContentSection = () => {
       counts.set(label, (counts.get(label) ?? 0) + 1);
     }
 
-    return ORDERED_LABELS
-      .filter((label) => (counts.get(label) ?? 0) > 0)
-      .map((label) => {
+    return ORDERED_LABELS.filter((label) => (counts.get(label) ?? 0) > 0).map(
+      (label) => {
         const icon = ICON_BY_LABEL[label] ?? BookOpen;
         return { icon, label, count: counts.get(label) ?? 0 };
-      });
+      },
+    );
   })();
 
   // ✅ 3 mais recentes (mantém o “featured” da Home)
@@ -108,7 +116,8 @@ const ContentSection = () => {
             Hub de conhecimento estratégico
           </h2>
           <p className="text-muted-foreground text-lg">
-            Artigos estratégicos sobre crescimento, dados e inteligência aplicada a negócios.
+            Artigos estratégicos sobre crescimento, dados e inteligência
+            aplicada a negócios.
           </p>
         </motion.div>
 
@@ -130,7 +139,9 @@ const ContentSection = () => {
             >
               <cat.icon className="w-4 h-4" />
               {cat.label}
-              <span className="text-xs text-muted-foreground ml-1">({cat.count})</span>
+              <span className="text-xs text-muted-foreground ml-1">
+                ({cat.count})
+              </span>
             </motion.button>
           ))}
         </div>
@@ -200,9 +211,12 @@ const ContentSection = () => {
         {/* Estado vazio (se ainda não tem posts no store) */}
         {featuredArticles.length === 0 && (
           <div className="mt-10 rounded-2xl border bg-card p-8 text-center">
-            <div className="text-lg font-bold text-foreground">Sem artigos ainda</div>
+            <div className="text-lg font-bold text-foreground">
+              Sem artigos ainda
+            </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Estamos preparando conteúdos incríveis para você. Em breve traremos novidades!
+              Estamos preparando conteúdos incríveis para você. Em breve
+              traremos novidades!
             </p>
           </div>
         )}
