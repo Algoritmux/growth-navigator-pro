@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
@@ -71,13 +77,19 @@ export default function BlogPostPage() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
 
-  const coverImage = useMemo(() => extractFirstImageSrc(post?.content ?? ""), [post?.content]);
+  const coverImage = useMemo(
+    () => extractFirstImageSrc(post?.content ?? ""),
+    [post?.content],
+  );
   const articleHtml = useMemo(() => {
     const html = contentToHtml(post?.content ?? "");
-    return html.replace(/<p>\s*<img[^>]*>\s*<\/p>/i, "").replace(/<img[^>]*>/i, "");
+    return html
+      .replace(/<p>\s*<img[^>]*>\s*<\/p>/i, "")
+      .replace(/<img[^>]*>/i, "");
   }, [post?.content]);
   const shareLinks = useMemo(() => {
-    const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+    const currentUrl =
+      typeof window !== "undefined" ? window.location.href : "";
     const encodedUrl = encodeURIComponent(currentUrl);
     const encodedText = encodeURIComponent(post?.title ?? "");
 
@@ -91,10 +103,17 @@ export default function BlogPostPage() {
 
   const postEditorSettings = {
     font: post?.editorSettings?.font ?? DEFAULT_POST_EDITOR_SETTINGS.font,
-    fontSize: post?.editorSettings?.fontSize ?? DEFAULT_POST_EDITOR_SETTINGS.fontSize,
-    lineHeight: post?.editorSettings?.lineHeight ?? DEFAULT_POST_EDITOR_SETTINGS.lineHeight,
-    paragraphSpaceBefore: post?.editorSettings?.paragraphSpaceBefore ?? DEFAULT_POST_EDITOR_SETTINGS.paragraphSpaceBefore,
-    paragraphSpaceAfter: post?.editorSettings?.paragraphSpaceAfter ?? DEFAULT_POST_EDITOR_SETTINGS.paragraphSpaceAfter,
+    fontSize:
+      post?.editorSettings?.fontSize ?? DEFAULT_POST_EDITOR_SETTINGS.fontSize,
+    lineHeight:
+      post?.editorSettings?.lineHeight ??
+      DEFAULT_POST_EDITOR_SETTINGS.lineHeight,
+    paragraphSpaceBefore:
+      post?.editorSettings?.paragraphSpaceBefore ??
+      DEFAULT_POST_EDITOR_SETTINGS.paragraphSpaceBefore,
+    paragraphSpaceAfter:
+      post?.editorSettings?.paragraphSpaceAfter ??
+      DEFAULT_POST_EDITOR_SETTINGS.paragraphSpaceAfter,
   };
 
   const articleStyle: CSSProperties & Record<string, string | number> = {
@@ -107,11 +126,15 @@ export default function BlogPostPage() {
 
   const articleClassName = [
     "prose prose-sm sm:prose-base max-w-none",
-    "prose-headings:text-foreground prose-strong:text-foreground prose-a:text-primary",
-    "prose-li:text-foreground/90 prose-blockquote:text-muted-foreground",
+    "prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground",
+    "prose-h2:mt-12 prose-h2:border-t prose-h2:pt-8 prose-h2:text-3xl",
+    "prose-h3:mt-8 prose-h3:text-2xl",
+    "prose-strong:text-foreground prose-a:font-semibold prose-a:text-primary",
+    "prose-li:text-foreground/90 prose-blockquote:rounded-2xl prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/40 prose-blockquote:px-5 prose-blockquote:py-3 prose-blockquote:text-muted-foreground",
     "[&_p]:text-foreground/90",
     "[&_p]:[margin-top:var(--post-p-before)] [&_p]:[margin-bottom:var(--post-p-after)]",
-    "prose-img:rounded-md prose-img:shadow-sm",
+    "prose-ul:space-y-2 prose-ol:space-y-2",
+    "prose-img:rounded-2xl prose-img:border prose-img:shadow-sm",
   ].join(" ");
 
   useEffect(() => {
@@ -144,7 +167,9 @@ export default function BlogPostPage() {
     const article = articleRef.current;
     if (!article) return;
 
-    const headingNodes = Array.from(article.querySelectorAll("h2, h3")) as HTMLElement[];
+    const headingNodes = Array.from(
+      article.querySelectorAll("h2, h3"),
+    ) as HTMLElement[];
     const items: TocItem[] = headingNodes.map((node, index) => {
       const raw = node.textContent?.trim() || `secao-${index + 1}`;
       const id = node.id || `${slugify(raw)}-${index + 1}`;
@@ -167,7 +192,10 @@ export default function BlogPostPage() {
       const viewport = window.innerHeight || 1;
       const totalDistance = rect.height + viewport;
       const passed = viewport - rect.top;
-      const progress = Math.min(100, Math.max(0, (passed / totalDistance) * 100));
+      const progress = Math.min(
+        100,
+        Math.max(0, (passed / totalDistance) * 100),
+      );
       setReadProgress(progress);
 
       if (!items.length) return;
@@ -197,7 +225,10 @@ export default function BlogPostPage() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <section className="mx-auto w-full max-w-3xl px-5 py-10">
-          <Link to="/blog" className="text-sm text-muted-foreground hover:underline">
+          <Link
+            to="/blog"
+            className="text-sm text-muted-foreground hover:underline"
+          >
             &larr; Voltar para o blog
           </Link>
           <h1 className="mt-4 text-2xl font-bold">Carregando post...</h1>
@@ -210,7 +241,10 @@ export default function BlogPostPage() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <section className="mx-auto w-full max-w-3xl px-5 py-10">
-          <Link to="/blog" className="text-sm text-muted-foreground hover:underline">
+          <Link
+            to="/blog"
+            className="text-sm text-muted-foreground hover:underline"
+          >
             &larr; Voltar para o blog
           </Link>
           <h1 className="mt-4 text-2xl font-bold">Post nao encontrado</h1>
@@ -246,10 +280,16 @@ export default function BlogPostPage() {
 
       setNewsletterName("");
       setNewsletterEmail("");
-      window.open("https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577", "_blank");
+      window.open(
+        "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577",
+        "_blank",
+      );
     } catch (error) {
       toast.error("Não foi possível salvar sua inscrição.", {
-        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tente novamente em alguns instantes.",
       });
     } finally {
       setIsSubmittingNewsletter(false);
@@ -278,7 +318,10 @@ export default function BlogPostPage() {
       />
 
       <section className="mx-auto w-full max-w-[1360px] px-5 py-10">
-        <Link to="/blog" className="text-sm text-muted-foreground hover:underline">
+        <Link
+          to="/blog"
+          className="text-sm text-muted-foreground hover:underline"
+        >
           &larr; Voltar para o blog
         </Link>
 
@@ -287,7 +330,10 @@ export default function BlogPostPage() {
             {post.title}
           </h1>
 
-          <time dateTime={post.dateISO} className="mt-5 block text-xl font-semibold text-foreground md:text-2xl">
+          <time
+            dateTime={post.dateISO}
+            className="mt-5 block text-xl font-semibold text-foreground md:text-2xl"
+          >
             {displayDate}
           </time>
 
@@ -297,7 +343,9 @@ export default function BlogPostPage() {
               alt="Guilherme Correia"
               className="h-16 w-16 rounded-full object-cover ring-2 ring-border md:h-20 md:w-20"
             />
-            <div className="mt-3 text-2xl font-medium text-foreground">Guilherme Correia</div>
+            <div className="mt-3 text-2xl font-medium text-foreground">
+              Guilherme Correia
+            </div>
             <div className="mt-1 text-sm text-muted-foreground md:text-base">
               Estrategia de growth, dados e IA aplicada a negocios
             </div>
@@ -306,49 +354,67 @@ export default function BlogPostPage() {
 
         {coverImage && (
           <div className="mt-7 overflow-hidden bg-card">
-            <img src={coverImage} alt={post.title} className="h-[180px] w-full object-cover md:h-[250px] lg:h-[320px]" />
+            <img
+              src={coverImage}
+              alt={post.title}
+              className="h-[180px] w-full object-cover md:h-[250px] lg:h-[320px]"
+            />
           </div>
         )}
 
         <div className="mt-6 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_300px] lg:gap-8">
-          <aside className="hidden lg:row-span-2 lg:block">
-            <div className="sticky top-24">
-              <h3 className="text-2xl font-medium leading-tight text-foreground md:text-3xl">Navegue pelo guia</h3>
-              <div className="mt-6 h-2 w-full rounded-full bg-border">
-                <div
-                  className="h-2 rounded-full bg-primary transition-all duration-200"
-                  style={{ width: `${Math.max(6, readProgress)}%` }}
-                />
-              </div>
+          {toc.length > 0 && (
+            <aside className="hidden lg:row-span-2 lg:block">
+              <div className="sticky top-24">
+                <h3 className="text-2xl font-medium leading-tight text-foreground md:text-3xl">
+                  Navegue pelo índice
+                </h3>
 
-              <div className="mt-5 text-xl font-medium text-primary">Ir para:</div>
-              <div className="mt-4 max-h-[62vh] overflow-auto pr-2">
-                {toc.length > 0 ? (
-                  <ul className="space-y-3">
-                    {toc.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          onClick={() => handleTocClick(item.id)}
-                          className={[
-                            "w-full text-left text-base leading-snug transition-colors",
-                            item.level === 3 ? "pl-4" : "",
-                            activeHeading === item.id ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
-                          ].join(" ")}
-                        >
-                          {item.text}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Adicione subtitulos (H2/H3) no post para criar o indice automatico.</p>
+                <div className="mt-6 h-2 w-full rounded-full bg-border">
+                  <div
+                    className="h-2 rounded-full bg-primary transition-all duration-200"
+                    style={{ width: `${Math.max(6, readProgress)}%` }}
+                  />
+                </div>
+
+                {toc.length > 0 && (
+                  <>
+                    <div className="mt-5 text-xl font-medium text-primary">
+                      Ir para:
+                    </div>
+
+                    <div className="mt-4 max-h-[62vh] overflow-auto pr-2">
+                      <ul className="space-y-3">
+                        {toc.map((item) => (
+                          <li key={item.id}>
+                            <button
+                              onClick={() => handleTocClick(item.id)}
+                              className={[
+                                "w-full text-left text-base leading-snug transition-colors",
+                                item.level === 3 ? "pl-4" : "",
+                                activeHeading === item.id
+                                  ? "font-semibold text-foreground"
+                                  : "text-muted-foreground hover:text-foreground",
+                              ].join(" ")}
+                            >
+                              {item.text}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
-          </aside>
+            </aside>
+          )}
 
           <div className="min-w-0 lg:col-start-2">
-            <p className="mb-8 text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>
+            <div className="mb-8 rounded-2xl border bg-muted/40 p-5">
+              <p className="text-lg leading-relaxed text-foreground/80">
+                {post.excerpt}
+              </p>
+            </div>
 
             <article
               ref={articleRef}
@@ -369,41 +435,71 @@ export default function BlogPostPage() {
                   Insights semanais sobre crescimento previsivel
                 </div>
                 <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                  Receba artigos estrategicos sobre marketing, vendas e dados direto da pratica, sem teoria generica.
+                  Receba artigos estrategicos sobre marketing, vendas e dados
+                  direto da pratica, sem teoria generica.
                 </p>
 
-              <form onSubmit={handleNewsletterSubmit} className="mt-5 space-y-2.5">
-                <input
-                  type="text"
-                  required
-                  value={newsletterName}
-                  onChange={(e) => setNewsletterName(e.target.value)}
-                  placeholder="Seu nome"
-                  className="h-11 w-full rounded-lg border bg-background px-3 text-base outline-none"
-                />
-                <input
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Seu e-mail"
-                  className="h-11 w-full rounded-lg border bg-background px-3 text-base outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmittingNewsletter}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                <form
+                  onSubmit={handleNewsletterSubmit}
+                  className="mt-5 space-y-2.5"
                 >
-                  {isSubmittingNewsletter ? "ENVIANDO..." : "ENVIAR"}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </form>
+                  <input
+                    type="text"
+                    required
+                    value={newsletterName}
+                    onChange={(e) => setNewsletterName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="h-11 w-full rounded-lg border bg-background px-3 text-base outline-none"
+                  />
+                  <input
+                    type="email"
+                    required
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    placeholder="Seu e-mail"
+                    className="h-11 w-full rounded-lg border bg-background px-3 text-base outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingNewsletter}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    {isSubmittingNewsletter ? "ENVIANDO..." : "ENVIAR"}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </form>
 
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Sem spam. Cancele quando quiser.</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Sem spam. Cancele quando quiser.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border bg-primary text-primary-foreground p-5 shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground/70">
+                  Materiais gratuitos
+                </div>
+
+                <h3 className="mt-3 text-xl font-semibold leading-tight">
+                  Guias práticos para aplicar growth com mais previsibilidade
+                </h3>
+
+                <p className="mt-3 text-sm leading-relaxed text-primary-foreground/80">
+                  Acesse frameworks, pesquisas e conteúdos complementares para
+                  aprofundar o tema deste artigo.
+                </p>
+
+                <Link
+                  to="/biblioteca"
+                  className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-background/90"
+                >
+                  Ver biblioteca →
+                </Link>
               </div>
 
               <div className="rounded-2xl border bg-card p-5 text-center">
-                <div className="text-2xl font-medium leading-tight text-foreground">Gostou? Compartilhe:</div>
+                <div className="text-2xl font-medium leading-tight text-foreground">
+                  Gostou? Compartilhe:
+                </div>
                 <div className="mt-3 flex items-center justify-center gap-2.5">
                   <a
                     href={shareLinks.whatsapp}
@@ -449,7 +545,9 @@ export default function BlogPostPage() {
                     alt="Guilherme Correia"
                     className="h-14 w-14 rounded-full object-cover ring-2 ring-border"
                   />
-                  <div className="mt-2.5 text-xl font-medium text-foreground">Guilherme Correia</div>
+                  <div className="mt-2.5 text-xl font-medium text-foreground">
+                    Guilherme Correia
+                  </div>
                   <div className="mt-1 text-sm leading-snug text-muted-foreground">
                     Estrategia de growth, dados e IA aplicada a negocios
                   </div>

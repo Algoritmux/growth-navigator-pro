@@ -1,10 +1,19 @@
-import { fetchPostsFromApi, type BlogPost } from "@/lib/blogStore";
+import type { BlogPost } from "@/lib/blogStore";
+import { fetchPublishedBlogPosts } from "@/lib/blogApi";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractFirstImageSrc } from "@/lib/markdown";
 
-const CATEGORIES = ["Todos", "GTM", "ICP", "Oferta", "Sales", "Growth", "IA"] as const;
+const CATEGORIES = [
+  "Todos",
+  "GTM",
+  "ICP",
+  "Oferta",
+  "Sales",
+  "Growth",
+  "IA",
+] as const;
 type Category = (typeof CATEGORIES)[number];
 
 function formatDatePtBR(dateISO: string) {
@@ -27,7 +36,7 @@ export default function BlogPage() {
   useEffect(() => {
     let active = true;
 
-    fetchPostsFromApi(true)
+    fetchPublishedBlogPosts()
       .then((data) => {
         if (active) setPosts(data);
       })
@@ -47,7 +56,8 @@ export default function BlogPage() {
     const q = query.trim().toLowerCase();
 
     return posts.filter((p) => {
-      const matchCategory = category === "Todos" ? true : p.category === category;
+      const matchCategory =
+        category === "Todos" ? true : p.category === category;
       const matchQuery =
         !q ||
         p.title.toLowerCase().includes(q) ||
@@ -67,7 +77,10 @@ export default function BlogPage() {
       <section className="mx-auto w-full max-w-6xl px-5 py-10">
         <div className="rounded-2xl border bg-card p-6">
           <div className="flex justify-end">
-            <Link to="/" className="text-sm text-muted-foreground hover:underline">
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground hover:underline"
+            >
               &larr; Voltar para a home
             </Link>
           </div>
@@ -129,7 +142,9 @@ export default function BlogPage() {
                 )}
 
                 <div className="text-xs text-muted-foreground">
-                  <span className="rounded-full border bg-background px-2 py-1">{p.category}</span>
+                  <span className="rounded-full border bg-background px-2 py-1">
+                    {p.category}
+                  </span>
                   <span className="mx-2">-</span>
                   <span>{p.readTime}</span>
                   <span className="mx-2">-</span>
@@ -137,7 +152,9 @@ export default function BlogPage() {
                 </div>
 
                 <h3 className="mt-3 text-base font-bold">{p.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{p.excerpt}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {p.excerpt}
+                </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {p.tags?.slice(0, 3).map((t: string) => (
@@ -163,7 +180,9 @@ export default function BlogPage() {
         {!isLoading && filtered.length === 0 && (
           <div className="mt-8 rounded-2xl border bg-card p-8 text-center">
             <div className="text-lg font-bold">Nada encontrado.</div>
-            <p className="mt-2 text-sm text-muted-foreground">Tente outro termo ou categoria.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tente outro termo ou categoria.
+            </p>
           </div>
         )}
       </section>
