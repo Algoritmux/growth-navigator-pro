@@ -41,6 +41,33 @@ const SPECIAL_BLOCK_TYPES: SpecialBlockType[] = [
 const SPECIAL_BLOCK_OPEN_RE =
   /^\[(bloco-destaque|card-numero|material|citacao)\b([^\]]*)\]\s*$/i;
 
+function slugifyHeading(text: string) {
+  return (
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/[`*_~[\]()]/g, "")
+      .replace(/&[a-z0-9#]+;/gi, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-") || "secao"
+  );
+}
+
+function createHeadingIdFactory() {
+  const counts = new Map<string, number>();
+
+  return (text: string) => {
+    const base = slugifyHeading(text);
+    const count = counts.get(base) || 0;
+    counts.set(base, count + 1);
+    return count === 0 ? base : `${base}-${count + 1}`;
+  };
+}
+
 function looksLikeHtml(content: string) {
   return /<\/?[a-z][\s\S]*>/i.test(content);
 }
@@ -313,6 +340,34 @@ function renderSpecialBlocksInHtml(html: string) {
   return rendered;
 }
 
+function htmlToText(value: string) {
+  if (typeof window !== "undefined" && typeof DOMParser !== "undefined") {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(value, "text/html");
+    return doc.body.textContent || "";
+  }
+
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+}
+
+function renderMarkdownHeadingsInHtml(html: string) {
+  const getHeadingId = createHeadingIdFactory();
+
+  return html.replace(
+    /<(p|div)(?:\s[^>]*)?>(\s*)(#{1,3})\s+([\s\S]*?)(\s*)<\/\1>/gi,
+    (_match, _tag, _before, hashes, contentHtml, _after) => {
+      const level = hashes.length;
+      const text = htmlToText(contentHtml).trim();
+      if (!text) return "";
+      return `<h${level} id="${getHeadingId(text)}">${contentHtml.trim()}</h${level}>`;
+    },
+  );
+}
+
 function isBlockStart(line: string) {
   return (
     /^#{1,3}\s+/.test(line) ||
@@ -326,6 +381,7 @@ function isBlockStart(line: string) {
 export function markdownToHtml(markdown: string) {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const html: string[] = [];
+  const getHeadingId = createHeadingIdFactory();
   let i = 0;
 
   while (i < lines.length) {
@@ -367,8 +423,11 @@ export function markdownToHtml(markdown: string) {
     const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
-      const content = parseInline(headingMatch[2].trim());
-      html.push(`<h${level}>${content}</h${level}>`);
+      const rawContent = headingMatch[2].trim();
+      const content = parseInline(rawContent);
+      html.push(
+        `<h${level} id="${getHeadingId(rawContent)}">${content}</h${level}>`,
+      );
       i += 1;
       continue;
     }
@@ -425,7 +484,9 @@ export function contentToHtml(content: string) {
   const trimmed = content.trim();
   if (!trimmed) return "";
   if (looksLikeHtml(trimmed)) {
-    return renderSpecialBlocksInHtml(sanitizeHtml(trimmed));
+    return renderMarkdownHeadingsInHtml(
+      renderSpecialBlocksInHtml(sanitizeHtml(trimmed)),
+    );
   }
   return renderSpecialBlocksInHtml(markdownToHtml(trimmed));
 }
