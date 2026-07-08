@@ -200,6 +200,15 @@ export default function BlogPostPage() {
 
       if (!items.length) return;
 
+      const isNearBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 160;
+
+      if (isNearBottom) {
+        setActiveHeading(items[items.length - 1].id);
+        return;
+      }
+
       let current = items[0].id;
       for (const item of items) {
         const el = document.getElementById(item.id);
