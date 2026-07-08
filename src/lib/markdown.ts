@@ -20,6 +20,27 @@ function sanitizeImageUrl(url: string) {
   return "";
 }
 
+type SpecialBlockType =
+  | "bloco-destaque"
+  | "card-numero"
+  | "material"
+  | "citacao";
+
+type SpecialBlockMatch = {
+  type: SpecialBlockType;
+  attrs: Record<string, string>;
+};
+
+const SPECIAL_BLOCK_TYPES: SpecialBlockType[] = [
+  "bloco-destaque",
+  "card-numero",
+  "material",
+  "citacao",
+];
+
+const SPECIAL_BLOCK_OPEN_RE =
+  /^\[(bloco-destaque|card-numero|material|citacao)\b([^\]]*)\]\s*$/i;
+
 function looksLikeHtml(content: string) {
   return /<\/?[a-z][\s\S]*>/i.test(content);
 }
@@ -165,8 +186,141 @@ function parseInline(text: string) {
   return result;
 }
 
+function parseAttributes(source: string) {
+  const attrs: Record<string, string> = {};
+  const attrRe = /([a-zA-Z0-9_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"']+))/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = attrRe.exec(source)) !== null) {
+    const key = match[1].toLowerCase();
+    attrs[key] = match[2] ?? match[3] ?? match[4] ?? "";
+  }
+
+  return attrs;
+}
+
+function parseSpecialBlockOpen(line: string): SpecialBlockMatch | null {
+  const match = line.trim().match(SPECIAL_BLOCK_OPEN_RE);
+  if (!match) return null;
+
+  return {
+    type: match[1].toLowerCase() as SpecialBlockType,
+    attrs: parseAttributes(match[2] || ""),
+  };
+}
+
+function specialBlockCloseRe(type: SpecialBlockType) {
+  return new RegExp(`^\\[\\/${type}\\]\\s*$`, "i");
+}
+
+function externalUrlAttributes(url: string) {
+  return /^https?:\/\//i.test(url) ? ' target="_blank" rel="noreferrer"' : "";
+}
+
+function normalizeSpecialBodyHtml(bodyHtml: string) {
+  return bodyHtml
+    .replace(/^(?:\s|<br\s*\/?>|<p>\s*(?:<br\s*\/?>)?\s*<\/p>)+/gi, "")
+    .replace(/(?:\s|<br\s*\/?>|<p>\s*(?:<br\s*\/?>)?\s*<\/p>)+$/gi, "")
+    .trim();
+}
+
+function renderSpecialBlock(
+  type: SpecialBlockType,
+  attrs: Record<string, string>,
+  bodyHtml: string,
+) {
+  const content = normalizeSpecialBodyHtml(bodyHtml);
+  if (!content) return "";
+
+  if (type === "bloco-destaque") {
+    return [
+      '<aside class="not-prose blog-special-block blog-special-highlight">',
+      '<div class="blog-special-highlight-marker" aria-hidden="true"></div>',
+      `<div class="blog-special-body">${content}</div>`,
+      "</aside>",
+    ].join("");
+  }
+
+  if (type === "card-numero") {
+    const number = escapeHtml(attrs.numero || attrs.numero_card || "");
+    const title = escapeHtml(attrs.titulo || "");
+
+    return [
+      '<section class="not-prose blog-special-block blog-special-number-card">',
+      number
+        ? `<div class="blog-special-number" aria-hidden="true">${number}</div>`
+        : "",
+      '<div class="blog-special-number-content">',
+      title ? `<h4 class="blog-special-title">${title}</h4>` : "",
+      `<div class="blog-special-body">${content}</div>`,
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  if (type === "material") {
+    const title = escapeHtml(attrs.titulo || "Material gratuito");
+    const button = escapeHtml(attrs.botao || "Acessar material");
+    const href = sanitizeUrl(attrs.link || "/biblioteca");
+
+    return [
+      '<aside class="not-prose blog-special-block blog-special-material">',
+      '<div class="blog-special-material-content">',
+      `<h4 class="blog-special-material-title">${title}</h4>`,
+      `<div class="blog-special-body">${content}</div>`,
+      "</div>",
+      `<a class="blog-special-material-button" href="${href}"${externalUrlAttributes(href)}>${button}</a>`,
+      "</aside>",
+    ].join("");
+  }
+
+  const author = escapeHtml(attrs.autor || "");
+
+  return [
+    '<figure class="not-prose blog-special-block blog-special-quote">',
+    `<blockquote class="blog-special-body">${content}</blockquote>`,
+    author ? `<figcaption>${author}</figcaption>` : "",
+    "</figure>",
+  ].join("");
+}
+
+function renderSpecialBlocksInHtml(html: string) {
+  let rendered = html;
+
+  for (const type of SPECIAL_BLOCK_TYPES) {
+    const blockRe = new RegExp(
+      [
+        String.raw`(?:<(?:p|div|section|span)[^>]*>\s*)?`,
+        String.raw`\[`,
+        type,
+        String.raw`\b([^\]]*)\]\s*`,
+        String.raw`(?:<\/(?:p|div|section|span)>\s*)?`,
+        String.raw`([\s\S]*?)`,
+        String.raw`(?:<(?:p|div|section|span)[^>]*>\s*)?`,
+        String.raw`\[\/`,
+        type,
+        String.raw`\]\s*`,
+        String.raw`(?:<\/(?:p|div|section|span)>\s*)?`,
+      ].join(""),
+      "gi",
+    );
+
+    rendered = rendered.replace(blockRe, (_match, attrSource, bodyHtml) =>
+      renderSpecialBlock(type, parseAttributes(attrSource || ""), bodyHtml),
+    );
+  }
+
+  return rendered;
+}
+
 function isBlockStart(line: string) {
-  return /^#{1,3}\s+/.test(line) || /^>\s?/.test(line) || /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line);
+  return (
+    /^#{1,3}\s+/.test(line) ||
+    /^>\s?/.test(line) ||
+    /^[-*]\s+/.test(line) ||
+    /^\d+\.\s+/.test(line) ||
+    Boolean(parseSpecialBlockOpen(line))
+  );
 }
 
 export function markdownToHtml(markdown: string) {
@@ -178,6 +332,34 @@ export function markdownToHtml(markdown: string) {
     const line = lines[i].trimEnd();
 
     if (!line.trim()) {
+      i += 1;
+      continue;
+    }
+
+    const specialBlock = parseSpecialBlockOpen(line);
+    if (specialBlock) {
+      const bodyLines: string[] = [];
+      let j = i + 1;
+      const closeRe = specialBlockCloseRe(specialBlock.type);
+
+      while (j < lines.length && !closeRe.test(lines[j].trim())) {
+        bodyLines.push(lines[j]);
+        j += 1;
+      }
+
+      if (j < lines.length) {
+        html.push(
+          renderSpecialBlock(
+            specialBlock.type,
+            specialBlock.attrs,
+            markdownToHtml(bodyLines.join("\n")),
+          ),
+        );
+        i = j + 1;
+        continue;
+      }
+
+      html.push(`<p>${parseInline(line)}</p>`);
       i += 1;
       continue;
     }
@@ -242,8 +424,10 @@ export function markdownToHtml(markdown: string) {
 export function contentToHtml(content: string) {
   const trimmed = content.trim();
   if (!trimmed) return "";
-  if (looksLikeHtml(trimmed)) return sanitizeHtml(trimmed);
-  return markdownToHtml(trimmed);
+  if (looksLikeHtml(trimmed)) {
+    return renderSpecialBlocksInHtml(sanitizeHtml(trimmed));
+  }
+  return renderSpecialBlocksInHtml(markdownToHtml(trimmed));
 }
 
 export function extractFirstImageSrc(content: string) {
