@@ -20,8 +20,65 @@ function sanitizeImageUrl(url: string) {
   return "";
 }
 
+type SpecialBlockType =
+  | "bloco-destaque"
+  | "card-numero"
+  | "material"
+  | "citacao";
+
+type SpecialBlockMatch = {
+  type: SpecialBlockType;
+  attrs: Record<string, string>;
+};
+
+const SPECIAL_BLOCK_TYPES: SpecialBlockType[] = [
+  "bloco-destaque",
+  "card-numero",
+  "material",
+  "citacao",
+];
+
+const SPECIAL_BLOCK_OPEN_RE =
+  /^\[(bloco-destaque|card-numero|material|citacao)\b([^\]]*)\]\s*$/i;
+
+function slugifyHeading(text: string) {
+  return (
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/[`*_~[\]()]/g, "")
+      .replace(/&[a-z0-9#]+;/gi, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-") || "secao"
+  );
+}
+
+function createHeadingIdFactory() {
+  const counts = new Map<string, number>();
+
+  return (text: string) => {
+    const base = slugifyHeading(text);
+    const count = counts.get(base) || 0;
+    counts.set(base, count + 1);
+    return count === 0 ? base : `${base}-${count + 1}`;
+  };
+}
+
 function looksLikeHtml(content: string) {
-  return /<\/?[a-z][\s\S]*>/i.test(content);
+  const withoutQuotedValues = content.replace(/"[^"]*"|'[^']*'/g, "");
+  return /<\/?[a-z][\s\S]*>/i.test(withoutQuotedValues);
+}
+
+function stripHtmlTags(value: string) {
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
 }
 
 function sanitizeHtml(html: string) {
@@ -165,13 +222,315 @@ function parseInline(text: string) {
   return result;
 }
 
+function parseAttributes(source: string) {
+  const attrs: Record<string, string> = {};
+  const attrRe = /([a-zA-Z0-9_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"']+))/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = attrRe.exec(source)) !== null) {
+    const key = match[1].toLowerCase();
+    attrs[key] = match[2] ?? match[3] ?? match[4] ?? "";
+  }
+
+  return attrs;
+}
+
+function parseSpecialBlockOpen(line: string): SpecialBlockMatch | null {
+  const match = line.trim().match(SPECIAL_BLOCK_OPEN_RE);
+  if (!match) return null;
+
+  return {
+    type: match[1].toLowerCase() as SpecialBlockType,
+    attrs: parseAttributes(match[2] || ""),
+  };
+}
+
+function specialBlockCloseRe(type: SpecialBlockType) {
+  return new RegExp(`^\\[\\/${type}\\]\\s*$`, "i");
+}
+
+function externalUrlAttributes(url: string) {
+  return /^https?:\/\//i.test(url) ? ' target="_blank" rel="noreferrer"' : "";
+}
+
+function normalizeSpecialBodyHtml(bodyHtml: string) {
+  return bodyHtml
+    .replace(/^(?:\s|<br\s*\/?>|<p>\s*(?:<br\s*\/?>)?\s*<\/p>)+/gi, "")
+    .replace(/(?:\s|<br\s*\/?>|<p>\s*(?:<br\s*\/?>)?\s*<\/p>)+$/gi, "")
+    .trim();
+}
+
+function renderSpecialBlock(
+  type: SpecialBlockType,
+  attrs: Record<string, string>,
+  bodyHtml: string,
+) {
+  const content = normalizeSpecialBodyHtml(bodyHtml);
+  if (!content) return "";
+
+  if (type === "bloco-destaque") {
+    return [
+      '<aside class="not-prose blog-special-block blog-special-highlight">',
+      '<div class="blog-special-highlight-marker" aria-hidden="true"></div>',
+      `<div class="blog-special-body">${content}</div>`,
+      "</aside>",
+    ].join("");
+  }
+
+  if (type === "card-numero") {
+    const number = escapeHtml(attrs.numero || attrs.numero_card || "");
+    const title = escapeHtml(attrs.titulo || "");
+
+    return [
+      '<section class="not-prose blog-special-block blog-special-number-card">',
+      number
+        ? `<div class="blog-special-number" aria-hidden="true">${number}</div>`
+        : "",
+      '<div class="blog-special-number-content">',
+      title ? `<h4 class="blog-special-title">${title}</h4>` : "",
+      `<div class="blog-special-body">${content}</div>`,
+      "</div>",
+      "</section>",
+    ].join("");
+  }
+
+  if (type === "material") {
+    const title = escapeHtml(attrs.titulo || "Material gratuito");
+    const button = escapeHtml(attrs.botao || "Acessar material");
+    const href = sanitizeUrl(attrs.link || "/biblioteca");
+
+    return [
+      '<aside class="not-prose blog-special-block blog-special-material">',
+      '<div class="blog-special-material-content">',
+      `<h4 class="blog-special-material-title">${title}</h4>`,
+      `<div class="blog-special-body">${content}</div>`,
+      "</div>",
+      `<a class="blog-special-material-button" href="${href}"${externalUrlAttributes(href)}>${button}</a>`,
+      "</aside>",
+    ].join("");
+  }
+
+  const author = escapeHtml(attrs.autor || "");
+
+  return [
+    '<figure class="not-prose blog-special-block blog-special-quote">',
+    `<blockquote class="blog-special-body">${content}</blockquote>`,
+    author ? `<figcaption>${author}</figcaption>` : "",
+    "</figure>",
+  ].join("");
+}
+
+function renderSpecialBlocksInHtml(html: string) {
+  let rendered = html;
+
+  for (const type of SPECIAL_BLOCK_TYPES) {
+    const blockRe = new RegExp(
+      [
+        String.raw`(?:<(?:p|div|section|span)[^>]*>\s*)?`,
+        String.raw`\[`,
+        type,
+        String.raw`\b([^\]]*)\]\s*`,
+        String.raw`(?:<\/(?:p|div|section|span)>\s*)?`,
+        String.raw`([\s\S]*?)`,
+        String.raw`(?:<(?:p|div|section|span)[^>]*>\s*)?`,
+        String.raw`\[\/`,
+        type,
+        String.raw`\]\s*`,
+        String.raw`(?:<\/(?:p|div|section|span)>\s*)?`,
+      ].join(""),
+      "gi",
+    );
+
+    rendered = rendered.replace(blockRe, (_match, attrSource, bodyHtml) =>
+      renderSpecialBlock(type, parseAttributes(attrSource || ""), bodyHtml),
+    );
+  }
+
+  return rendered;
+}
+
+function normalizeHtmlToMarkdown(html: string) {
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return html
+      .replace(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi, (_match, level, text) => {
+        return `${"#".repeat(Number(level))} ${stripHtmlTags(text)}`;
+      })
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_match, text) => {
+        return `- ${stripHtmlTags(text)}`;
+      })
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|section|blockquote|ul|ol)>/gi, "\n\n")
+      .replace(/<(p|div|section|blockquote|ul|ol)[^>]*>/gi, "")
+      .replace(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi, (_match, src) => {
+        return sanitizeImageUrl(src) ? `![](${src})` : "";
+      })
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (
+        _match,
+        href,
+        text,
+      ) => {
+        return `[${stripHtmlTags(text)}](${sanitizeUrl(href)})`;
+      })
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
+      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
+      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
+      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  const blockTags = new Set([
+    "article",
+    "aside",
+    "blockquote",
+    "div",
+    "figure",
+    "h1",
+    "h2",
+    "h3",
+    "li",
+    "ol",
+    "p",
+    "section",
+    "ul",
+  ]);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const lines: string[] = [];
+
+  const pushBlank = () => {
+    if (lines.length > 0 && lines[lines.length - 1] !== "") {
+      lines.push("");
+    }
+  };
+
+  const pushLines = (value: string) => {
+    const normalized = value
+      .replace(/\r\n/g, "\n")
+      .replace(/\u00a0/g, " ")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    for (const line of normalized) {
+      lines.push(line);
+    }
+  };
+
+  const serializeInline = (node: Node): string => {
+    if (node.nodeType === 3) return node.textContent || "";
+    if (node.nodeType !== 1) return "";
+
+    const element = node as Element;
+    const tag = element.tagName.toLowerCase();
+    const inner = () => Array.from(element.childNodes).map(serializeInline).join("");
+
+    if (tag === "br") return "\n";
+
+    if (tag === "img") {
+      const src = sanitizeImageUrl(element.getAttribute("src") || "");
+      if (!src) return "";
+      const alt = element.getAttribute("alt") || "";
+      return `![${alt}](${src})`;
+    }
+
+    if (tag === "a") {
+      const href = sanitizeUrl(element.getAttribute("href") || "");
+      return `[${inner().trim()}](${href})`;
+    }
+
+    if (tag === "strong" || tag === "b") return `**${inner()}**`;
+    if (tag === "em" || tag === "i") return `*${inner()}*`;
+    if (tag === "code") return `\`${inner()}\``;
+
+    return inner();
+  };
+
+  const hasBlockChildren = (element: Element) =>
+    Array.from(element.children).some((child) =>
+      blockTags.has(child.tagName.toLowerCase()),
+    );
+
+  const appendNode = (node: Node) => {
+    if (node.nodeType === 3) {
+      pushLines(node.textContent || "");
+      return;
+    }
+
+    if (node.nodeType !== 1) return;
+
+    const element = node as Element;
+    const tag = element.tagName.toLowerCase();
+
+    if (tag === "h1" || tag === "h2" || tag === "h3") {
+      pushLines(`${"#".repeat(Number(tag[1]))} ${serializeInline(element)}`);
+      pushBlank();
+      return;
+    }
+
+    if (tag === "ul" || tag === "ol") {
+      let index = 1;
+      for (const child of Array.from(element.children)) {
+        if (child.tagName.toLowerCase() !== "li") continue;
+        const marker = tag === "ol" ? `${index}.` : "-";
+        pushLines(`${marker} ${serializeInline(child)}`);
+        index += 1;
+      }
+      pushBlank();
+      return;
+    }
+
+    if (tag === "blockquote") {
+      const quoteLines = serializeInline(element)
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `> ${line}`);
+      pushLines(quoteLines.join("\n"));
+      pushBlank();
+      return;
+    }
+
+    if (tag === "p" || tag === "div" || tag === "section" || tag === "article") {
+      if (hasBlockChildren(element)) {
+        Array.from(element.childNodes).forEach(appendNode);
+      } else {
+        pushLines(serializeInline(element));
+        pushBlank();
+      }
+      return;
+    }
+
+    if (tag === "img") {
+      pushLines(serializeInline(element));
+      pushBlank();
+      return;
+    }
+
+    Array.from(element.childNodes).forEach(appendNode);
+  };
+
+  Array.from(doc.body.childNodes).forEach(appendNode);
+
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function isBlockStart(line: string) {
-  return /^#{1,3}\s+/.test(line) || /^>\s?/.test(line) || /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line);
+  return (
+    /^#{1,3}\s+/.test(line) ||
+    /^>\s?/.test(line) ||
+    /^[-*]\s+/.test(line) ||
+    /^\d+\.\s+/.test(line) ||
+    Boolean(parseSpecialBlockOpen(line))
+  );
 }
 
 export function markdownToHtml(markdown: string) {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const html: string[] = [];
+  const getHeadingId = createHeadingIdFactory();
   let i = 0;
 
   while (i < lines.length) {
@@ -182,11 +541,42 @@ export function markdownToHtml(markdown: string) {
       continue;
     }
 
+    const specialBlock = parseSpecialBlockOpen(line);
+    if (specialBlock) {
+      const bodyLines: string[] = [];
+      let j = i + 1;
+      const closeRe = specialBlockCloseRe(specialBlock.type);
+
+      while (j < lines.length && !closeRe.test(lines[j].trim())) {
+        bodyLines.push(lines[j]);
+        j += 1;
+      }
+
+      if (j < lines.length) {
+        html.push(
+          renderSpecialBlock(
+            specialBlock.type,
+            specialBlock.attrs,
+            markdownToHtml(bodyLines.join("\n")),
+          ),
+        );
+        i = j + 1;
+        continue;
+      }
+
+      html.push(`<p>${parseInline(line)}</p>`);
+      i += 1;
+      continue;
+    }
+
     const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
-      const content = parseInline(headingMatch[2].trim());
-      html.push(`<h${level}>${content}</h${level}>`);
+      const rawContent = headingMatch[2].trim();
+      const content = parseInline(rawContent);
+      html.push(
+        `<h${level} id="${getHeadingId(rawContent)}">${content}</h${level}>`,
+      );
       i += 1;
       continue;
     }
@@ -242,8 +632,12 @@ export function markdownToHtml(markdown: string) {
 export function contentToHtml(content: string) {
   const trimmed = content.trim();
   if (!trimmed) return "";
-  if (looksLikeHtml(trimmed)) return sanitizeHtml(trimmed);
-  return markdownToHtml(trimmed);
+  if (looksLikeHtml(trimmed)) {
+    return renderSpecialBlocksInHtml(
+      markdownToHtml(normalizeHtmlToMarkdown(sanitizeHtml(trimmed))),
+    );
+  }
+  return renderSpecialBlocksInHtml(markdownToHtml(trimmed));
 }
 
 export function extractFirstImageSrc(content: string) {

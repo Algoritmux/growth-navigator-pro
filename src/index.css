@@ -88,6 +88,206 @@
   }
 }
 
+@layer components {
+  .blog-special-block {
+    margin: 2rem 0;
+    border-radius: 1rem;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 18px 45px -28px hsl(var(--primary) / 0.45);
+  }
+
+  .blog-special-body {
+    color: hsl(var(--foreground) / 0.88);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .blog-special-body p,
+  .blog-special-body ul,
+  .blog-special-body ol,
+  .blog-special-body blockquote {
+    margin: 0.65rem 0 0;
+  }
+
+  .blog-special-body p:first-child,
+  .blog-special-body ul:first-child,
+  .blog-special-body ol:first-child,
+  .blog-special-body blockquote:first-child {
+    margin-top: 0;
+  }
+
+  .blog-special-body ul,
+  .blog-special-body ol {
+    padding-left: 1.25rem;
+  }
+
+  .blog-special-body ul {
+    list-style: disc;
+  }
+
+  .blog-special-body ol {
+    list-style: decimal;
+  }
+
+  .blog-special-body a {
+    color: hsl(var(--primary));
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .blog-special-highlight {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, hsl(var(--primary) / 0.07), transparent 58%),
+      hsl(var(--secondary));
+    padding: 1.5rem;
+  }
+
+  .blog-special-highlight-marker {
+    position: absolute;
+    inset: 1.2rem auto 1.2rem 1.2rem;
+    width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--brand-yellow)));
+  }
+
+  .blog-special-highlight .blog-special-body {
+    padding-left: 1.1rem;
+    color: hsl(var(--foreground) / 0.92);
+    font-size: 1.08rem;
+    font-weight: 500;
+  }
+
+  .blog-special-number-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: hsl(var(--card));
+    padding: 1.35rem;
+  }
+
+  .blog-special-number {
+    display: inline-flex;
+    width: 3rem;
+    min-width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-size: 1.1rem;
+    font-weight: 800;
+    box-shadow: 0 10px 24px -14px hsl(var(--primary));
+  }
+
+  .blog-special-number-content {
+    min-width: 0;
+  }
+
+  .blog-special-title {
+    margin: 0 0 0.45rem;
+    color: hsl(var(--foreground));
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .blog-special-material {
+    display: grid;
+    gap: 1.25rem;
+    align-items: center;
+    background:
+      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))),
+      hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 1.5rem;
+  }
+
+  .blog-special-material-title {
+    margin: 0 0 0.55rem;
+    color: hsl(var(--primary-foreground));
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .blog-special-material .blog-special-body {
+    color: hsl(var(--primary-foreground) / 0.86);
+  }
+
+  .blog-special-material-button {
+    display: inline-flex;
+    min-height: 2.85rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+
+  .blog-special-material-button:hover {
+    transform: translateY(-1px);
+    opacity: 0.92;
+  }
+
+  .blog-special-quote {
+    position: relative;
+    background: hsl(var(--card));
+    border-left: 5px solid hsl(var(--primary));
+    padding: 1.45rem 1.55rem 1.45rem 1.8rem;
+  }
+
+  .blog-special-quote::before {
+    content: "\"";
+    position: absolute;
+    top: -0.35rem;
+    right: 1.25rem;
+    color: hsl(var(--primary) / 0.13);
+    font-family: Georgia, serif;
+    font-size: 5rem;
+    line-height: 1;
+  }
+
+  .blog-special-quote blockquote {
+    margin: 0;
+    color: hsl(var(--foreground) / 0.9);
+    font-family: Georgia, serif;
+    font-size: 1.12rem;
+    font-style: italic;
+    line-height: 1.75;
+  }
+
+  .blog-special-quote figcaption {
+    margin-top: 0.85rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .blog-special-quote figcaption::before {
+    content: "- ";
+  }
+
+  @media (min-width: 720px) {
+    .blog-special-material {
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 1.7rem;
+    }
+
+    .blog-special-material-button {
+      min-width: 10.5rem;
+    }
+  }
+}
+
 @layer utilities {
   .text-gradient-primary {
     background: linear-gradient(135deg, hsl(268 60% 22%), hsl(268 50% 35%));
