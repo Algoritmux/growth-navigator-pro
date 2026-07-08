@@ -1,4 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type ClipboardEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { createRssNewsletterDraft } from "@/lib/newsletterApi";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import {
   type BlogCategory,
   type BlogPost,
@@ -22,6 +33,7 @@ import {
   Italic,
   List,
   ListOrdered,
+  MailPlus,
   Pencil,
   Plus,
   Redo2,
@@ -37,13 +49,21 @@ import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/AdminHeader";
 import { contentToHtml } from "@/lib/markdown";
 
-const categories: BlogCategory[] = ["GTM", "ICP", "Oferta", "Sales", "Growth", "IA"];
+const categories: BlogCategory[] = [
+  "GTM",
+  "ICP",
+  "Oferta",
+  "Sales",
+  "Growth",
+  "IA",
+];
 type BlockType = "p" | "h1" | "h2" | "h3";
 type EditorFont = "theme" | "arial" | "georgia" | "times";
 type TextAlignType = "left" | "center" | "right" | "justify";
 
 const MIN_EDITOR_PAGE_HEIGHT = 1200;
-const TOOLBAR_BUTTON_CLASS = "inline-flex h-9 items-center justify-center rounded-lg border bg-background px-2.5 text-sm";
+const TOOLBAR_BUTTON_CLASS =
+  "inline-flex h-9 items-center justify-center rounded-lg border bg-background px-2.5 text-sm";
 const FONT_SIZE_OPTIONS = [14, 16, 18, 20, 22];
 const LINE_HEIGHT_OPTIONS = [1, 1.15, 1.5, 2];
 const PARAGRAPH_SPACE_OPTIONS = [0, 4, 8, 12, 16, 20, 24];
@@ -79,24 +99,43 @@ function newPostTemplate(): BlogPost {
 }
 
 function escapeHtmlForEditor(text: string) {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function escapeAttribute(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function closestNumber(value: number, options: number[]) {
-  return options.reduce((prev, current) => (Math.abs(current - value) < Math.abs(prev - value) ? current : prev), options[0]);
+  return options.reduce(
+    (prev, current) =>
+      Math.abs(current - value) < Math.abs(prev - value) ? current : prev,
+    options[0],
+  );
 }
 
 function normalizeBlockType(value: string | null): BlockType | null {
   if (!value) return null;
-  const normalized = value.toLowerCase().replace(/[<>"']/g, "").trim();
+  const normalized = value
+    .toLowerCase()
+    .replace(/[<>"']/g, "")
+    .trim();
   if (normalized.includes("h1")) return "h1";
   if (normalized.includes("h2")) return "h2";
   if (normalized.includes("h3")) return "h3";
-  if (normalized.includes("p") || normalized.includes("normal") || normalized.includes("div")) return "p";
+  if (
+    normalized.includes("p") ||
+    normalized.includes("normal") ||
+    normalized.includes("div")
+  )
+    return "p";
   return null;
 }
 
@@ -112,15 +151,27 @@ export default function BlogAdminPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isSavingPost, setIsSavingPost] = useState(false);
+  const [isCreatingNewsletterDraft, setIsCreatingNewsletterDraft] =
+    useState(false);
   const [q, setQ] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [blockType, setBlockType] = useState<BlockType>("p");
-  const [editorFont, setEditorFont] = useState<EditorFont>(DEFAULT_EDITOR_SETTINGS.font);
-  const [editorFontSize, setEditorFontSize] = useState<number>(DEFAULT_EDITOR_SETTINGS.fontSize);
-  const [editorLineHeight, setEditorLineHeight] = useState<number>(DEFAULT_EDITOR_SETTINGS.lineHeight);
-  const [paragraphSpaceBefore, setParagraphSpaceBefore] = useState<number>(DEFAULT_EDITOR_SETTINGS.paragraphSpaceBefore);
-  const [paragraphSpaceAfter, setParagraphSpaceAfter] = useState<number>(DEFAULT_EDITOR_SETTINGS.paragraphSpaceAfter);
+  const [editorFont, setEditorFont] = useState<EditorFont>(
+    DEFAULT_EDITOR_SETTINGS.font,
+  );
+  const [editorFontSize, setEditorFontSize] = useState<number>(
+    DEFAULT_EDITOR_SETTINGS.fontSize,
+  );
+  const [editorLineHeight, setEditorLineHeight] = useState<number>(
+    DEFAULT_EDITOR_SETTINGS.lineHeight,
+  );
+  const [paragraphSpaceBefore, setParagraphSpaceBefore] = useState<number>(
+    DEFAULT_EDITOR_SETTINGS.paragraphSpaceBefore,
+  );
+  const [paragraphSpaceAfter, setParagraphSpaceAfter] = useState<number>(
+    DEFAULT_EDITOR_SETTINGS.paragraphSpaceAfter,
+  );
   const [isSpacingMenuOpen, setIsSpacingMenuOpen] = useState(false);
   const [isCustomSpacingOpen, setIsCustomSpacingOpen] = useState(false);
   const [keepWithNext, setKeepWithNext] = useState(false);
@@ -147,7 +198,8 @@ export default function BlogAdminPage() {
     const s = q.trim().toLowerCase();
     if (!s) return posts;
     return posts.filter((p) => {
-      const hay = `${p.title} ${p.slug} ${p.category} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
+      const hay =
+        `${p.title} ${p.slug} ${p.category} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
       return hay.includes(s);
     });
   }, [posts, q]);
@@ -193,10 +245,20 @@ export default function BlogAdminPage() {
     setForm({ ...post });
     setEditorHtml(contentToHtml(post.content || ""));
     setEditorFont(post.editorSettings?.font ?? DEFAULT_EDITOR_SETTINGS.font);
-    setEditorFontSize(post.editorSettings?.fontSize ?? DEFAULT_EDITOR_SETTINGS.fontSize);
-    setEditorLineHeight(post.editorSettings?.lineHeight ?? DEFAULT_EDITOR_SETTINGS.lineHeight);
-    setParagraphSpaceBefore(post.editorSettings?.paragraphSpaceBefore ?? DEFAULT_EDITOR_SETTINGS.paragraphSpaceBefore);
-    setParagraphSpaceAfter(post.editorSettings?.paragraphSpaceAfter ?? DEFAULT_EDITOR_SETTINGS.paragraphSpaceAfter);
+    setEditorFontSize(
+      post.editorSettings?.fontSize ?? DEFAULT_EDITOR_SETTINGS.fontSize,
+    );
+    setEditorLineHeight(
+      post.editorSettings?.lineHeight ?? DEFAULT_EDITOR_SETTINGS.lineHeight,
+    );
+    setParagraphSpaceBefore(
+      post.editorSettings?.paragraphSpaceBefore ??
+        DEFAULT_EDITOR_SETTINGS.paragraphSpaceBefore,
+    );
+    setParagraphSpaceAfter(
+      post.editorSettings?.paragraphSpaceAfter ??
+        DEFAULT_EDITOR_SETTINGS.paragraphSpaceAfter,
+    );
     setIsOpen(true);
   }
 
@@ -241,7 +303,8 @@ export default function BlogAdminPage() {
     };
 
     document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", handleSelectionChange);
   }, [isOpen]);
 
   function currentEditorHtml() {
@@ -290,7 +353,11 @@ export default function BlogAdminPage() {
       closeModal();
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Não foi possível salvar o post.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o post.",
+      );
     } finally {
       setIsSavingPost(false);
     }
@@ -303,7 +370,11 @@ export default function BlogAdminPage() {
       await refreshList();
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Não foi possível excluir o post.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir o post.",
+      );
     }
   }
 
@@ -317,7 +388,51 @@ export default function BlogAdminPage() {
       await refreshList();
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Não foi possível atualizar o post.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar o post.",
+      );
+    }
+  }
+
+  async function generateNewsletterDraft() {
+    const publishedCount = posts.filter((post) => post.published).length;
+
+    if (publishedCount === 0) {
+      alert("Nenhum post publicado encontrado para gerar a newsletter.");
+      return;
+    }
+
+    const confirmed = confirm(
+      "Gerar uma campanha em rascunho no Listmonk usando os posts publicados mais recentes?",
+    );
+
+    if (!confirmed) return;
+
+    setIsCreatingNewsletterDraft(true);
+
+    try {
+      const result = await createRssNewsletterDraft({
+        limit: 5,
+        subject: "Novos insights do blog - Growth Navigator",
+        name: `Newsletter RSS - ${new Date().toLocaleDateString("pt-BR")}`,
+      });
+
+      const campaignId = result.campaign?.id
+        ? ` ID: ${result.campaign.id}.`
+        : "";
+
+      alert(`Campanha criada como rascunho no Listmonk.${campaignId}`);
+    } catch (error) {
+      console.error(error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível gerar a campanha no Listmonk.",
+      );
+    } finally {
+      setIsCreatingNewsletterDraft(false);
     }
   }
 
@@ -360,7 +475,9 @@ export default function BlogAdminPage() {
     keepLinesTogether ? "[&_p]:[break-inside:avoid]" : "",
     avoidWidows ? "[&_p]:[orphans:2] [&_p]:[widows:2]" : "",
     pageBreakBefore ? "[&_p:first-of-type]:[break-before:page]" : "",
-    keepWithNext ? "[&_h1]:[break-after:avoid] [&_h2]:[break-after:avoid] [&_h3]:[break-after:avoid]" : "",
+    keepWithNext
+      ? "[&_h1]:[break-after:avoid] [&_h2]:[break-after:avoid] [&_h3]:[break-after:avoid]"
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -398,7 +515,12 @@ export default function BlogAdminPage() {
   function removeImageNode(image: HTMLImageElement) {
     const parent = image.parentElement;
     image.remove();
-    if (parent && parent.tagName === "P" && parent.querySelectorAll("img").length === 0 && !(parent.textContent || "").trim()) {
+    if (
+      parent &&
+      parent.tagName === "P" &&
+      parent.querySelectorAll("img").length === 0 &&
+      !(parent.textContent || "").trim()
+    ) {
       parent.innerHTML = "<br />";
     }
     clearSelectedImage();
@@ -438,7 +560,9 @@ export default function BlogAdminPage() {
     setIsItalicActive(document.queryCommandState("italic"));
     setIsUnderlineActive(document.queryCommandState("underline"));
 
-    const nextBlock = normalizeBlockType(document.queryCommandValue("formatBlock"));
+    const nextBlock = normalizeBlockType(
+      document.queryCommandValue("formatBlock"),
+    );
     if (nextBlock) setBlockType(nextBlock);
 
     if (document.queryCommandState("justifyCenter")) {
@@ -451,7 +575,10 @@ export default function BlogAdminPage() {
       setTextAlign("left");
     }
 
-    const elementNode = selection.focusNode instanceof HTMLElement ? selection.focusNode : selection.focusNode?.parentElement;
+    const elementNode =
+      selection.focusNode instanceof HTMLElement
+        ? selection.focusNode
+        : selection.focusNode?.parentElement;
     if (!elementNode || !editor.contains(elementNode)) return;
 
     const style = window.getComputedStyle(elementNode);
@@ -464,19 +591,27 @@ export default function BlogAdminPage() {
     }
 
     const parsedLineHeight = Number.parseFloat(style.lineHeight || "0");
-    if (!Number.isNaN(parsedLineHeight) && parsedLineHeight > 0 && parsedSize > 0) {
+    if (
+      !Number.isNaN(parsedLineHeight) &&
+      parsedLineHeight > 0 &&
+      parsedSize > 0
+    ) {
       const ratio = parsedLineHeight / parsedSize;
       setEditorLineHeight(closestNumber(ratio, LINE_HEIGHT_OPTIONS));
     }
 
     const parsedMarginTop = Number.parseFloat(style.marginTop || "0");
     if (!Number.isNaN(parsedMarginTop)) {
-      setParagraphSpaceBefore(closestNumber(parsedMarginTop, PARAGRAPH_SPACE_OPTIONS));
+      setParagraphSpaceBefore(
+        closestNumber(parsedMarginTop, PARAGRAPH_SPACE_OPTIONS),
+      );
     }
 
     const parsedMarginBottom = Number.parseFloat(style.marginBottom || "0");
     if (!Number.isNaN(parsedMarginBottom)) {
-      setParagraphSpaceAfter(closestNumber(parsedMarginBottom, PARAGRAPH_SPACE_OPTIONS));
+      setParagraphSpaceAfter(
+        closestNumber(parsedMarginBottom, PARAGRAPH_SPACE_OPTIONS),
+      );
     }
   }
 
@@ -599,7 +734,10 @@ export default function BlogAdminPage() {
       .split(/\n{2,}/)
       .map((part) => part.trim())
       .filter(Boolean)
-      .map((part) => `<p>${escapeHtmlForEditor(part).replace(/\n/g, "<br />")}</p>`)
+      .map(
+        (part) =>
+          `<p>${escapeHtmlForEditor(part).replace(/\n/g, "<br />")}</p>`,
+      )
       .join("");
 
     if (html.trim()) {
@@ -680,7 +818,9 @@ export default function BlogAdminPage() {
       return;
     }
     if (file.size > 1_800_000) {
-      alert("Imagem muito grande para salvar localmente. Use ate 1.8MB ou insira por URL.");
+      alert(
+        "Imagem muito grande para salvar localmente. Use ate 1.8MB ou insira por URL.",
+      );
       return;
     }
 
@@ -710,10 +850,25 @@ export default function BlogAdminPage() {
             </p>
           </div>
 
-          <Button onClick={openNew} className="h-11 gap-2 rounded-xl px-6 shadow-lg">
-            <Plus className="h-5 w-5" />
-            Novo Post
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={generateNewsletterDraft}
+              disabled={isCreatingNewsletterDraft || isLoadingPosts}
+              className="h-11 gap-2 rounded-xl px-6"
+            >
+              <MailPlus className="h-5 w-5" />
+              {isCreatingNewsletterDraft ? "Gerando..." : "Gerar newsletter"}
+            </Button>
+
+            <Button
+              onClick={openNew}
+              className="h-11 gap-2 rounded-xl px-6 shadow-lg"
+            >
+              <Plus className="h-5 w-5" />
+              Novo Post
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -721,7 +876,8 @@ export default function BlogAdminPage() {
         <div className="rounded-2xl border bg-card p-6">
           <h2 className="text-2xl font-bold">Admin - Blog</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cadastre posts e publique/despublique. O que estiver publicado aparece em <b>/blog</b>.
+            Cadastre posts e publique/despublique. O que estiver publicado
+            aparece em <b>/blog</b>.
           </p>
 
           <div className="mt-5 flex items-center gap-2 rounded-xl border bg-background px-3 py-2 md:max-w-md">
@@ -741,18 +897,25 @@ export default function BlogAdminPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="rounded-full border bg-background px-2 py-1">{p.category}</span>
+                    <span className="rounded-full border bg-background px-2 py-1">
+                      {p.category}
+                    </span>
                     <span className="rounded-full border bg-background px-2 py-1">
                       {p.published ? "Publicado" : "Rascunho"}
                     </span>
                   </div>
 
                   <div className="mt-2 text-base font-bold">{p.title}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{p.excerpt}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {p.excerpt}
+                  </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {p.tags.slice(0, 6).map((t) => (
-                      <span key={t} className="rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground">
+                      <span
+                        key={t}
+                        className="rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground"
+                      >
                         {t}
                       </span>
                     ))}
@@ -760,17 +923,36 @@ export default function BlogAdminPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 md:justify-end">
-                  <Button variant="outline" size="sm" onClick={() => togglePublish(p)} className="gap-2">
-                    {p.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => togglePublish(p)}
+                    className="gap-2"
+                  >
+                    {p.published ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                     {p.published ? "Despublicar" : "Publicar"}
                   </Button>
 
-                  <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEdit(p)}
+                    className="gap-2"
+                  >
                     <Pencil className="h-4 w-4" />
                     Editar
                   </Button>
 
-                  <Button variant="destructive" size="sm" onClick={() => remove(p)} className="gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => remove(p)}
+                    className="gap-2"
+                  >
                     <Trash2 className="h-4 w-4" />
                     Excluir
                   </Button>
@@ -797,7 +979,9 @@ export default function BlogAdminPage() {
         <div className="fixed inset-0 z-50 grid place-items-start bg-black/55 p-2 md:p-4">
           <div className="flex h-[96vh] w-full max-w-[98vw] flex-col overflow-hidden rounded-2xl border bg-card p-5 shadow-2xl">
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold">{editingId ? "Editar post" : "Novo post"}</div>
+              <div className="text-lg font-bold">
+                {editingId ? "Editar post" : "Novo post"}
+              </div>
               <Button variant="ghost" onClick={closeModal}>
                 Fechar
               </Button>
@@ -806,7 +990,9 @@ export default function BlogAdminPage() {
             <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
               <input
                 value={form.title}
-                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, title: e.target.value }))
+                }
                 placeholder="Titulo do post"
                 className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
               />
@@ -814,13 +1000,17 @@ export default function BlogAdminPage() {
               <div className="grid gap-3 md:grid-cols-2">
                 <input
                   value={form.slug}
-                  onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, slug: e.target.value }))
+                  }
                   placeholder="Slug (opcional - gera automatico)"
                   className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
                 />
                 <input
                   value={form.dateISO}
-                  onChange={(e) => setForm((prev) => ({ ...prev, dateISO: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, dateISO: e.target.value }))
+                  }
                   className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
                   type="date"
                 />
@@ -829,7 +1019,12 @@ export default function BlogAdminPage() {
               <div className="grid gap-3 md:grid-cols-2">
                 <select
                   value={form.category}
-                  onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as BlogCategory }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      category: e.target.value as BlogCategory,
+                    }))
+                  }
                   className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
                 >
                   {categories.map((c) => (
@@ -841,7 +1036,9 @@ export default function BlogAdminPage() {
 
                 <input
                   value={form.readTime}
-                  onChange={(e) => setForm((prev) => ({ ...prev, readTime: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, readTime: e.target.value }))
+                  }
                   placeholder="Tempo de leitura (ex: 8 min)"
                   className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
                 />
@@ -849,7 +1046,9 @@ export default function BlogAdminPage() {
 
               <textarea
                 value={form.excerpt}
-                onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, excerpt: e.target.value }))
+                }
                 placeholder="Resumo curto (excerpt)"
                 className="min-h-[96px] w-full rounded-xl border bg-background p-3 outline-none"
               />
@@ -870,7 +1069,13 @@ export default function BlogAdminPage() {
               />
 
               <div className="rounded-xl border bg-background">
-                <input ref={imageUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                <input
+                  ref={imageUploadRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
                 <div
                   className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b bg-muted/95 p-3 shadow-sm backdrop-blur-sm"
                   onMouseDown={(event) => {
@@ -878,10 +1083,18 @@ export default function BlogAdminPage() {
                     if (target.closest("button")) event.preventDefault();
                   }}
                 >
-                  <button onClick={() => runCommand("undo")} className={toolbarButtonClass()} title="Desfazer">
+                  <button
+                    onClick={() => runCommand("undo")}
+                    className={toolbarButtonClass()}
+                    title="Desfazer"
+                  >
                     <Undo2 className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("redo")} className={toolbarButtonClass()} title="Refazer">
+                  <button
+                    onClick={() => runCommand("redo")}
+                    className={toolbarButtonClass()}
+                    title="Refazer"
+                  >
                     <Redo2 className="h-4 w-4" />
                   </button>
 
@@ -901,13 +1114,18 @@ export default function BlogAdminPage() {
                     <option value="h2">H2</option>
                     <option value="h3">H3</option>
                   </select>
-                  <button onClick={() => applyBlock()} className={toolbarButtonClass()}>
+                  <button
+                    onClick={() => applyBlock()}
+                    className={toolbarButtonClass()}
+                  >
                     Inserir bloco
                   </button>
 
                   <select
                     value={editorFont}
-                    onChange={(e) => setEditorFont(e.target.value as EditorFont)}
+                    onChange={(e) =>
+                      setEditorFont(e.target.value as EditorFont)
+                    }
                     className="h-9 rounded-lg border bg-background px-2 text-sm outline-none"
                   >
                     <option value="theme">Fonte do tema</option>
@@ -942,43 +1160,88 @@ export default function BlogAdminPage() {
 
                     {isSpacingMenuOpen && (
                       <div className="absolute left-0 top-11 z-40 w-[320px] rounded-xl border bg-popover py-2 shadow-xl">
-                        <button onClick={() => applySpacingPreset(1)} className={spacingOptionClass(editorLineHeight === 1)}>
-                          <span className="w-4 text-center">{editorLineHeight === 1 ? "✓" : ""}</span>
+                        <button
+                          onClick={() => applySpacingPreset(1)}
+                          className={spacingOptionClass(editorLineHeight === 1)}
+                        >
+                          <span className="w-4 text-center">
+                            {editorLineHeight === 1 ? "✓" : ""}
+                          </span>
                           Simples
                         </button>
-                        <button onClick={() => applySpacingPreset(1.15)} className={spacingOptionClass(editorLineHeight === 1.15)}>
-                          <span className="w-4 text-center">{editorLineHeight === 1.15 ? "✓" : ""}</span>
+                        <button
+                          onClick={() => applySpacingPreset(1.15)}
+                          className={spacingOptionClass(
+                            editorLineHeight === 1.15,
+                          )}
+                        >
+                          <span className="w-4 text-center">
+                            {editorLineHeight === 1.15 ? "✓" : ""}
+                          </span>
                           1,15
                         </button>
-                        <button onClick={() => applySpacingPreset(1.5)} className={spacingOptionClass(editorLineHeight === 1.5)}>
-                          <span className="w-4 text-center">{editorLineHeight === 1.5 ? "✓" : ""}</span>
+                        <button
+                          onClick={() => applySpacingPreset(1.5)}
+                          className={spacingOptionClass(
+                            editorLineHeight === 1.5,
+                          )}
+                        >
+                          <span className="w-4 text-center">
+                            {editorLineHeight === 1.5 ? "✓" : ""}
+                          </span>
                           1,5
                         </button>
-                        <button onClick={() => applySpacingPreset(2)} className={spacingOptionClass(editorLineHeight === 2)}>
-                          <span className="w-4 text-center">{editorLineHeight === 2 ? "✓" : ""}</span>
+                        <button
+                          onClick={() => applySpacingPreset(2)}
+                          className={spacingOptionClass(editorLineHeight === 2)}
+                        >
+                          <span className="w-4 text-center">
+                            {editorLineHeight === 2 ? "✓" : ""}
+                          </span>
                           Duplo
                         </button>
 
                         <div className="my-2 border-t" />
-                        <button onClick={removeSpacingBefore} className={spacingOptionClass(paragraphSpaceBefore === 0)}>
-                          <span className="w-4 text-center">{paragraphSpaceBefore === 0 ? "✓" : ""}</span>
+                        <button
+                          onClick={removeSpacingBefore}
+                          className={spacingOptionClass(
+                            paragraphSpaceBefore === 0,
+                          )}
+                        >
+                          <span className="w-4 text-center">
+                            {paragraphSpaceBefore === 0 ? "✓" : ""}
+                          </span>
                           Remover espaco antes do paragrafo
                         </button>
-                        <button onClick={removeSpacingAfter} className={spacingOptionClass(paragraphSpaceAfter === 0)}>
-                          <span className="w-4 text-center">{paragraphSpaceAfter === 0 ? "✓" : ""}</span>
+                        <button
+                          onClick={removeSpacingAfter}
+                          className={spacingOptionClass(
+                            paragraphSpaceAfter === 0,
+                          )}
+                        >
+                          <span className="w-4 text-center">
+                            {paragraphSpaceAfter === 0 ? "✓" : ""}
+                          </span>
                           Remover espaco depois do paragrafo
                         </button>
 
                         <div className="my-2 border-t" />
-                        <button onClick={() => setIsCustomSpacingOpen((v) => !v)} className={spacingOptionClass(isCustomSpacingOpen)}>
-                          <span className="w-4 text-center">{isCustomSpacingOpen ? "✓" : ""}</span>
+                        <button
+                          onClick={() => setIsCustomSpacingOpen((v) => !v)}
+                          className={spacingOptionClass(isCustomSpacingOpen)}
+                        >
+                          <span className="w-4 text-center">
+                            {isCustomSpacingOpen ? "✓" : ""}
+                          </span>
                           Espacamento personalizado
                         </button>
                         {isCustomSpacingOpen && (
                           <div className="grid grid-cols-2 gap-2 px-2 py-2">
                             <select
                               value={String(paragraphSpaceBefore)}
-                              onChange={(e) => setParagraphSpaceBefore(Number(e.target.value))}
+                              onChange={(e) =>
+                                setParagraphSpaceBefore(Number(e.target.value))
+                              }
                               className="h-9 rounded-lg border bg-background px-2 text-xs outline-none"
                               title="Espaco antes"
                             >
@@ -990,7 +1253,9 @@ export default function BlogAdminPage() {
                             </select>
                             <select
                               value={String(paragraphSpaceAfter)}
-                              onChange={(e) => setParagraphSpaceAfter(Number(e.target.value))}
+                              onChange={(e) =>
+                                setParagraphSpaceAfter(Number(e.target.value))
+                              }
                               className="h-9 rounded-lg border bg-background px-2 text-xs outline-none"
                               title="Espaco depois"
                             >
@@ -1004,73 +1269,142 @@ export default function BlogAdminPage() {
                         )}
 
                         <div className="my-2 border-t" />
-                        <button onClick={toggleKeepWithNext} className={spacingOptionClass(keepWithNext)}>
-                          <span className="w-4 text-center">{keepWithNext ? "✓" : ""}</span>
+                        <button
+                          onClick={toggleKeepWithNext}
+                          className={spacingOptionClass(keepWithNext)}
+                        >
+                          <span className="w-4 text-center">
+                            {keepWithNext ? "✓" : ""}
+                          </span>
                           Manter com o proximo
                         </button>
-                        <button onClick={toggleKeepLinesTogether} className={spacingOptionClass(keepLinesTogether)}>
-                          <span className="w-4 text-center">{keepLinesTogether ? "✓" : ""}</span>
+                        <button
+                          onClick={toggleKeepLinesTogether}
+                          className={spacingOptionClass(keepLinesTogether)}
+                        >
+                          <span className="w-4 text-center">
+                            {keepLinesTogether ? "✓" : ""}
+                          </span>
                           Manter as linhas juntas
                         </button>
-                        <button onClick={toggleAvoidWidows} className={spacingOptionClass(avoidWidows)}>
-                          <span className="w-4 text-center">{avoidWidows ? "✓" : ""}</span>
+                        <button
+                          onClick={toggleAvoidWidows}
+                          className={spacingOptionClass(avoidWidows)}
+                        >
+                          <span className="w-4 text-center">
+                            {avoidWidows ? "✓" : ""}
+                          </span>
                           Evitar linhas unicas
                         </button>
-                        <button onClick={togglePageBreakBefore} className={spacingOptionClass(pageBreakBefore)}>
-                          <span className="w-4 text-center">{pageBreakBefore ? "✓" : ""}</span>
+                        <button
+                          onClick={togglePageBreakBefore}
+                          className={spacingOptionClass(pageBreakBefore)}
+                        >
+                          <span className="w-4 text-center">
+                            {pageBreakBefore ? "✓" : ""}
+                          </span>
                           Adicionar quebra de pagina antes do texto
                         </button>
                       </div>
                     )}
                   </div>
 
-                  <button onClick={() => runCommand("bold")} className={toolbarButtonClass(isBoldActive)} title="Negrito">
+                  <button
+                    onClick={() => runCommand("bold")}
+                    className={toolbarButtonClass(isBoldActive)}
+                    title="Negrito"
+                  >
                     <Bold className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("italic")} className={toolbarButtonClass(isItalicActive)} title="Italico">
+                  <button
+                    onClick={() => runCommand("italic")}
+                    className={toolbarButtonClass(isItalicActive)}
+                    title="Italico"
+                  >
                     <Italic className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("underline")} className={toolbarButtonClass(isUnderlineActive)} title="Sublinhado">
+                  <button
+                    onClick={() => runCommand("underline")}
+                    className={toolbarButtonClass(isUnderlineActive)}
+                    title="Sublinhado"
+                  >
                     <Underline className="h-4 w-4" />
                   </button>
 
-                  <button onClick={() => runCommand("formatBlock", "blockquote")} className={toolbarButtonClass()}>
+                  <button
+                    onClick={() => runCommand("formatBlock", "blockquote")}
+                    className={toolbarButtonClass()}
+                  >
                     Citacao
                   </button>
 
-                  <button onClick={() => runCommand("justifyLeft")} className={toolbarButtonClass(textAlign === "left")} title="Alinhar a esquerda">
+                  <button
+                    onClick={() => runCommand("justifyLeft")}
+                    className={toolbarButtonClass(textAlign === "left")}
+                    title="Alinhar a esquerda"
+                  >
                     <AlignLeft className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("justifyCenter")} className={toolbarButtonClass(textAlign === "center")} title="Centralizar">
+                  <button
+                    onClick={() => runCommand("justifyCenter")}
+                    className={toolbarButtonClass(textAlign === "center")}
+                    title="Centralizar"
+                  >
                     <AlignCenter className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("justifyRight")} className={toolbarButtonClass(textAlign === "right")} title="Alinhar a direita">
+                  <button
+                    onClick={() => runCommand("justifyRight")}
+                    className={toolbarButtonClass(textAlign === "right")}
+                    title="Alinhar a direita"
+                  >
                     <AlignRight className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("justifyFull")} className={toolbarButtonClass(textAlign === "justify")} title="Justificar">
+                  <button
+                    onClick={() => runCommand("justifyFull")}
+                    className={toolbarButtonClass(textAlign === "justify")}
+                    title="Justificar"
+                  >
                     <AlignJustify className="h-4 w-4" />
                   </button>
 
-                  <button onClick={() => runCommand("insertUnorderedList")} className={toolbarButtonClass()} title="Lista">
+                  <button
+                    onClick={() => runCommand("insertUnorderedList")}
+                    className={toolbarButtonClass()}
+                    title="Lista"
+                  >
                     <List className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("insertOrderedList")} className={toolbarButtonClass()} title="Lista numerada">
+                  <button
+                    onClick={() => runCommand("insertOrderedList")}
+                    className={toolbarButtonClass()}
+                    title="Lista numerada"
+                  >
                     <ListOrdered className="h-4 w-4" />
                   </button>
-                  <button onClick={() => runCommand("removeFormat")} className={toolbarButtonClass()} title="Limpar formatacao">
+                  <button
+                    onClick={() => runCommand("removeFormat")}
+                    className={toolbarButtonClass()}
+                    title="Limpar formatacao"
+                  >
                     <RemoveFormatting className="h-4 w-4" />
                   </button>
 
                   <button onClick={insertLink} className={toolbarButtonClass()}>
                     Link
                   </button>
-                  <button onClick={openImageDialog} className={toolbarButtonClass()}>
+                  <button
+                    onClick={openImageDialog}
+                    className={toolbarButtonClass()}
+                  >
                     <span className="inline-flex items-center gap-2">
                       <ImagePlus className="h-4 w-4" />
                       Imagem
                     </span>
                   </button>
-                  <button onClick={removeSelectedImage} className={toolbarButtonClass()}>
+                  <button
+                    onClick={removeSelectedImage}
+                    className={toolbarButtonClass()}
+                  >
                     Remover imagem
                   </button>
                   <button
@@ -1114,7 +1448,9 @@ export default function BlogAdminPage() {
                           dangerouslySetInnerHTML={{ __html: previewHtml }}
                         />
                       ) : (
-                        <div className="text-sm text-muted-foreground">A visualizacao aparece aqui enquanto voce escreve.</div>
+                        <div className="text-sm text-muted-foreground">
+                          A visualizacao aparece aqui enquanto voce escreve.
+                        </div>
                       )}
                     </div>
                   )}
@@ -1125,7 +1461,12 @@ export default function BlogAdminPage() {
                 <input
                   type="checkbox"
                   checked={form.published}
-                  onChange={(e) => setForm((prev) => ({ ...prev, published: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      published: e.target.checked,
+                    }))
+                  }
                 />
                 Publicado
               </label>
@@ -1150,7 +1491,11 @@ export default function BlogAdminPage() {
                 </p>
 
                 <div className="mt-4">
-                  <Button variant="outline" onClick={pickImageFromComputer} className="gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={pickImageFromComputer}
+                    className="gap-2"
+                  >
                     <Upload className="h-4 w-4" />
                     Escolher arquivo do computador
                   </Button>
@@ -1173,7 +1518,10 @@ export default function BlogAdminPage() {
                   <Button variant="outline" onClick={closeImageDialog}>
                     Cancelar
                   </Button>
-                  <Button onClick={insertImageByUrlDraft} disabled={!imageUrlDraft.trim()}>
+                  <Button
+                    onClick={insertImageByUrlDraft}
+                    disabled={!imageUrlDraft.trim()}
+                  >
                     Inserir por URL
                   </Button>
                 </div>
