@@ -52,18 +52,18 @@ const LeadMagnetSection = () => {
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-5 sm:mb-4">
             Insights semanais sobre crescimento previsível
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-8 sm:mb-10">
+          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-9 sm:mb-10">
             Receba artigos estratégicos sobre marketing, vendas e dados — direto da prática, sem teoria genérica.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 sm:gap-3 max-w-lg mx-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-5 sm:gap-3 max-w-lg mx-auto">
             <input
               type="text"
               placeholder="Seu nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="flex-1 h-14 sm:h-12 px-5 sm:px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full min-h-[52px] rounded-xl border border-border bg-background px-5 py-3 text-base leading-none text-foreground placeholder:text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:h-12 sm:min-h-0 sm:flex-1 sm:rounded-lg sm:px-4 sm:py-0 sm:text-sm sm:placeholder:text-sm"
             />
             <input
               type="email"
@@ -71,9 +71,9 @@ const LeadMagnetSection = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex-1 h-14 sm:h-12 px-5 sm:px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full min-h-[52px] rounded-xl border border-border bg-background px-5 py-3 text-base leading-none text-foreground placeholder:text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:h-12 sm:min-h-0 sm:flex-1 sm:rounded-lg sm:px-4 sm:py-0 sm:text-sm sm:placeholder:text-sm"
             />
-            <Button type="submit" variant="hero" className="h-14 sm:h-12 px-6 text-sm sm:text-xs" disabled={loading}>
+            <Button type="submit" variant="hero" className="h-[54px] w-full px-6 text-sm sm:h-12 sm:w-auto sm:text-xs" disabled={loading}>
               {loading ? "ENVIANDO..." : "ENVIAR"} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
