@@ -19,32 +19,105 @@ function campaignEscape(string $value): string
 
 function buildNewsletterHtml(array $posts): string
 {
-    $html = '<h2>Insights recentes sobre crescimento previsível</h2>';
-    $html .= '<p>Olá!</p>';
-    $html .= '<p>Confira os conteúdos mais recentes publicados no blog:</p>';
+    $siteUrl = 'https://guilhermecorreia.com.br';
+    $libraryUrl = $siteUrl . '/biblioteca';
+    $featuredPost = $posts[0];
+    $secondaryPosts = array_slice($posts, 1);
 
-    foreach ($posts as $post) {
-        $title = campaignEscape((string) $post['title']);
-        $excerpt = campaignEscape((string) $post['excerpt']);
-        $url = campaignEscape((string) $post['url']);
-        $category = campaignEscape((string) $post['category']);
+    $featuredTitle = campaignEscape((string) $featuredPost['title']);
+    $featuredExcerpt = campaignEscape((string) $featuredPost['excerpt']);
+    $featuredUrl = campaignEscape((string) $featuredPost['url']);
+    $featuredCategory = campaignEscape((string) $featuredPost['category']);
 
-        $html .= '<hr>';
-        $html .= "<p><strong>{$title}</strong></p>";
+    $html = '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">';
+    $html .= 'Uma curadoria rápida para transformar marketing, vendas, dados e IA em crescimento previsível.';
+    $html .= '</div>';
+    $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0;padding:0;background:#f6f1ff;font-family:Arial,Helvetica,sans-serif;color:#241235;">';
+    $html .= '<tr><td align="center" style="padding:28px 12px;">';
+    $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:680px;background:#ffffff;border-collapse:collapse;">';
 
-        if ($category !== '') {
-            $html .= "<p><em>{$category}</em></p>";
-        }
+    $html .= '<tr><td style="background:#2b1045;padding:28px 32px;border-bottom:4px solid #f4c542;">';
+    $html .= '<p style="margin:0 0 8px 0;color:#f4c542;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Growth Navigator Pro</p>';
+    $html .= '<h1 style="margin:0;color:#ffffff;font-size:30px;line-height:1.18;font-weight:800;">Growth Navigator Weekly</h1>';
+    $html .= '</td></tr>';
 
-        if ($excerpt !== '') {
-            $html .= "<p>{$excerpt}</p>";
-        }
+    $html .= '<tr><td style="padding:34px 32px 22px 32px;">';
+    $html .= '<h2 style="margin:0 0 14px 0;color:#2b1045;font-size:28px;line-height:1.2;font-weight:800;">Insights recentes sobre crescimento previsível</h2>';
+    $html .= '<p style="margin:0;color:#594765;font-size:16px;line-height:1.7;">Uma curadoria rápida para quem quer transformar marketing, vendas, dados e IA em um sistema mais previsível de crescimento.</p>';
+    $html .= '</td></tr>';
 
-        $html .= "<p><a href=\"{$url}\">Ler artigo completo →</a></p>";
+    $html .= '<tr><td style="padding:8px 32px 28px 32px;">';
+    $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;background:#321253;">';
+    $html .= '<tr><td style="padding:28px;border:1px solid #4e286d;">';
+
+    if ($featuredCategory !== '') {
+        $html .= "<p style=\"margin:0 0 12px 0;color:#f4c542;font-size:12px;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;\">{$featuredCategory}</p>";
     }
 
-    $html .= '<hr>';
-    $html .= '<p>Até a próxima,<br>Growth Navigator Pro</p>';
+    $html .= "<h3 style=\"margin:0 0 14px 0;color:#ffffff;font-size:24px;line-height:1.25;font-weight:800;\">{$featuredTitle}</h3>";
+
+    if ($featuredExcerpt !== '') {
+        $html .= "<p style=\"margin:0 0 22px 0;color:#eadff2;font-size:16px;line-height:1.65;\">{$featuredExcerpt}</p>";
+    }
+
+    $html .= "<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td style=\"background:#f4c542;\"><a href=\"{$featuredUrl}\" style=\"display:inline-block;padding:13px 20px;color:#2b1045;font-size:14px;font-weight:bold;text-decoration:none;\">Ler análise completa</a></td></tr></table>";
+    $html .= '</td></tr></table>';
+    $html .= '</td></tr>';
+
+    if ($secondaryPosts) {
+        $html .= '<tr><td style="padding:2px 32px 10px 32px;">';
+        $html .= '<h3 style="margin:0;color:#2b1045;font-size:20px;line-height:1.3;font-weight:800;">Mais insights para explorar</h3>';
+        $html .= '</td></tr>';
+
+        foreach ($secondaryPosts as $post) {
+            $title = campaignEscape((string) $post['title']);
+            $excerpt = campaignEscape((string) $post['excerpt']);
+            $url = campaignEscape((string) $post['url']);
+            $category = campaignEscape((string) $post['category']);
+
+            $html .= '<tr><td style="padding:10px 32px;">';
+            $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;border:1px solid #eadff2;background:#fffaf0;">';
+            $html .= '<tr><td style="padding:22px 24px;">';
+
+            if ($category !== '') {
+                $html .= "<p style=\"margin:0 0 9px 0;color:#7a4b00;font-size:11px;font-weight:bold;letter-spacing:.7px;text-transform:uppercase;\">{$category}</p>";
+            }
+
+            $html .= "<h4 style=\"margin:0 0 10px 0;color:#2b1045;font-size:18px;line-height:1.35;font-weight:800;\">{$title}</h4>";
+
+            if ($excerpt !== '') {
+                $html .= "<p style=\"margin:0 0 17px 0;color:#594765;font-size:14px;line-height:1.6;\">{$excerpt}</p>";
+            }
+
+            $html .= "<a href=\"{$url}\" style=\"color:#4c1d75;font-size:14px;font-weight:bold;text-decoration:none;\">Ler análise completa</a>";
+            $html .= '</td></tr></table>';
+            $html .= '</td></tr>';
+        }
+    }
+
+    $html .= '<tr><td style="padding:24px 32px 8px 32px;">';
+    $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;background:#f7f0ff;border-left:4px solid #f4c542;">';
+    $html .= '<tr><td style="padding:22px 24px;">';
+    $html .= '<p style="margin:0 0 8px 0;color:#2b1045;font-size:13px;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;">Para pensar</p>';
+    $html .= '<p style="margin:0;color:#3b244f;font-size:17px;line-height:1.65;font-weight:bold;">Crescimento previsível não nasce de mais volume. Nasce de clareza, consistência e aprendizado acumulado.</p>';
+    $html .= '</td></tr></table>';
+    $html .= '</td></tr>';
+
+    $html .= '<tr><td style="padding:20px 32px 34px 32px;">';
+    $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;background:#2b1045;">';
+    $html .= '<tr><td style="padding:26px 24px;text-align:center;">';
+    $html .= '<h3 style="margin:0 0 10px 0;color:#ffffff;font-size:22px;line-height:1.3;font-weight:800;">Quer aprofundar?</h3>';
+    $html .= '<p style="margin:0 0 20px 0;color:#eadff2;font-size:15px;line-height:1.65;">Acesse a biblioteca do Growth Navigator Pro e veja materiais gratuitos para aplicar IA, dados e estratégia comercial.</p>';
+    $html .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td style="background:#f4c542;"><a href="' . campaignEscape($libraryUrl) . '" style="display:inline-block;padding:13px 20px;color:#2b1045;font-size:14px;font-weight:bold;text-decoration:none;">Ver biblioteca</a></td></tr></table>';
+    $html .= '</td></tr></table>';
+    $html .= '</td></tr>';
+
+    $html .= '<tr><td style="padding:24px 32px;background:#170924;text-align:center;">';
+    $html .= '<p style="margin:0 0 6px 0;color:#f4c542;font-size:14px;font-weight:bold;">Growth Navigator Pro</p>';
+    $html .= '<p style="margin:0;color:#d9cce4;font-size:13px;line-height:1.55;">Insights sobre marketing, vendas, dados e crescimento previsível.</p>';
+    $html .= '</td></tr>';
+    $html .= '</table>';
+    $html .= '</td></tr></table>';
 
     return $html;
 }
