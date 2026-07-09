@@ -49,21 +49,21 @@ const LeadMagnetSection = () => {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent/10 mb-6">
             <Mail className="w-6 h-6 text-accent" />
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-5 sm:mb-4">
             Insights semanais sobre crescimento previsível
           </h2>
-          <p className="text-muted-foreground text-lg mb-10">
+          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-8 sm:mb-10">
             Receba artigos estratégicos sobre marketing, vendas e dados — direto da prática, sem teoria genérica.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 sm:gap-3 max-w-lg mx-auto">
             <input
               type="text"
               placeholder="Seu nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="flex-1 h-12 px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="flex-1 h-14 sm:h-12 px-5 sm:px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <input
               type="email"
@@ -71,13 +71,13 @@ const LeadMagnetSection = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex-1 h-12 px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="flex-1 h-14 sm:h-12 px-5 sm:px-4 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <Button type="submit" variant="hero" className="h-12 px-6" disabled={loading}>
+            <Button type="submit" variant="hero" className="h-14 sm:h-12 px-6 text-sm sm:text-xs" disabled={loading}>
               {loading ? "ENVIANDO..." : "ENVIAR"} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-sm sm:text-xs text-muted-foreground mt-5 sm:mt-4">
             Sem spam. Cancele quando quiser.
           </p>
         </motion.div>
