@@ -4,11 +4,15 @@ import { Instagram, Youtube, Headphones, BookOpen, Linkedin, FileText, ArrowUpRi
 const channels = [
   { icon: Instagram, label: "Instagram", desc: "@guilherme.a.correia", href: "https://www.instagram.com/guilherme.a.correia/" },
   { icon: Youtube, label: "YouTube", desc: "Vídeos e cases reais de Growth", href: "https://www.youtube.com/@guilherme.a.correia" },
-  { icon: Headphones, label: "Podcast", desc: "Conversas estratégicas sobre negócios", href: "#" },
+  { icon: Headphones, label: "Podcast", desc: "Conversas estratégicas sobre negócios", href: "/blog" },
   { icon: BookOpen, label: "Blog / Insights", desc: "Artigos e reflexões estratégicas", href: "/blog" },
   { icon: Linkedin, label: "Newsletter LinkedIn", desc: "Assine para insights semanais", href: "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577" },
   { icon: FileText, label: "Publicações", desc: "Livros, e-books e materiais exclusivos", href: "/biblioteca" },
 ];
+
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href);
+}
 
 const SocialHubSection = () => {
   return (
@@ -34,7 +38,10 @@ const SocialHubSection = () => {
             <motion.a
               key={ch.label}
               href={ch.href}
-              className="group flex items-center gap-4 p-5 rounded-2xl bg-secondary border border-border hover:shadow-elevated hover:border-accent/30 transition-all duration-300"
+              target={isExternalHref(ch.href) ? "_blank" : undefined}
+              rel={isExternalHref(ch.href) ? "noopener noreferrer" : undefined}
+              aria-label={`Acessar ${ch.label}`}
+              className="group relative z-10 flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl border border-border bg-secondary p-5 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

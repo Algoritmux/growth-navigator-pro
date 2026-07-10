@@ -14,6 +14,8 @@ import { fetchMaterialsFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@
 
 const ITEMS_PER_PAGE = 6;
 
+const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+
 const chunkMaterials = (items: MaterialItem[], size: number) => {
   const pages: MaterialItem[][] = [];
   for (let i = 0; i < items.length; i += size) {
@@ -92,7 +94,11 @@ const MaterialsSection = () => {
                 Acessar <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             ) : (
-              <a href={item.href} target="_blank" rel="noreferrer">
+              <a
+                href={item.href}
+                target={isExternalHref(item.href) ? "_blank" : undefined}
+                rel={isExternalHref(item.href) ? "noopener noreferrer" : undefined}
+              >
                 Acessar <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
               </a>
             )}

@@ -20,6 +20,17 @@ function sanitizeImageUrl(url: string) {
   return "";
 }
 
+function isExternalUrl(url: string) {
+  if (!/^https?:\/\//i.test(url)) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./i, "") !== "guilhermecorreia.com.br";
+  } catch {
+    return false;
+  }
+}
+
 type SpecialBlockType =
   | "bloco-destaque"
   | "card-numero"
@@ -177,11 +188,12 @@ function sanitizeHtml(html: string) {
       if (!href || !/^(https?:\/\/|mailto:|\/|#)/i.test(href)) {
         el.setAttribute("href", "#");
       }
-      el.setAttribute("rel", "noreferrer");
-      if (/^https?:\/\//i.test(href)) {
+      if (isExternalUrl(href)) {
         el.setAttribute("target", "_blank");
+        el.setAttribute("rel", "noopener noreferrer");
       } else {
         el.removeAttribute("target");
+        el.removeAttribute("rel");
       }
     }
 
@@ -216,7 +228,7 @@ function parseInline(text: string) {
   result = result.replace(/_([^_]+)_/g, "<em>$1</em>");
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, url) => {
     const safeUrl = sanitizeUrl(url);
-    return `<a href="${safeUrl}" target="_blank" rel="noreferrer">${label}</a>`;
+    return `<a href="${safeUrl}"${externalUrlAttributes(safeUrl)}>${label}</a>`;
   });
 
   return result;
@@ -250,7 +262,7 @@ function specialBlockCloseRe(type: SpecialBlockType) {
 }
 
 function externalUrlAttributes(url: string) {
-  return /^https?:\/\//i.test(url) ? ' target="_blank" rel="noreferrer"' : "";
+  return isExternalUrl(url) ? ' target="_blank" rel="noopener noreferrer"' : "";
 }
 
 function normalizeSpecialBodyHtml(bodyHtml: string) {

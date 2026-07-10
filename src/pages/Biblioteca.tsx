@@ -26,6 +26,8 @@ import {
 } from "@/lib/materials-store";
 import logoGC from "@/assets/logo-gc.png";
 
+const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+
 function BibliotecaSidebar({
     activeCategory,
     onCategoryChange,
@@ -272,7 +274,11 @@ export default function Biblioteca() {
                                                     Acessar <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
                                                 </Link>
                                             ) : item.href && item.href !== "#" ? (
-                                                <a href={item.href} target="_blank" rel="noreferrer">
+                                                <a
+                                                    href={item.href}
+                                                    target={isExternalHref(item.href) ? "_blank" : undefined}
+                                                    rel={isExternalHref(item.href) ? "noopener noreferrer" : undefined}
+                                                >
                                                     Acessar <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
                                                 </a>
                                             ) : (

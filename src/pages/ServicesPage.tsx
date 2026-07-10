@@ -124,7 +124,7 @@ export default function ServicesPage() {
 
                                         <div className="flex flex-wrap gap-4">
                                             <Button variant="accent" size="lg" className="rounded-xl px-8 text-white hover:text-white" asChild>
-                                                <a href="https://wa.me/5512992474969" target="_blank" rel="noreferrer">
+                                                <a href="https://wa.me/5512992474969" target="_blank" rel="noopener noreferrer">
                                                     Consultar disponibilidade
                                                 </a>
                                             </Button>
@@ -221,7 +221,7 @@ export default function ServicesPage() {
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button variant="accent" size="lg" className="rounded-xl px-10 py-7 text-lg group text-white hover:text-white" asChild>
-                                    <a href="https://wa.me/5512992474969" target="_blank" rel="noreferrer">
+                                    <a href="https://wa.me/5512992474969" target="_blank" rel="noopener noreferrer">
                                         <MessageCircle className="mr-2 w-5 h-5 transition-transform group-hover:scale-110" />
                                         Chamar no WhatsApp
                                     </a>

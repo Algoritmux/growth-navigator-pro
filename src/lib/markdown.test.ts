@@ -171,4 +171,49 @@ Descricao segura.
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("javascript:alert");
   });
+
+  it("keeps images from breaking headings and special blocks", () => {
+    const html = contentToHtml(`
+## Antes da imagem
+
+![Diagrama de funil](https://cdn.example.com/funil.png)
+
+[material titulo="Playbook Avancado" botao="Ver biblioteca" link="/biblioteca"]
+Acesse gratuitamente nossa biblioteca de frameworks de GTM.
+[/material]
+
+<img src="https://cdn.example.com/processo.png" alt="Processo">
+
+### Depois da imagem
+
+Texto final.
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelectorAll("img")).toHaveLength(2);
+    expect(doc.querySelector("img")?.getAttribute("src")).toBe(
+      "https://cdn.example.com/funil.png",
+    );
+    expect(html).toContain('class="not-prose blog-special-block blog-special-material"');
+    expect(doc.querySelector("h2")?.textContent).toBe("Antes da imagem");
+    expect(doc.querySelector("h3")?.textContent).toBe("Depois da imagem");
+    expect(html).not.toContain("[/material]");
+  });
+
+  it("opens only external links in a new tab", () => {
+    const html = contentToHtml(
+      [
+        "[Biblioteca](/biblioteca)",
+        "[Site publico](https://guilhermecorreia.com.br/blog)",
+        "[Instagram](https://www.instagram.com/guilherme.a.correia/)",
+      ].join("\n\n"),
+    );
+    const doc = parseHtml(html);
+    const links = Array.from(doc.querySelectorAll("a"));
+
+    expect(links[0].getAttribute("target")).toBeNull();
+    expect(links[1].getAttribute("target")).toBeNull();
+    expect(links[2].getAttribute("target")).toBe("_blank");
+    expect(links[2].getAttribute("rel")).toBe("noopener noreferrer");
+  });
 });
