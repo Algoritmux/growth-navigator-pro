@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { fetchMaterialBySlugFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
 import SEO from "@/components/SEO";
 
+const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+
 export default function MaterialPage() {
     const { slug } = useParams<{ slug: string }>();
     const [material, setMaterial] = useState<MaterialItem | undefined>();
@@ -164,7 +166,11 @@ export default function MaterialPage() {
                             <div className="mt-8 flex flex-wrap gap-3">
                                 {material.href && material.href !== "#" ? (
                                     <Button asChild className="gap-2">
-                                        <a href={material.href} target="_blank" rel="noreferrer">
+                                        <a
+                                            href={material.href}
+                                            target={isExternalHref(material.href) ? "_blank" : undefined}
+                                            rel={isExternalHref(material.href) ? "noopener noreferrer" : undefined}
+                                        >
                                             Acessar material <ArrowRight className="h-4 w-4" />
                                         </a>
                                     </Button>

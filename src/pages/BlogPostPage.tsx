@@ -84,8 +84,8 @@ export default function BlogPostPage() {
   const articleHtml = useMemo(() => {
     const html = contentToHtml(post?.content ?? "");
     return html
-      .replace(/<p>\s*<img[^>]*>\s*<\/p>/i, "")
-      .replace(/<img[^>]*>/i, "");
+      .replace(/^\s*<p>\s*<img[^>]*>\s*<\/p>/i, "")
+      .replace(/^\s*<img[^>]*>/i, "");
   }, [post?.content]);
   const shareLinks = useMemo(() => {
     const currentUrl =
@@ -134,7 +134,7 @@ export default function BlogPostPage() {
     "[&_p]:text-foreground/90",
     "[&_p]:[margin-top:var(--post-p-before)] [&_p]:[margin-bottom:var(--post-p-after)]",
     "prose-ul:space-y-2 prose-ol:space-y-2",
-    "prose-img:rounded-2xl prose-img:border prose-img:shadow-sm",
+    "prose-img:mx-auto prose-img:my-8 prose-img:block prose-img:h-auto prose-img:max-w-full prose-img:rounded-2xl prose-img:border prose-img:object-contain prose-img:shadow-sm",
   ].join(" ");
 
   useEffect(() => {
@@ -190,12 +190,21 @@ export default function BlogPostPage() {
 
       const rect = target.getBoundingClientRect();
       const viewport = window.innerHeight || 1;
-      const totalDistance = rect.height + viewport;
-      const passed = viewport - rect.top;
-      const progress = Math.min(
-        100,
-        Math.max(0, (passed / totalDistance) * 100),
-      );
+      const scrollTop =
+        window.scrollY || document.documentElement.scrollTop || 0;
+      const articleTop = scrollTop + rect.top;
+      const articleBottom = scrollTop + rect.bottom;
+      const articleDistance = Math.max(1, articleBottom - articleTop - viewport);
+      const hasReachedArticleEnd = scrollTop + viewport >= articleBottom - 8;
+      const hasReachedPageEnd =
+        scrollTop + viewport >= document.documentElement.scrollHeight - 8;
+      const progress =
+        hasReachedArticleEnd || hasReachedPageEnd
+          ? 100
+          : Math.min(
+              100,
+              Math.max(0, ((scrollTop - articleTop) / articleDistance) * 100),
+            );
       setReadProgress(progress);
 
       if (!items.length) return;
@@ -223,10 +232,27 @@ export default function BlogPostPage() {
     updateReadingState();
     window.addEventListener("scroll", updateReadingState, { passive: true });
     window.addEventListener("resize", updateReadingState);
+    window.addEventListener("load", updateReadingState);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateReadingState)
+        : undefined;
+    resizeObserver?.observe(article);
+
+    const images = Array.from(article.querySelectorAll("img"));
+    images.forEach((image) =>
+      image.addEventListener("load", updateReadingState),
+    );
 
     return () => {
       window.removeEventListener("scroll", updateReadingState);
       window.removeEventListener("resize", updateReadingState);
+      window.removeEventListener("load", updateReadingState);
+      resizeObserver?.disconnect();
+      images.forEach((image) =>
+        image.removeEventListener("load", updateReadingState),
+      );
     };
   }, [articleHtml]);
 
@@ -284,15 +310,11 @@ export default function BlogPostPage() {
       });
 
       toast.success("Inscrição realizada!", {
-        description: "Obrigado! Também abrimos a newsletter no LinkedIn.",
+        description: "Obrigado! Sua inscrição foi realizada com sucesso.",
       });
 
       setNewsletterName("");
       setNewsletterEmail("");
-      window.open(
-        "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7281675119909912577",
-        "_blank",
-      );
     } catch (error) {
       toast.error("Não foi possível salvar sua inscrição.", {
         description:
@@ -513,7 +535,7 @@ export default function BlogPostPage() {
                   <a
                     href={shareLinks.whatsapp}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label="Compartilhar no WhatsApp"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >
@@ -522,7 +544,7 @@ export default function BlogPostPage() {
                   <a
                     href={shareLinks.facebook}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label="Compartilhar no Facebook"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >
@@ -531,7 +553,7 @@ export default function BlogPostPage() {
                   <a
                     href={shareLinks.linkedin}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label="Compartilhar no LinkedIn"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >
@@ -540,7 +562,7 @@ export default function BlogPostPage() {
                   <a
                     href={shareLinks.twitter}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label="Compartilhar no X"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >

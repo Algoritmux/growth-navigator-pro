@@ -29,7 +29,10 @@ const LeadMagnetSection = () => {
       setEmail("");
     } catch (error) {
       toast.error("Não foi possível salvar sua inscrição.", {
-        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tente novamente em alguns instantes.",
       });
     } finally {
       setLoading(false);
@@ -53,17 +56,20 @@ const LeadMagnetSection = () => {
             Insights semanais sobre crescimento previsível
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-9 sm:mb-10">
-            Receba artigos estratégicos sobre marketing, vendas e dados — direto da prática, sem teoria genérica.
+            Receba artigos estratégicos sobre marketing, vendas e dados — direto
+            da prática, sem teoria genérica.
           </p>
-
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-5 sm:gap-3 max-w-lg mx-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full max-w-lg flex-col gap-5 mx-auto sm:flex-row sm:gap-3"
+          >
             <input
               type="text"
               placeholder="Seu nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full min-h-[52px] rounded-xl border border-border bg-background px-5 py-3 text-base leading-none text-foreground placeholder:text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:h-12 sm:min-h-0 sm:flex-1 sm:rounded-lg sm:px-4 sm:py-0 sm:text-sm sm:placeholder:text-sm"
+              className="block box-border w-full h-[52px] min-h-[52px] px-5 py-3 text-base leading-normal rounded-xl border border-[#e4d8ea] bg-white text-[#1f0b2e] placeholder:text-[#7b668c] placeholder:text-base focus:outline-none focus:ring-2 focus:ring-[#8b1ccf]/30 sm:h-10 sm:min-h-10 sm:flex-1 sm:px-4 sm:py-2 sm:text-sm sm:placeholder:text-sm"
             />
             <input
               type="email"
@@ -71,10 +77,16 @@ const LeadMagnetSection = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full min-h-[52px] rounded-xl border border-border bg-background px-5 py-3 text-base leading-none text-foreground placeholder:text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:h-12 sm:min-h-0 sm:flex-1 sm:rounded-lg sm:px-4 sm:py-0 sm:text-sm sm:placeholder:text-sm"
+              className="block box-border w-full h-[52px] min-h-[52px] px-5 py-3 text-base leading-normal rounded-xl border border-[#e4d8ea] bg-white text-[#1f0b2e] placeholder:text-[#7b668c] placeholder:text-base focus:outline-none focus:ring-2 focus:ring-[#8b1ccf]/30 sm:h-10 sm:min-h-10 sm:flex-1 sm:px-4 sm:py-2 sm:text-sm sm:placeholder:text-sm"
             />
-            <Button type="submit" variant="hero" className="h-[54px] w-full px-6 text-sm sm:h-12 sm:w-auto sm:text-xs" disabled={loading}>
-              {loading ? "ENVIANDO..." : "ENVIAR"} <ArrowRight className="w-4 h-4 ml-1" />
+            <Button
+              type="submit"
+              variant="hero"
+              className="h-[54px] w-full px-6 text-sm sm:h-12 sm:w-auto sm:text-xs"
+              disabled={loading}
+            >
+              {loading ? "ENVIANDO..." : "ENVIAR"}{" "}
+              <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
           <p className="text-sm sm:text-xs text-muted-foreground mt-5 sm:mt-4">

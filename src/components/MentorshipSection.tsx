@@ -36,7 +36,9 @@ const MentorshipSection = () => {
           transition={{ duration: 0.6 }}
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-accent">Mentorias, Palestras & Consultorias</span>
-          <h2 className="mt-3 mb-4 text-3xl font-bold text-foreground sm:text-4xl">{"Contrate meus servi\u00e7os"}</h2>
+          <h2 className="mt-3 mb-4 max-w-full whitespace-normal break-normal text-3xl font-bold leading-tight text-foreground sm:text-4xl sm:leading-tight">
+            {"Contrate meus servi\u00e7os"}
+          </h2>
           <p className="text-lg text-muted-foreground">
             {"Da aquisi\u00e7\u00e3o de conte\u00fado \u00e0 transforma\u00e7\u00e3o real. Escolha o formato que faz sentido para o momento do seu neg\u00f3cio."}
           </p>
