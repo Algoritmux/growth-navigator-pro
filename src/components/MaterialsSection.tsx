@@ -10,7 +10,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { fetchMaterialsFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
+import {
+  fetchMaterialsFromApi,
+  getMaterialAccess,
+  getMaterialAccessLabel,
+  MATERIAL_CATEGORIES,
+  type MaterialItem,
+} from "@/lib/materials-store";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -49,6 +55,7 @@ const MaterialsSection = () => {
 
   const renderCard = (item: MaterialItem, i: number) => {
     const isAvailable = Boolean(item.slug) || (Boolean(item.href) && item.href !== "#");
+    const access = getMaterialAccess(item);
 
     return (
       <motion.div
@@ -60,7 +67,8 @@ const MaterialsSection = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.35, delay: i * 0.04 }}
       >
-        <div className="mb-5 flex items-center gap-3">
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/[0.05]">
             {(() => {
               const cat = MATERIAL_CATEGORIES.find((c) => c.value === item.type);
@@ -69,6 +77,17 @@ const MaterialsSection = () => {
             })()}
           </div>
           <span className="text-xs font-semibold uppercase tracking-wider text-primary/60">{item.type}</span>
+          </div>
+          <span
+            className={[
+              "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+              access === "paid"
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700",
+            ].join(" ")}
+          >
+            {getMaterialAccessLabel(item)}
+          </span>
         </div>
 
         <h3 className="mb-3 text-base font-bold leading-snug text-primary">{item.title}</h3>

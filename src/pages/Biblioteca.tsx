@@ -21,6 +21,8 @@ import {
 import {
     MATERIAL_CATEGORIES,
     fetchMaterialsFromApi,
+    getMaterialAccess,
+    getMaterialAccessLabel,
     type MaterialItem,
     MaterialCategoryValue,
 } from "@/lib/materials-store";
@@ -231,17 +233,30 @@ export default function Biblioteca() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.4, delay: i * 0.04 }}
                                     >
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                {(() => {
-                                                    const cat = MATERIAL_CATEGORIES.find((c) => c.value === item.type);
-                                                    const Icon = cat?.icon;
-                                                    return Icon ? <Icon className="w-5 h-5 text-primary" /> : null;
-                                                })()}
+                                        <div className="flex items-start justify-between gap-3 mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                    {(() => {
+                                                        const cat = MATERIAL_CATEGORIES.find((c) => c.value === item.type);
+                                                        const Icon = cat?.icon;
+                                                        return Icon ? <Icon className="w-5 h-5 text-primary" /> : null;
+                                                    })()}
+                                                </div>
+
+                                                <span className="text-xs font-mono text-accent uppercase">
+                                                    {item.type}
+                                                </span>
                                             </div>
 
-                                            <span className="text-xs font-mono text-accent uppercase">
-                                                {item.type}
+                                            <span
+                                                className={[
+                                                    "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                                                    getMaterialAccess(item) === "paid"
+                                                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                                                        : "border-emerald-200 bg-emerald-50 text-emerald-700",
+                                                ].join(" ")}
+                                            >
+                                                {getMaterialAccessLabel(item)}
                                             </span>
                                         </div>
 

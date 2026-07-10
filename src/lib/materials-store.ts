@@ -20,6 +20,7 @@ export type MaterialType =
     | "Estudo Exclusivo";
 
 export type MaterialCategoryValue = "all" | MaterialType;
+export type MaterialAccess = "free" | "paid";
 
 export type MaterialItem = {
     id: string;
@@ -33,6 +34,10 @@ export type MaterialItem = {
     href?: string;       // link externo (pago)
     published?: boolean; // aparece na /biblioteca
     coverImage?: string; // url da capa
+    access?: MaterialAccess;
+    hasDownload?: boolean;
+    downloadUrl?: string | null;
+    downloadButtonLabel?: string;
     ctaLabel?: string;   // texto do botão
 };
 
@@ -70,6 +75,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#"', // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/growth-driven.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "ia-vendas-b2b",
@@ -83,6 +92,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/ia-vendas-b2b.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "canvas-maturidade",
@@ -96,6 +109,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/canvas-maturidade.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "arquitetura-vendas",
@@ -109,6 +126,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/arquitetura-vendas.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "panorama-growth-2025",
@@ -122,6 +143,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/panorama-growth-2025.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "keynote-futuro",
@@ -135,6 +160,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         // href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "free",
+        hasDownload: true,
+        downloadUrl: "/materials/keynote-futuro.pdf",
+        downloadButtonLabel: "Download",
     },
     {
         id: "case-triplicar-receita",
@@ -147,6 +176,10 @@ const SEED_MATERIALS: MaterialItem[] = [
         coverImage: "https://.../capa.png", // pode deixar vazio por enquanto
         //  href: "#", // se for pago, coloque o link externo real aqui
         ctaLabel: "Acessar material",
+        access: "paid",
+        hasDownload: false,
+        downloadUrl: null,
+        downloadButtonLabel: "Tenho interesse",
     },
 ];
 
@@ -233,7 +266,24 @@ export function countMaterialsByCategory(value: MaterialCategoryValue) {
     return getAllMaterials().filter((m) => m.type === value).length;
 }
 
+export function getMaterialAccess(material: Pick<MaterialItem, "access">): MaterialAccess {
+    return material.access === "paid" ? "paid" : "free";
+}
+
+export function getMaterialAccessLabel(material: Pick<MaterialItem, "access">) {
+    return getMaterialAccess(material) === "paid" ? "Pago" : "Gratuito";
+}
+
+export function hasMaterialDownload(material: Pick<MaterialItem, "access" | "hasDownload" | "downloadUrl">) {
+    return getMaterialAccess(material) === "free" && Boolean(material.hasDownload && material.downloadUrl);
+}
+
 function mapApiMaterial(material: Record<string, any>): MaterialItem {
+    const access = material.access === "paid" || material.access_type === "paid" ? "paid" : "free";
+    const rawDownloadUrl = material.downloadUrl ?? material.download_url ?? null;
+    const downloadUrl = rawDownloadUrl ? String(rawDownloadUrl) : null;
+    const hasDownload = access === "free" && Boolean(material.hasDownload ?? material.has_download) && Boolean(downloadUrl);
+
     return {
         id: String(material.id),
         type: (material.type || "Livro") as MaterialType,
@@ -245,6 +295,12 @@ function mapApiMaterial(material: Record<string, any>): MaterialItem {
         published: Boolean(material.published),
         coverImage: material.coverImage ? String(material.coverImage) : "",
         ctaLabel: material.ctaLabel ? String(material.ctaLabel) : "Acessar material",
+        access,
+        hasDownload,
+        downloadUrl,
+        downloadButtonLabel: material.downloadButtonLabel || material.download_button_label
+            ? String(material.downloadButtonLabel || material.download_button_label)
+            : "Download",
     };
 }
 
