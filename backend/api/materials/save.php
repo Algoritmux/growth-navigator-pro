@@ -33,6 +33,10 @@ try {
     $coverImage = trim((string) ($data['coverImage'] ?? $data['cover_image'] ?? ''));
     $href = trim((string) ($data['href'] ?? ''));
     $ctaLabel = trim((string) ($data['ctaLabel'] ?? $data['cta_label'] ?? 'Acessar material'));
+    $access = trim((string) ($data['access'] ?? $data['access_type'] ?? 'free'));
+    $hasDownload = (bool) ($data['hasDownload'] ?? $data['has_download'] ?? false);
+    $downloadUrl = trim((string) ($data['downloadUrl'] ?? $data['download_url'] ?? ''));
+    $downloadButtonLabel = trim((string) ($data['downloadButtonLabel'] ?? $data['download_button_label'] ?? 'Download'));
     $tags = $data['tags'] ?? [];
     $published = (bool) ($data['published'] ?? true);
 
@@ -61,6 +65,15 @@ try {
         $tags = [];
     }
 
+    if (!in_array($access, ['free', 'paid'], true)) {
+        sendError('Tipo de acesso invalido.');
+    }
+
+    if ($access === 'paid') {
+        $hasDownload = false;
+        $downloadUrl = '';
+    }
+
     $connection = getConnection();
 
     $payload = [
@@ -72,6 +85,10 @@ try {
         'cover_image' => $coverImage !== '' ? $coverImage : null,
         'href' => $href !== '' ? $href : null,
         'cta_label' => $ctaLabel !== '' ? $ctaLabel : 'Acessar material',
+        'access_type' => $access,
+        'has_download' => $hasDownload && $downloadUrl !== '' ? 1 : 0,
+        'download_url' => $hasDownload && $downloadUrl !== '' ? $downloadUrl : null,
+        'download_button_label' => $downloadButtonLabel !== '' ? $downloadButtonLabel : 'Download',
         'is_published' => $published ? 1 : 0,
     ];
 
@@ -85,6 +102,10 @@ try {
                 cover_image = :cover_image,
                 href = :href,
                 cta_label = :cta_label,
+                access_type = :access_type,
+                has_download = :has_download,
+                download_url = :download_url,
+                download_button_label = :download_button_label,
                 is_published = :is_published
             WHERE id = :id';
 
@@ -94,9 +115,9 @@ try {
         $savedId = $id;
     } else {
         $sql = 'INSERT INTO materials (
-                type, slug, title, description, tags_json, cover_image, href, cta_label, is_published
+                type, slug, title, description, tags_json, cover_image, href, cta_label, access_type, has_download, download_url, download_button_label, is_published
             ) VALUES (
-                :type, :slug, :title, :description, :tags_json, :cover_image, :href, :cta_label, :is_published
+                :type, :slug, :title, :description, :tags_json, :cover_image, :href, :cta_label, :access_type, :has_download, :download_url, :download_button_label, :is_published
             )';
 
         $statement = $connection->prepare($sql);

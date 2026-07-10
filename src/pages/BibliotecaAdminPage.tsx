@@ -9,9 +9,12 @@ import AdminHeader from "@/components/AdminHeader";
 
 import {
     MaterialItem,
+    MaterialAccess,
     MaterialType,
     deleteMaterialFromApi,
     fetchMaterialsFromApi,
+    getMaterialAccess,
+    getMaterialAccessLabel,
     saveMaterialToApi,
 } from "@/lib/materials-store";
 
@@ -34,6 +37,10 @@ type FormState = {
     href: string;
     slug: string;
     published: boolean;
+    access: MaterialAccess;
+    hasDownload: boolean;
+    downloadUrl: string;
+    downloadButtonLabel: string;
 };
 
 function itemToForm(m?: MaterialItem): FormState {
@@ -46,6 +53,10 @@ function itemToForm(m?: MaterialItem): FormState {
         href: m?.href ?? "",
         slug: m?.slug ?? "",
         published: m?.published ?? true,
+        access: m?.access ?? "free",
+        hasDownload: m?.hasDownload ?? false,
+        downloadUrl: m?.downloadUrl ?? "",
+        downloadButtonLabel: m?.downloadButtonLabel ?? "Download",
     };
 }
 
@@ -151,6 +162,10 @@ export default function BibliotecaAdminPage() {
             href: form.href.trim(),
             slug: form.slug.trim(),
             published: form.published,
+            access: form.access,
+            hasDownload: form.access === "free" ? form.hasDownload : false,
+            downloadUrl: form.access === "free" && form.hasDownload ? form.downloadUrl.trim() : null,
+            downloadButtonLabel: form.downloadButtonLabel.trim() || "Download",
         };
 
         setIsSaving(true);
@@ -238,6 +253,21 @@ export default function BibliotecaAdminPage() {
                                         <span className="rounded-full border bg-background px-2 py-1">
                                             {m.published ? "Publicado" : "Rascunho"}
                                         </span>
+                                        <span
+                                            className={[
+                                                "rounded-full border px-2 py-1",
+                                                getMaterialAccess(m) === "paid"
+                                                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                                                    : "border-emerald-200 bg-emerald-50 text-emerald-700",
+                                            ].join(" ")}
+                                        >
+                                            {getMaterialAccessLabel(m)}
+                                        </span>
+                                        {m.hasDownload && m.downloadUrl ? (
+                                            <span className="rounded-full border bg-background px-2 py-1">
+                                                Download
+                                            </span>
+                                        ) : null}
                                     </div>
 
                                     <div className="mt-2 text-base font-bold">{m.title}</div>
@@ -395,6 +425,56 @@ export default function BibliotecaAdminPage() {
                                     placeholder="https://..."
                                 />
                             </label>
+
+                            <label className="grid gap-1">
+                                <span className="text-sm text-muted-foreground">Tipo de acesso</span>
+                                <select
+                                    value={form.access}
+                                    onChange={(e) =>
+                                        setForm((s) => ({
+                                            ...s,
+                                            access: e.target.value as MaterialAccess,
+                                            hasDownload: e.target.value === "free" ? s.hasDownload : false,
+                                        }))
+                                    }
+                                    className="h-10 rounded-md border bg-background px-3 text-sm"
+                                >
+                                    <option value="free">Gratuito</option>
+                                    <option value="paid">Pago</option>
+                                </select>
+                            </label>
+
+                            <div className="grid gap-3 rounded-xl border bg-background/60 p-3">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.hasDownload}
+                                        disabled={form.access === "paid"}
+                                        onChange={(e) => setForm((s) => ({ ...s, hasDownload: e.target.checked }))}
+                                    />
+                                    <span className="text-sm">Possui download?</span>
+                                </label>
+
+                                <label className="grid gap-1">
+                                    <span className="text-sm text-muted-foreground">URL/caminho do arquivo de download</span>
+                                    <Input
+                                        value={form.downloadUrl}
+                                        disabled={form.access === "paid" || !form.hasDownload}
+                                        onChange={(e) => setForm((s) => ({ ...s, downloadUrl: e.target.value }))}
+                                        placeholder="/materials/playbook-gtm.pdf"
+                                    />
+                                </label>
+
+                                <label className="grid gap-1">
+                                    <span className="text-sm text-muted-foreground">Texto do botao de download</span>
+                                    <Input
+                                        value={form.downloadButtonLabel}
+                                        disabled={form.access === "paid"}
+                                        onChange={(e) => setForm((s) => ({ ...s, downloadButtonLabel: e.target.value }))}
+                                        placeholder="Download"
+                                    />
+                                </label>
+                            </div>
 
                             <label className="grid gap-1">
                                 <span className="text-sm text-muted-foreground">Slug (URL interna) — opcional</span>

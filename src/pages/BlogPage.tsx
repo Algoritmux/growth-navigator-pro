@@ -136,7 +136,7 @@ export default function BlogPage() {
                       src={coverImage}
                       alt={p.title}
                       loading="lazy"
-                      className="h-40 w-full object-cover transition-[transform,filter] duration-300 group-hover:scale-[1.02] [filter:grayscale(1)_sepia(1)_hue-rotate(235deg)_saturate(7)_brightness(0.72)_contrast(1.1)] group-hover:[filter:none]"
+                      className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     />
                   </div>
                 )}

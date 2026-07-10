@@ -1,9 +1,26 @@
+import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
-import { fetchMaterialBySlugFromApi, MATERIAL_CATEGORIES, type MaterialItem } from "@/lib/materials-store";
+import {
+    fetchMaterialBySlugFromApi,
+    getMaterialAccess,
+    getMaterialAccessLabel,
+    hasMaterialDownload,
+    MATERIAL_CATEGORIES,
+    type MaterialItem,
+} from "@/lib/materials-store";
+import { createLead } from "@/lib/leadsApi";
 import SEO from "@/components/SEO";
 
 const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
@@ -12,6 +29,16 @@ export default function MaterialPage() {
     const { slug } = useParams<{ slug: string }>();
     const [material, setMaterial] = useState<MaterialItem | undefined>();
     const [isLoading, setIsLoading] = useState(true);
+    const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+    const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+    const [leadError, setLeadError] = useState("");
+    const [isDownloadReleased, setIsDownloadReleased] = useState(false);
+    const [leadForm, setLeadForm] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        role: "",
+    });
 
     useEffect(() => {
         let active = true;
@@ -22,6 +49,8 @@ export default function MaterialPage() {
         }
 
         setIsLoading(true);
+        setIsDownloadReleased(false);
+        setLeadError("");
         fetchMaterialBySlugFromApi(slug)
             .then((data) => {
                 if (active) setMaterial(data);
@@ -76,6 +105,67 @@ export default function MaterialPage() {
 
     const cat = MATERIAL_CATEGORIES.find((c) => c.value === material.type);
     const Icon = cat?.icon;
+    const access = getMaterialAccess(material);
+    const accessLabel = getMaterialAccessLabel(material);
+    const canDownload = hasMaterialDownload(material);
+    const downloadButtonLabel = material.downloadButtonLabel?.trim() || "Download";
+    const leadSource = access === "paid" ? "paid-material-interest" : "material-download";
+    const isLeadFormValid =
+        leadForm.name.trim() !== "" &&
+        leadForm.email.trim() !== "" &&
+        leadForm.phone.trim() !== "" &&
+        leadForm.role.trim() !== "";
+
+    function releaseDownload() {
+        if (!canDownload || !material.downloadUrl) return;
+
+        const anchor = document.createElement("a");
+        anchor.href = material.downloadUrl;
+        anchor.download = "";
+        anchor.rel = "noopener noreferrer";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+    }
+
+    async function submitLeadForm(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setLeadError("");
+
+        if (!isLeadFormValid) {
+            setLeadError("Preencha todos os campos obrigatorios.");
+            return;
+        }
+
+        setIsSubmittingLead(true);
+        try {
+            await createLead({
+                name: leadForm.name.trim(),
+                email: leadForm.email.trim(),
+                phone: leadForm.phone.trim(),
+                service: `material:${material.slug || material.id}`,
+                source: leadSource,
+                message: [
+                    `Material: ${material.title}`,
+                    `Slug: ${material.slug || "sem-slug"}`,
+                    `Cargo: ${leadForm.role.trim()}`,
+                    `Tipo de acesso: ${accessLabel}`,
+                ].join("\n"),
+            });
+
+            if (access === "free") {
+                setIsDownloadReleased(true);
+                releaseDownload();
+            } else {
+                setIsLeadModalOpen(false);
+            }
+        } catch (error) {
+            console.error(error);
+            setLeadError(error instanceof Error ? error.message : "Nao foi possivel enviar seus dados.");
+        } finally {
+            setIsSubmittingLead(false);
+        }
+    }
 
     return (
         <main className="min-h-screen bg-background text-foreground">
@@ -132,7 +222,7 @@ export default function MaterialPage() {
 
                         {/* Conteúdo */}
                         <div className="flex-1">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                                 {Icon ? (
                                     <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                         <Icon className="h-5 w-5 text-primary" />
@@ -141,6 +231,16 @@ export default function MaterialPage() {
 
                                 <span className="text-xs font-mono text-accent uppercase">
                                     {material.type}
+                                </span>
+                                <span
+                                    className={[
+                                        "rounded-full border px-2.5 py-1 text-xs font-semibold",
+                                        access === "paid"
+                                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                                            : "border-emerald-200 bg-emerald-50 text-emerald-700",
+                                    ].join(" ")}
+                                >
+                                    {accessLabel}
                                 </span>
                             </div>
 
@@ -183,6 +283,30 @@ export default function MaterialPage() {
                                 <Button asChild variant="outline">
                                     <Link to="/biblioteca">Ver todos</Link>
                                 </Button>
+
+                                {access === "free" ? (
+                                    canDownload ? (
+                                        <Button
+                                            type="button"
+                                            variant="accent"
+                                            className="gap-2 text-white hover:text-white"
+                                            onClick={() => setIsLeadModalOpen(true)}
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            {downloadButtonLabel}
+                                        </Button>
+                                    ) : null
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        variant="accent"
+                                        className="gap-2 text-white hover:text-white"
+                                        onClick={() => setIsLeadModalOpen(true)}
+                                    >
+                                        <LockKeyhole className="h-4 w-4" />
+                                        Tenho interesse
+                                    </Button>
+                                )}
                             </div>
 
                             {/* Aqui você pode colocar: preço, “pago/grátis”, bullets, etc */}
@@ -190,6 +314,89 @@ export default function MaterialPage() {
                     </div>
                 </div>
             </section>
+
+            <Dialog open={isLeadModalOpen} onOpenChange={setIsLeadModalOpen}>
+                <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {access === "paid" ? "Solicitar acesso" : "Liberar download"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {access === "paid"
+                                ? "Envie seus dados para recebermos seu interesse nesse material."
+                                : "Preencha seus dados para liberar o arquivo."}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {isDownloadReleased ? (
+                        <div className="grid gap-4">
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+                                Obrigado! Seu download foi liberado.
+                            </div>
+                            {material.downloadUrl ? (
+                                <Button asChild variant="accent" className="text-white hover:text-white">
+                                    <a href={material.downloadUrl} download>
+                                        Baixar agora
+                                    </a>
+                                </Button>
+                            ) : null}
+                        </div>
+                    ) : (
+                        <form className="grid gap-4" onSubmit={submitLeadForm}>
+                            <label className="grid gap-1.5">
+                                <span className="text-sm font-medium">Nome</span>
+                                <Input
+                                    required
+                                    value={leadForm.name}
+                                    onChange={(event) => setLeadForm((state) => ({ ...state, name: event.target.value }))}
+                                    autoComplete="name"
+                                />
+                            </label>
+
+                            <label className="grid gap-1.5">
+                                <span className="text-sm font-medium">E-mail</span>
+                                <Input
+                                    required
+                                    type="email"
+                                    value={leadForm.email}
+                                    onChange={(event) => setLeadForm((state) => ({ ...state, email: event.target.value }))}
+                                    autoComplete="email"
+                                />
+                            </label>
+
+                            <label className="grid gap-1.5">
+                                <span className="text-sm font-medium">Nº telefone</span>
+                                <Input
+                                    required
+                                    value={leadForm.phone}
+                                    onChange={(event) => setLeadForm((state) => ({ ...state, phone: event.target.value }))}
+                                    autoComplete="tel"
+                                />
+                            </label>
+
+                            <label className="grid gap-1.5">
+                                <span className="text-sm font-medium">Cargo</span>
+                                <Input
+                                    required
+                                    value={leadForm.role}
+                                    onChange={(event) => setLeadForm((state) => ({ ...state, role: event.target.value }))}
+                                    autoComplete="organization-title"
+                                />
+                            </label>
+
+                            {leadError ? (
+                                <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                                    {leadError}
+                                </div>
+                            ) : null}
+
+                            <Button type="submit" disabled={isSubmittingLead || !isLeadFormValid} variant="accent" className="text-white hover:text-white">
+                                {isSubmittingLead ? "Enviando..." : access === "paid" ? "Tenho interesse" : downloadButtonLabel}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }

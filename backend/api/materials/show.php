@@ -17,13 +17,21 @@ function mapMaterial(array $material): array
     $material['desc'] = $material['description'];
     $material['coverImage'] = $material['cover_image'];
     $material['ctaLabel'] = $material['cta_label'];
+    $material['access'] = $material['access_type'] ?? 'free';
+    $material['hasDownload'] = (bool) ($material['has_download'] ?? false);
+    $material['downloadUrl'] = $material['download_url'] ?? null;
+    $material['downloadButtonLabel'] = $material['download_button_label'] ?? 'Download';
 
     unset(
         $material['tags_json'],
         $material['is_published'],
         $material['description'],
         $material['cover_image'],
-        $material['cta_label']
+        $material['cta_label'],
+        $material['access_type'],
+        $material['has_download'],
+        $material['download_url'],
+        $material['download_button_label']
     );
 
     return $material;
