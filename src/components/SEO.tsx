@@ -7,14 +7,12 @@ interface SEOProps {
 }
 
 const SEO = ({ title, description, jsonLd }: SEOProps) => {
-    const fullTitle = title ? `${title} | Guilherme Correia` : "Guilherme Correia | Growth & IA Estratégica";
-    const defaultDesc = "Estrategista de Growth e IA. Ajudo empresas a escala através de frameworks de crescimento previsível e automações inteligentes.";
+    const fullTitle = title ? `${title} | Guilherme Correia` : "Guilherme Correia | Growth, IA e Crescimento Previsível";
+    const defaultDesc = "Estratégias práticas sobre growth, marketing, vendas, dados e inteligência artificial para construir crescimento previsível.";
 
     useEffect(() => {
-        // Atualizar Título
         document.title = fullTitle;
 
-        // Atualizar Meta Descrição
         let metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
             metaDescription = document.createElement("meta");
@@ -23,7 +21,6 @@ const SEO = ({ title, description, jsonLd }: SEOProps) => {
         }
         metaDescription.setAttribute("content", description || defaultDesc);
 
-        // Gerenciar JSON-LD
         const scriptId = "seo-json-ld";
         let script = document.getElementById(scriptId) as HTMLScriptElement;
 
@@ -38,8 +35,6 @@ const SEO = ({ title, description, jsonLd }: SEOProps) => {
         } else if (script) {
             script.remove();
         }
-
-        // Cleanup opcional se necessário ao desmontar, mas para SPAs geralmente queremos manter o estado
     }, [fullTitle, description, jsonLd]);
 
     return null;
