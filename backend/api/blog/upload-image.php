@@ -57,7 +57,7 @@ try {
     $baseName = substr($baseName, 0, 64);
 
     $extension = $allowed[$mime];
-    $uploadDir = dirname(__DIR__, 3) . '/public/lovable-uploads';
+    $uploadDir = dirname(__DIR__, 3) . '/lovable-uploads';
 
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
         sendError('Nao foi possivel preparar a pasta de uploads.', 500);
