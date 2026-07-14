@@ -2,9 +2,12 @@ import { getAdminAuthHeaders } from "./authSession";
 
 const DEFAULT_API_BASE_URL = "http://localhost/growth-navigator-pro/backend/api";
 
-export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
-).replace(/\/$/, "");
+function resolveApiBaseUrl() {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim() || "";
+  return configured || DEFAULT_API_BASE_URL;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl().replace(/\/$/, "");
 
 type RequestOptions = {
   method?: "GET" | "POST";

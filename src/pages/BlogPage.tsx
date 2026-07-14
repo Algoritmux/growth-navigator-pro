@@ -3,7 +3,7 @@ import { fetchPublishedBlogPosts } from "@/lib/blogApi";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { extractFirstImageSrc } from "@/lib/markdown";
+import { extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 
 const CATEGORIES = [
   "Todos",
@@ -122,7 +122,10 @@ export default function BlogPage() {
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {visiblePosts.map((p) => {
-            const coverImage = extractFirstImageSrc(p.content);
+            const coverImage =
+              p.coverImage ||
+              extractCoverImageSrc(p.content) ||
+              extractFirstImageSrc(p.content);
 
             return (
               <Link

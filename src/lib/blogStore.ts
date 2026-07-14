@@ -1,4 +1,6 @@
 import { getAdminAuthHeaders } from "./authSession";
+import { API_BASE_URL } from "./api";
+import { extractCoverImageSrc } from "./markdown";
 
 export type BlogCategory = "GTM" | "ICP" | "Oferta" | "Sales" | "Growth" | "IA";
 
@@ -12,6 +14,7 @@ export type BlogPost = {
     category: BlogCategory;
     tags: string[];
     content: string; // markdown simples (por enquanto)
+    coverImage?: string;
     editorSettings?: {
         font?: "theme" | "arial" | "georgia" | "times";
         fontSize?: number;
@@ -24,12 +27,6 @@ export type BlogPost = {
 };
 
 const STORAGE_KEY = "gc_blog_posts_v1";
-
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ||
-    (typeof window !== "undefined" && ["8080", "5173"].includes(window.location.port)
-        ? "http://localhost/growth-navigator-pro/backend/api"
-        : "/backend/api");
 
 const seedPosts: BlogPost[] = [
     {
@@ -144,6 +141,10 @@ export function deletePost(id: string) {
 function mapApiPost(post: Record<string, any>): BlogPost {
     const publishedDate = String(post.published_at || post.created_at || "").slice(0, 10);
     const updatedDate = String(post.updated_at || post.created_at || "").slice(0, 10);
+    const content = String(post.content || "");
+    const coverImage =
+        String(post.cover_image || post.coverImage || "").trim() ||
+        extractCoverImageSrc(content);
 
     return {
         id: String(post.id),
@@ -154,7 +155,8 @@ function mapApiPost(post: Record<string, any>): BlogPost {
         readTime: String(post.read_time || "5 min"),
         category: (post.category || "GTM") as BlogCategory,
         tags: Array.isArray(post.tags) ? post.tags : [],
-        content: String(post.content || ""),
+        content,
+        coverImage: coverImage || undefined,
         editorSettings: {
             font: post.editor_font || "theme",
             fontSize: Number(post.editor_font_size || 18),
@@ -209,6 +211,22 @@ export async function savePostToApi(post: BlogPost): Promise<{ id: string; slug:
     return {
         id: String(data.id),
         slug: data.slug,
+    };
+}
+
+export async function uploadBlogImageToApi(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`${API_BASE_URL}/blog/upload-image.php`, {
+        method: "POST",
+        headers: getAdminAuthHeaders(),
+        body: formData,
+    });
+
+    const data = await readApiResponse<{ url: string }>(response);
+    return {
+        url: data.url,
     };
 }
 
