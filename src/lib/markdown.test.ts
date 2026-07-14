@@ -1,11 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { contentToHtml } from "./markdown";
+import {
+  contentToHtml,
+  extractCoverImageSrc,
+  extractFirstImageSrc,
+  withCoverImageMeta,
+} from "./markdown";
 
 function parseHtml(html: string) {
   return new DOMParser().parseFromString(html, "text/html");
 }
 
 describe("contentToHtml special blog blocks", () => {
+  it("stores cover image metadata without rendering it in the article body", () => {
+    const content = withCoverImageMeta(
+      "## Inicio\n\n![Imagem interna](/lovable-uploads/interna.png)",
+      "/lovable-uploads/capa.png",
+    );
+    const html = contentToHtml(content);
+
+    expect(extractCoverImageSrc(content)).toBe("/lovable-uploads/capa.png");
+    expect(extractFirstImageSrc(content)).toBe("/lovable-uploads/interna.png");
+    expect(html).not.toContain("blog-cover-image");
+    expect(html).toContain('<h2 id="inicio">Inicio</h2>');
+  });
+
   it("renders markdown h2 and h3 headings with stable ids", () => {
     const html = contentToHtml(`
 ## O que é crescimento previsível?
@@ -43,6 +61,74 @@ Crescimento previsível é a capacidade de gerar oportunidades, vendas e receita
     );
   });
 
+  it("renders simple lists, numbered lists, links and separators with editorial classes", () => {
+    const html = contentToHtml(`
+## Checklist
+
+- Primeiro item
+- Segundo item com [link](/biblioteca)
+
+1. Diagnosticar
+2. Priorizar
+
+---
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("ul.blog-editorial-list")).not.toBeNull();
+    expect(doc.querySelector("ol.blog-numbered-list")).not.toBeNull();
+    expect(doc.querySelector("a")?.getAttribute("href")).toBe("/biblioteca");
+    expect(doc.querySelector("hr")).not.toBeNull();
+    expect(doc.querySelectorAll("li")).toHaveLength(4);
+  });
+
+  it("keeps standalone numbers as plain text instead of turning them into cards", () => {
+    const html = contentToHtml(`
+1
+Diagnostique a jornada do cliente.
+
+2
+Priorize experimentos com impacto claro.
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("ol.blog-loose-steps")).toBeNull();
+    expect(doc.querySelectorAll(".blog-loose-step")).toHaveLength(0);
+    expect(doc.querySelector("p")?.textContent).toBe("1");
+  });
+
+  it("renders numbered lists with descriptions under each item as one clean list", () => {
+    const html = contentToHtml(`
+## Principais etapas de uma estrategia de growth
+
+1. Diagnostico da jornada
+Antes de criar novas campanhas, entenda os pontos de atrito.
+
+2. Definicao de hipoteses
+Depois do diagnostico, escolha o que precisa ser testado.
+
+3. Execucao de testes
+Os testes devem ser simples e mensuraveis.
+
+4. Analise dos resultados
+Toda acao precisa gerar aprendizado.
+
+5. Escala do que funciona
+Quando uma hipotese gera resultado, transforme em processo.
+`);
+    const doc = parseHtml(html);
+    const list = doc.querySelector("ol.blog-numbered-list");
+    const items = Array.from(doc.querySelectorAll("ol.blog-numbered-list > li"));
+
+    expect(list).not.toBeNull();
+    expect(items).toHaveLength(5);
+    expect(items[0].innerHTML).toContain("Diagnostico da jornada<br>");
+    expect(items[2].textContent).toContain("Execucao de testes");
+    expect(items[2].textContent).toContain("Os testes devem ser simples");
+    expect(doc.querySelector("ol.blog-loose-steps")).toBeNull();
+    expect(html).not.toContain("blog-loose-step-number");
+  });
+
   it("renders markdown special blocks as styled HTML", () => {
     const html = contentToHtml(`
 ## Como funciona?
@@ -75,6 +161,59 @@ Texto importante em destaque.
     expect(html).toContain('class="not-prose blog-special-block blog-special-quote"');
     expect(html).toContain("<figcaption>Guilherme Correia</figcaption>");
     expect(html).toContain('class="not-prose blog-special-block blog-special-highlight"');
+  });
+
+  it("renders steps, editorial list and image caption blocks", () => {
+    const html = contentToHtml(`
+[passos]
+[passo titulo="Aquisicao"]
+Atraia pessoas certas.
+[/passo]
+[passo titulo="Retencao"]
+Mantenha clientes ativos.
+[/passo]
+[/passos]
+
+[lista]
+- CAC
+- Retencao
+[/lista]
+
+[imagem src="/lovable-uploads/exemplo.png" alt="Diagrama" legenda="Legenda curta"]
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-special-steps")).not.toBeNull();
+    expect(doc.querySelectorAll(".blog-special-step")).toHaveLength(2);
+    expect(doc.querySelector(".blog-special-list")).not.toBeNull();
+    expect(doc.querySelector(".blog-special-image img")?.getAttribute("src")).toBe(
+      "/lovable-uploads/exemplo.png",
+    );
+    expect(doc.querySelector(".blog-special-image figcaption")?.textContent).toBe(
+      "Legenda curta",
+    );
+    expect(html).not.toContain("[passos]");
+    expect(html).not.toContain("[passo");
+    expect(html).not.toContain("[lista]");
+    expect(html).not.toContain("[imagem");
+  });
+
+  it("renders editor figure HTML as image with caption", () => {
+    const html = contentToHtml(
+      '<figure><img src="/lovable-uploads/grafico.png" alt="Grafico de crescimento"><figcaption>Legenda do grafico</figcaption></figure>',
+    );
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-special-image img")?.getAttribute("src")).toBe(
+      "/lovable-uploads/grafico.png",
+    );
+    expect(doc.querySelector(".blog-special-image img")?.getAttribute("alt")).toBe(
+      "Grafico de crescimento",
+    );
+    expect(doc.querySelector(".blog-special-image figcaption")?.textContent).toBe(
+      "Legenda do grafico",
+    );
+    expect(html).not.toContain("<figure><img");
   });
 
   it("renders mixed editor HTML headings and special blocks", () => {
@@ -152,11 +291,28 @@ Texto importante em destaque.
     expect(html).not.toContain("[/card-numero]");
   });
 
-  it("keeps incomplete blocks as safe text", () => {
+  it("renders incomplete blocks safely without leaking raw shortcodes", () => {
     const html = contentToHtml(`[material titulo="Guia"]\nTexto sem fechamento.`);
 
-    expect(html).toContain("[material titulo=&quot;Guia&quot;]");
+    expect(html).toContain('class="not-prose blog-special-block blog-special-material"');
     expect(html).toContain("Texto sem fechamento.");
+    expect(html).not.toContain("[material");
+  });
+
+  it("keeps malformed steps from breaking the page or leaking wrapper tags", () => {
+    const html = contentToHtml(`
+[passos]
+[passo titulo="Primeiro"]
+Conteudo do primeiro passo.
+[/passo]
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-special-steps")).not.toBeNull();
+    expect(doc.querySelectorAll(".blog-special-step")).toHaveLength(1);
+    expect(html).toContain("Conteudo do primeiro passo.");
+    expect(html).not.toContain("[passos]");
+    expect(html).not.toContain("[passo");
   });
 
   it("escapes attributes and sanitizes material links", () => {
@@ -198,6 +354,38 @@ Texto final.
     expect(doc.querySelector("h2")?.textContent).toBe("Antes da imagem");
     expect(doc.querySelector("h3")?.textContent).toBe("Depois da imagem");
     expect(html).not.toContain("[/material]");
+  });
+
+  it("renders heading, image block, steps and material together without raw tags", () => {
+    const html = contentToHtml(`
+## Plano de execucao
+
+[imagem src="/lovable-uploads/plano.png" alt="Plano" legenda="Mapa do plano"]
+
+[passos]
+[passo titulo="Diagnostico"]
+Entenda o ponto de partida.
+[/passo]
+[passo titulo="Execucao"]
+Transforme prioridade em rotina.
+[/passo]
+[/passos]
+
+[material titulo="Guia" botao="Ver biblioteca" link="/biblioteca"]
+Continue estudando.
+[/material]
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("h2")?.textContent).toBe("Plano de execucao");
+    expect(doc.querySelector(".blog-special-image img")?.getAttribute("alt")).toBe(
+      "Plano",
+    );
+    expect(doc.querySelectorAll(".blog-special-step")).toHaveLength(2);
+    expect(doc.querySelector(".blog-special-material")).not.toBeNull();
+    expect(html).not.toContain("[imagem");
+    expect(html).not.toContain("[passos]");
+    expect(html).not.toContain("[material");
   });
 
   it("opens only external links in a new tab", () => {

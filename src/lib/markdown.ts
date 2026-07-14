@@ -35,7 +35,9 @@ type SpecialBlockType =
   | "bloco-destaque"
   | "card-numero"
   | "material"
-  | "citacao";
+  | "citacao"
+  | "passos"
+  | "lista";
 
 type SpecialBlockMatch = {
   type: SpecialBlockType;
@@ -47,10 +49,16 @@ const SPECIAL_BLOCK_TYPES: SpecialBlockType[] = [
   "card-numero",
   "material",
   "citacao",
+  "passos",
+  "lista",
 ];
 
 const SPECIAL_BLOCK_OPEN_RE =
-  /^\[(bloco-destaque|card-numero|material|citacao)\b([^\]]*)\]\s*$/i;
+  /^\[(bloco-destaque|card-numero|material|citacao|passos|lista)\b([^\]]*)\]\s*$/i;
+
+const IMAGE_BLOCK_RE = /^\[imagem\b([^\]]*)\]\s*$/i;
+const STEP_OPEN_RE = /^\[passo\b([^\]]*)\]\s*$/i;
+const STEP_CLOSE_RE = /^\[\/passo\]\s*$/i;
 
 function slugifyHeading(text: string) {
   return (
@@ -113,6 +121,8 @@ function sanitizeHtml(html: string) {
     "code",
     "div",
     "em",
+    "figcaption",
+    "figure",
     "h1",
     "h2",
     "h3",
@@ -257,6 +267,36 @@ function parseSpecialBlockOpen(line: string): SpecialBlockMatch | null {
   };
 }
 
+const COVER_IMAGE_META_RE =
+  /^\s*<!--\s*blog-cover-image:\s*([^\n\r]*?)\s*-->\s*/i;
+
+export function extractCoverImageSrc(content: string) {
+  const source = content?.trimStart() || "";
+  const match = source.match(COVER_IMAGE_META_RE);
+  if (!match?.[1]) return undefined;
+
+  const safe = sanitizeImageUrl(match[1]);
+  return safe || undefined;
+}
+
+export function stripCoverImageMeta(content: string) {
+  return (content || "").replace(COVER_IMAGE_META_RE, "");
+}
+
+export function withCoverImageMeta(content: string, coverImage?: string) {
+  const cleanContent = stripCoverImageMeta(content).trim();
+  const safeCover = sanitizeImageUrl(coverImage || "");
+
+  if (!safeCover) return cleanContent;
+  return `<!-- blog-cover-image: ${safeCover} -->\n${cleanContent}`;
+}
+
+function parseImageBlockOpen(line: string) {
+  const match = line.trim().match(IMAGE_BLOCK_RE);
+  if (!match) return null;
+  return parseAttributes(match[1] || "");
+}
+
 function specialBlockCloseRe(type: SpecialBlockType) {
   return new RegExp(`^\\[\\/${type}\\]\\s*$`, "i");
 }
@@ -322,6 +362,19 @@ function renderSpecialBlock(
     ].join("");
   }
 
+  if (type === "lista") {
+    return [
+      '<section class="not-prose blog-special-block blog-special-list">',
+      '<div class="blog-special-list-marker" aria-hidden="true">✓</div>',
+      `<div class="blog-special-body">${content}</div>`,
+      "</section>",
+    ].join("");
+  }
+
+  if (type === "passos") {
+    return content;
+  }
+
   const author = escapeHtml(attrs.autor || "");
 
   return [
@@ -329,6 +382,97 @@ function renderSpecialBlock(
     `<blockquote class="blog-special-body">${content}</blockquote>`,
     author ? `<figcaption>${author}</figcaption>` : "",
     "</figure>",
+  ].join("");
+}
+
+function renderImageBlock(attrs: Record<string, string>) {
+  const src = sanitizeImageUrl(attrs.src || "");
+  if (!src) return "";
+
+  const alt = escapeHtml(attrs.alt || attrs.descricao || "");
+  const caption = escapeHtml(attrs.legenda || attrs.caption || "");
+
+  return [
+    '<figure class="not-prose blog-special-image">',
+    `<img src="${src}" alt="${alt}" />`,
+    caption ? `<figcaption>${caption}</figcaption>` : "",
+    "</figure>",
+  ].join("");
+}
+
+function renderStepsBlock(markdown: string) {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const steps: Array<{ title: string; body: string }> = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const match = lines[i].trim().match(STEP_OPEN_RE);
+    if (!match) {
+      i += 1;
+      continue;
+    }
+
+    const attrs = parseAttributes(match[1] || "");
+    const bodyLines: string[] = [];
+    let j = i + 1;
+
+    while (j < lines.length && !STEP_CLOSE_RE.test(lines[j].trim())) {
+      bodyLines.push(lines[j]);
+      j += 1;
+    }
+
+    if (j < lines.length) {
+      steps.push({
+        title: attrs.titulo || attrs.title || "",
+        body: markdownToHtml(bodyLines.join("\n")),
+      });
+      i = j + 1;
+      continue;
+    }
+
+    i += 1;
+  }
+
+  if (steps.length === 0) return "";
+
+  return [
+    '<section class="not-prose blog-special-block blog-special-steps">',
+    steps
+      .map((step, index) => {
+        const title = escapeHtml(step.title || `Passo ${index + 1}`);
+        return [
+          '<article class="blog-special-step">',
+          `<div class="blog-special-step-number" aria-hidden="true">${index + 1}</div>`,
+          '<div class="blog-special-step-content">',
+          `<h4>${title}</h4>`,
+          `<div class="blog-special-body">${normalizeSpecialBodyHtml(step.body)}</div>`,
+          "</div>",
+          "</article>",
+        ].join("");
+      })
+      .join(""),
+    "</section>",
+  ].join("");
+}
+
+function renderLooseNumberedSteps(
+  steps: Array<{ number: string; bodyLines: string[] }>,
+) {
+  return [
+    '<ol class="not-prose blog-loose-steps">',
+    steps
+      .map((step) => {
+        const number = escapeHtml(step.number);
+        const body = normalizeSpecialBodyHtml(markdownToHtml(step.bodyLines.join("\n")));
+        return [
+          `<li class="blog-loose-step" value="${number}">`,
+          `<div class="blog-loose-step-number" aria-hidden="true">${number}</div>`,
+          `<div class="blog-special-body">${body}</div>`,
+          "</li>",
+        ].join("");
+      })
+      .join(""),
+    "</ol>",
   ].join("");
 }
 
@@ -371,8 +515,17 @@ function normalizeHtmlToMarkdown(html: string) {
         return `- ${stripHtmlTags(text)}`;
       })
       .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<hr\s*\/?>/gi, "\n\n---\n\n")
       .replace(/<\/(p|div|section|blockquote|ul|ol)>/gi, "\n\n")
       .replace(/<(p|div|section|blockquote|ul|ol)[^>]*>/gi, "")
+      .replace(
+        /<figure[^>]*>\s*<img[^>]*src=["']([^"']+)["'][^>]*alt=["']([^"']*)["'][^>]*>\s*<figcaption[^>]*>([\s\S]*?)<\/figcaption>\s*<\/figure>/gi,
+        (_match, src, alt, caption) => {
+          return sanitizeImageUrl(src)
+            ? `[imagem src="${src}" alt="${stripHtmlTags(alt)}" legenda="${stripHtmlTags(caption)}"]`
+            : "";
+        },
+      )
       .replace(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi, (_match, src) => {
         return sanitizeImageUrl(src) ? `![](${src})` : "";
       })
@@ -402,6 +555,7 @@ function normalizeHtmlToMarkdown(html: string) {
     "h1",
     "h2",
     "h3",
+    "hr",
     "li",
     "ol",
     "p",
@@ -494,6 +648,34 @@ function normalizeHtmlToMarkdown(html: string) {
       return;
     }
 
+    if (tag === "hr") {
+      pushLines("---");
+      pushBlank();
+      return;
+    }
+
+    if (tag === "figure") {
+      const image = element.querySelector("img");
+      if (image) {
+        const src = sanitizeImageUrl(image.getAttribute("src") || "");
+        const alt = image.getAttribute("alt") || "";
+        const caption =
+          element.querySelector("figcaption")?.textContent?.trim() || "";
+        if (src && caption) {
+          pushLines(
+            `[imagem src="${src}" alt="${alt.replace(/"/g, "'")}" legenda="${caption.replace(/"/g, "'")}"]`,
+          );
+          pushBlank();
+          return;
+        }
+        if (src) {
+          pushLines(`![${alt}](${src})`);
+          pushBlank();
+          return;
+        }
+      }
+    }
+
     if (tag === "blockquote") {
       const quoteLines = serializeInline(element)
         .split("\n")
@@ -535,7 +717,9 @@ function isBlockStart(line: string) {
     /^>\s?/.test(line) ||
     /^[-*]\s+/.test(line) ||
     /^\d+\.\s+/.test(line) ||
-    Boolean(parseSpecialBlockOpen(line))
+    /^(-{3,}|\*{3,}|_{3,})$/.test(line.trim()) ||
+    Boolean(parseSpecialBlockOpen(line)) ||
+    Boolean(parseImageBlockOpen(line))
   );
 }
 
@@ -565,6 +749,12 @@ export function markdownToHtml(markdown: string) {
       }
 
       if (j < lines.length) {
+        if (specialBlock.type === "passos") {
+          html.push(renderStepsBlock(bodyLines.join("\n")));
+          i = j + 1;
+          continue;
+        }
+
         html.push(
           renderSpecialBlock(
             specialBlock.type,
@@ -576,7 +766,24 @@ export function markdownToHtml(markdown: string) {
         continue;
       }
 
-      html.push(`<p>${parseInline(line)}</p>`);
+      if (specialBlock.type === "passos") {
+        html.push(renderStepsBlock(bodyLines.join("\n")));
+      } else {
+        html.push(
+          renderSpecialBlock(
+            specialBlock.type,
+            specialBlock.attrs,
+            markdownToHtml(bodyLines.join("\n")),
+          ),
+        );
+      }
+      i = lines.length;
+      continue;
+    }
+
+    const imageBlockAttrs = parseImageBlockOpen(line);
+    if (imageBlockAttrs) {
+      html.push(renderImageBlock(imageBlockAttrs));
       i += 1;
       continue;
     }
@@ -609,17 +816,52 @@ export function markdownToHtml(markdown: string) {
         items.push(parseInline(lines[i].trim().replace(/^[-*]\s+/, "")));
         i += 1;
       }
-      html.push(`<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`);
+      html.push(
+        `<ul class="blog-editorial-list">${items.map((item) => `<li>${item}</li>`).join("")}</ul>`,
+      );
       continue;
     }
 
     if (/^\d+\.\s+/.test(line)) {
       const items: string[] = [];
       while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
-        items.push(parseInline(lines[i].trim().replace(/^\d+\.\s+/, "")));
+        const itemLines = [
+          parseInline(lines[i].trim().replace(/^\d+\.\s+/, "")),
+        ];
         i += 1;
+
+        while (i < lines.length) {
+          const current = lines[i].trim();
+          if (!current) {
+            i += 1;
+            if (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+              break;
+            }
+            if (itemLines.length > 1) break;
+            continue;
+          }
+          if (isBlockStart(current)) break;
+          itemLines.push(parseInline(current));
+          i += 1;
+        }
+
+        items.push(itemLines.join("<br />"));
       }
-      html.push(`<ol>${items.map((item) => `<li>${item}</li>`).join("")}</ol>`);
+      html.push(
+        `<ol class="blog-numbered-list">${items.map((item) => `<li>${item}</li>`).join("")}</ol>`,
+      );
+      continue;
+    }
+
+    if (/^\d+[.)]?\s*$/.test(line.trim())) {
+      html.push(`<p>${parseInline(line.trim())}</p>`);
+      i += 1;
+      continue;
+    }
+
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
+      html.push("<hr />");
+      i += 1;
       continue;
     }
 
@@ -642,7 +884,7 @@ export function markdownToHtml(markdown: string) {
 }
 
 export function contentToHtml(content: string) {
-  const trimmed = content.trim();
+  const trimmed = stripCoverImageMeta(content).trim();
   if (!trimmed) return "";
   if (looksLikeHtml(trimmed)) {
     return renderSpecialBlocksInHtml(
@@ -653,7 +895,7 @@ export function contentToHtml(content: string) {
 }
 
 export function extractFirstImageSrc(content: string) {
-  const source = content?.trim() || "";
+  const source = stripCoverImageMeta(content).trim();
   if (!source) return undefined;
 
   const htmlMatch = source.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);

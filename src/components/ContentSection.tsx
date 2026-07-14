@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { BlogPost } from "@/lib/blogStore";
 import { fetchPublishedBlogPosts } from "@/lib/blogApi";
-import { extractFirstImageSrc } from "@/lib/markdown";
+import { extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 import { useEffect, useState } from "react";
 
 /**
@@ -96,7 +96,10 @@ const ContentSection = () => {
       title: p.title,
       excerpt: p.excerpt,
       readTime: p.readTime,
-      image: extractFirstImageSrc(p.content),
+      image:
+        p.coverImage ||
+        extractCoverImageSrc(p.content) ||
+        extractFirstImageSrc(p.content),
     }));
 
   return (

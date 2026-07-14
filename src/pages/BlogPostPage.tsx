@@ -8,9 +8,16 @@ import React, {
 import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
-import { contentToHtml, extractFirstImageSrc } from "@/lib/markdown";
+import { contentToHtml, extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 import authorAvatar from "@/assets/guilherme-about-new.jpg";
-import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from "lucide-react";
+import {
+  ArrowRight,
+  Link2,
+  Linkedin,
+  Mail,
+  Share2,
+  Twitter,
+} from "lucide-react";
 import { toast } from "sonner";
 import { subscribeToNewsletter } from "@/lib/leadsApi";
 
@@ -78,8 +85,11 @@ export default function BlogPostPage() {
   const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
 
   const coverImage = useMemo(
-    () => extractFirstImageSrc(post?.content ?? ""),
-    [post?.content],
+    () =>
+      post?.coverImage ||
+      extractCoverImageSrc(post?.content ?? "") ||
+      extractFirstImageSrc(post?.content ?? ""),
+    [post?.coverImage, post?.content],
   );
   const articleHtml = useMemo(() => {
     const html = contentToHtml(post?.content ?? "");
@@ -95,7 +105,6 @@ export default function BlogPostPage() {
 
     return {
       whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
     };
@@ -125,16 +134,18 @@ export default function BlogPostPage() {
   };
 
   const articleClassName = [
-    "prose prose-sm sm:prose-base max-w-none",
+    "prose prose-base sm:prose-lg max-w-none",
     "prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground",
-    "prose-h2:mt-12 prose-h2:border-t prose-h2:pt-8 prose-h2:text-3xl",
-    "prose-h3:mt-8 prose-h3:text-2xl",
+    "prose-h1:text-3xl sm:prose-h1:text-4xl",
+    "prose-h2:mt-10 prose-h2:border-t prose-h2:pt-7 prose-h2:text-2xl sm:prose-h2:mt-12 sm:prose-h2:pt-8 sm:prose-h2:text-3xl",
+    "prose-h3:mt-7 prose-h3:text-xl sm:prose-h3:mt-8 sm:prose-h3:text-2xl",
     "prose-strong:text-foreground prose-a:font-semibold prose-a:text-primary",
-    "prose-li:text-foreground/90 prose-blockquote:rounded-2xl prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/40 prose-blockquote:px-5 prose-blockquote:py-3 prose-blockquote:text-muted-foreground",
+    "prose-li:text-foreground/90 prose-blockquote:rounded-xl prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/40 prose-blockquote:px-4 prose-blockquote:py-3 prose-blockquote:text-muted-foreground sm:prose-blockquote:px-5",
     "[&_p]:text-foreground/90",
     "[&_p]:[margin-top:var(--post-p-before)] [&_p]:[margin-bottom:var(--post-p-after)]",
-    "prose-ul:space-y-2 prose-ol:space-y-2",
-    "prose-img:mx-auto prose-img:my-8 prose-img:block prose-img:h-auto prose-img:max-w-full prose-img:rounded-2xl prose-img:border prose-img:object-contain prose-img:shadow-sm",
+    "prose-ul:space-y-2 prose-ol:space-y-2 prose-ul:pl-0 prose-ol:pl-0",
+    "prose-hr:my-10 prose-hr:border-border",
+    "prose-img:mx-auto prose-img:my-8 prose-img:block prose-img:h-auto prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:object-contain prose-img:shadow-sm sm:prose-img:rounded-2xl",
   ].join(" ");
 
   useEffect(() => {
@@ -327,6 +338,49 @@ export default function BlogPostPage() {
     }
   }
 
+  async function copyCurrentLink(message = "Link copiado!") {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    toast.success(message);
+  }
+
+  async function handleNativeShare() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!url) return;
+
+    if (navigator.share && post) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt,
+          url,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    await copyCurrentLink("Link copiado para compartilhar.");
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <SEO
@@ -348,7 +402,7 @@ export default function BlogPostPage() {
         }}
       />
 
-      <section className="mx-auto w-full max-w-[1360px] px-5 py-10">
+      <section className="mx-auto w-full max-w-[1360px] px-4 py-8 sm:px-5 sm:py-10">
         <Link
           to="/blog"
           className="text-sm text-muted-foreground hover:underline"
@@ -356,14 +410,14 @@ export default function BlogPostPage() {
           &larr; Voltar para o blog
         </Link>
 
-        <header className="mx-auto mt-6 max-w-6xl text-center">
-          <h1 className="text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-foreground md:text-5xl">
+        <header className="mx-auto mt-6 max-w-5xl text-center">
+          <h1 className="text-balance text-[2rem] font-semibold leading-[1.08] tracking-tight text-foreground sm:text-4xl md:text-5xl">
             {post.title}
           </h1>
 
           <time
             dateTime={post.dateISO}
-            className="mt-5 block text-xl font-semibold text-foreground md:text-2xl"
+            className="mt-5 block text-lg font-semibold text-foreground md:text-2xl"
           >
             {displayDate}
           </time>
@@ -441,8 +495,8 @@ export default function BlogPostPage() {
           )}
 
           <div className="min-w-0 lg:col-start-2">
-            <div className="mb-8 rounded-2xl border bg-muted/40 p-5">
-              <p className="text-lg leading-relaxed text-foreground/80">
+            <div className="mb-8 rounded-xl border bg-muted/40 p-4 sm:rounded-2xl sm:p-5">
+              <p className="text-base leading-relaxed text-foreground/80 sm:text-lg">
                 {post.excerpt}
               </p>
             </div>
@@ -528,10 +582,10 @@ export default function BlogPostPage() {
               </div>
 
               <div className="rounded-2xl border bg-card p-5 text-center">
-                <div className="text-2xl font-medium leading-tight text-foreground">
+                <div className="text-lg font-semibold leading-tight text-foreground">
                   Gostou? Compartilhe:
                 </div>
-                <div className="mt-3 flex items-center justify-center gap-2.5">
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                   <a
                     href={shareLinks.whatsapp}
                     target="_blank"
@@ -540,15 +594,6 @@ export default function BlogPostPage() {
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                   >
                     <WhatsAppIcon className="h-4 w-4" />
-                  </a>
-                  <a
-                    href={shareLinks.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Compartilhar no Facebook"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
-                  >
-                    <Facebook className="h-4 w-4" />
                   </a>
                   <a
                     href={shareLinks.linkedin}
@@ -568,6 +613,24 @@ export default function BlogPostPage() {
                   >
                     <Twitter className="h-4 w-4" />
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => copyCurrentLink()}
+                    aria-label="Copiar link do artigo"
+                    title="Copiar link do artigo"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    <Link2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    aria-label="Compartilhar pelo celular"
+                    title="Compartilhar pelo celular"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
                 </div>
 
                 <div className="mt-5 flex flex-col items-center">

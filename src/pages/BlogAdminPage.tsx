@@ -18,6 +18,7 @@ import {
   makeId,
   makeSlug,
   savePostToApi,
+  uploadBlogImageToApi,
 } from "@/lib/blogStore";
 import {
   AlignCenter,
@@ -47,7 +48,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/AdminHeader";
-import { contentToHtml } from "@/lib/markdown";
+import {
+  contentToHtml,
+  extractFirstImageSrc,
+  stripCoverImageMeta,
+  withCoverImageMeta,
+} from "@/lib/markdown";
 
 const categories: BlogCategory[] = [
   "GTM",
@@ -93,6 +99,7 @@ function newPostTemplate(): BlogPost {
     category: "GTM",
     tags: [],
     content: "",
+    coverImage: "",
     published: false,
     updatedAtISO: today,
   };
@@ -184,11 +191,15 @@ export default function BlogAdminPage() {
   const [textAlign, setTextAlign] = useState<TextAlignType>("left");
   const [showPreview, setShowPreview] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
+  const [isUploadingBodyImage, setIsUploadingBodyImage] = useState(false);
   const [imageUrlDraft, setImageUrlDraft] = useState("");
   const [imageAltDraft, setImageAltDraft] = useState("");
+  const [imageCaptionDraft, setImageCaptionDraft] = useState("");
   const [form, setForm] = useState<BlogPost>(newPostTemplate());
   const [editorHtml, setEditorHtml] = useState("");
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const coverUploadRef = useRef<HTMLInputElement | null>(null);
   const imageUploadRef = useRef<HTMLInputElement | null>(null);
   const selectedImageRef = useRef<HTMLImageElement | null>(null);
   const selectionRangeRef = useRef<Range | null>(null);
@@ -242,8 +253,11 @@ export default function BlogAdminPage() {
     setEditingId(post.id);
     setShowPreview(false);
     setBlockType("p");
-    setForm({ ...post });
-    setEditorHtml(contentToHtml(post.content || ""));
+    setForm({
+      ...post,
+      coverImage: post.coverImage || extractFirstImageSrc(post.content || "") || "",
+    });
+    setEditorHtml(contentToHtml(stripCoverImageMeta(post.content || "")));
     setEditorFont(post.editorSettings?.font ?? DEFAULT_EDITOR_SETTINGS.font);
     setEditorFontSize(
       post.editorSettings?.fontSize ?? DEFAULT_EDITOR_SETTINGS.fontSize,
@@ -335,7 +349,8 @@ export default function BlogAdminPage() {
       title,
       slug: form.slug.trim() || makeSlug(title),
       excerpt: form.excerpt.trim(),
-      content,
+      coverImage: form.coverImage?.trim() || "",
+      content: withCoverImageMeta(content, form.coverImage),
       editorSettings: {
         font: editorFont,
         fontSize: editorFontSize,
@@ -472,6 +487,7 @@ export default function BlogAdminPage() {
     "[&_p]:[margin-top:var(--editor-p-before)] [&_p]:[margin-bottom:var(--editor-p-after)]",
     "[&_a]:text-primary [&_a]:underline",
     "[&_img]:my-6 [&_img]:h-auto [&_img]:w-full [&_img]:rounded-md [&_img]:object-contain",
+    "[&_figure]:my-6 [&_figure]:text-center [&_figure_img]:mx-auto [&_figure_img]:my-0 [&_figure_img]:h-auto [&_figure_img]:max-w-full [&_figure_img]:rounded-md [&_figcaption]:mt-2 [&_figcaption]:text-sm [&_figcaption]:text-muted-foreground",
     keepLinesTogether ? "[&_p]:[break-inside:avoid]" : "",
     avoidWidows ? "[&_p]:[orphans:2] [&_p]:[widows:2]" : "",
     pageBreakBefore ? "[&_p:first-of-type]:[break-before:page]" : "",
@@ -490,6 +506,7 @@ export default function BlogAdminPage() {
     "[&_p]:[margin-top:var(--preview-p-before)] [&_p]:[margin-bottom:var(--preview-p-after)]",
     "[&_a]:text-primary [&_a]:underline",
     "[&_img]:my-6 [&_img]:h-auto [&_img]:w-full [&_img]:rounded-md [&_img]:object-contain",
+    "[&_figure]:my-6 [&_figure]:text-center [&_figure_img]:mx-auto [&_figure_img]:my-0 [&_figure_img]:h-auto [&_figure_img]:max-w-full [&_figure_img]:rounded-md [&_figcaption]:mt-2 [&_figcaption]:text-sm [&_figcaption]:text-muted-foreground",
   ]
     .filter(Boolean)
     .join(" ");
@@ -715,6 +732,7 @@ export default function BlogAdminPage() {
   function openImageDialog() {
     setImageUrlDraft("");
     setImageAltDraft("");
+    setImageCaptionDraft("");
     setIsImageDialogOpen(true);
   }
 
@@ -789,49 +807,100 @@ export default function BlogAdminPage() {
     }
   }
 
-  function insertImageByUrl(url: string, alt: string) {
+  function insertImageByUrl(url: string, alt: string, caption = "") {
     const src = url.trim();
     if (!src) return;
-    if (!/^(https?:\/\/|\/|data:image\/)/i.test(src)) {
+    if (!/^(https?:\/\/|\/)/i.test(src)) {
       alert("Use uma URL valida (http/https) ou caminho relativo.");
       return;
     }
-    const imageHtml = `<p><img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt)}" /></p>`;
+    const safeSrc = escapeAttribute(src);
+    const safeAlt = escapeAttribute(alt.trim() || "Descricao da imagem");
+    const safeCaption = escapeHtmlForEditor(caption.trim());
+    const imageHtml = [
+      '<figure>',
+      `<img src="${safeSrc}" alt="${safeAlt}" />`,
+      safeCaption ? `<figcaption>${safeCaption}</figcaption>` : "",
+      "</figure><p><br /></p>",
+    ].join("");
     runCommand("insertHTML", imageHtml);
     closeImageDialog();
   }
 
   function insertImageByUrlDraft() {
-    insertImageByUrl(imageUrlDraft, imageAltDraft);
+    insertImageByUrl(imageUrlDraft, imageAltDraft, imageCaptionDraft);
   }
 
   function pickImageFromComputer() {
     imageUploadRef.current?.click();
   }
 
-  function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+  function pickCoverImageFromComputer() {
+    coverUploadRef.current?.click();
+  }
+
+  async function uploadBlogImage(file: File) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Selecione um arquivo de imagem.");
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error("Envie uma imagem JPG, PNG ou WebP.");
+    }
+    if (file.size > 5_000_000) {
+      throw new Error("A imagem deve ter ate 5MB.");
+    }
+
+    try {
+      return await uploadBlogImageToApi(file);
+    } catch (error) {
+      console.error("Falha no upload de imagem do blog", error);
+      throw new Error(
+        "Nao foi possivel enviar a imagem. Verifique se o endpoint de upload ja foi publicado no servidor.",
+      );
+    }
+  }
+
+  async function handleCoverImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("Selecione um arquivo de imagem.");
-      return;
-    }
-    if (file.size > 1_800_000) {
-      alert(
-        "Imagem muito grande para salvar localmente. Use ate 1.8MB ou insira por URL.",
-      );
-      return;
-    }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = String(reader.result || "");
-      const imageHtml = `<p><img src="${escapeAttribute(src)}" alt="${escapeAttribute(imageAltDraft.trim())}" /></p>`;
-      runCommand("insertHTML", imageHtml);
-      closeImageDialog();
-    };
-    reader.readAsDataURL(file);
+    setIsUploadingCoverImage(true);
+    try {
+      const result = await uploadBlogImage(file);
+      setForm((prev) => ({ ...prev, coverImage: result.url }));
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel enviar a imagem de capa.",
+      );
+    } finally {
+      setIsUploadingCoverImage(false);
+    }
+  }
+
+  async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setIsUploadingBodyImage(true);
+    try {
+      const result = await uploadBlogImage(file);
+      setImageUrlDraft(result.url);
+      if (!imageAltDraft.trim()) {
+        setImageAltDraft(file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "));
+      }
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel enviar a imagem.",
+      );
+    } finally {
+      setIsUploadingBodyImage(false);
+    }
   }
 
   return (
@@ -885,7 +954,7 @@ export default function BlogAdminPage() {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar por titulo, categoria, tag..."
+              placeholder="Buscar por titulo, categoria ou tema..."
               className="border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
             />
           </div>
@@ -910,16 +979,6 @@ export default function BlogAdminPage() {
                     {p.excerpt}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {p.tags.slice(0, 6).map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 md:justify-end">
@@ -988,6 +1047,57 @@ export default function BlogAdminPage() {
             </div>
 
             <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+              <div className="rounded-xl border bg-background/80 p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+                      CMS editorial
+                    </div>
+                    <h2 className="mt-1 text-xl font-bold">
+                      Editor editorial simples
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                      Voce pode escrever normalmente usando paragrafos, titulos
+                      e listas. Use a barra do editor para aplicar negrito,
+                      H2, H3, listas, links, citacoes e imagens. Voce nao
+                      precisa saber programacao.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-5">
+                  <div className="rounded-lg border bg-card p-3">
+                    <b className="block text-foreground">Conteudo</b>
+                    Titulo, resumo e corpo do artigo.
+                  </div>
+                  <div className="rounded-lg border bg-card p-3">
+                    <b className="block text-foreground">Classificacao</b>
+                    Categoria e tempo de leitura.
+                  </div>
+                  <div className="rounded-lg border bg-card p-3">
+                    <b className="block text-foreground">Imagem</b>
+                    Capa separada das imagens internas.
+                  </div>
+                  <div className="rounded-lg border bg-card p-3">
+                    <b className="block text-foreground">Publicacao</b>
+                    Revise como rascunho antes de publicar.
+                  </div>
+                  <div className="rounded-lg border bg-card p-3">
+                    <b className="block text-foreground">SEO</b>
+                    Titulo e resumo viram fallback publico.
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-background/80 p-4">
+                <div className="text-sm font-semibold text-foreground">
+                  Conteudo principal
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  O resumo ideal tem 140 a 250 caracteres. O slug pode ficar em
+                  branco para ser gerado automaticamente.
+                </p>
+                <div className="mt-3 space-y-3">
               <input
                 value={form.title}
                 onChange={(e) =>
@@ -1016,34 +1126,6 @@ export default function BlogAdminPage() {
                 />
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <select
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      category: e.target.value as BlogCategory,
-                    }))
-                  }
-                  className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  value={form.readTime}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, readTime: e.target.value }))
-                  }
-                  placeholder="Tempo de leitura (ex: 8 min)"
-                  className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
-                />
-              </div>
-
               <textarea
                 value={form.excerpt}
                 onChange={(e) =>
@@ -1052,32 +1134,155 @@ export default function BlogAdminPage() {
                 placeholder="Resumo curto (excerpt)"
                 className="min-h-[96px] w-full rounded-xl border bg-background p-3 outline-none"
               />
+                </div>
+              </div>
 
-              <input
-                value={form.tags.join(", ")}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    tags: e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  }))
-                }
-                placeholder="Tags separadas por virgula"
-                className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
-              />
+              <div className="rounded-xl border bg-background/80 p-4">
+                <div className="text-sm font-semibold text-foreground">
+                  Classificacao
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Escolha o tema principal do artigo.
+                </p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <select
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        category: e.target.value as BlogCategory,
+                      }))
+                    }
+                    className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
+                    aria-label="Categoria ou tema do post"
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    value={form.readTime}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, readTime: e.target.value }))
+                    }
+                    placeholder="Tempo de leitura (ex: 8 min)"
+                    className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-background/80 p-4">
+                <div className="text-sm font-semibold text-foreground">
+                  Imagem de capa
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Imagem horizontal recomendada. Exemplo: 1920x1080. Use uma
+                  imagem leve e otimizada.
+                </p>
+                <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+                  <div className="space-y-2">
+                    <Input
+                      value={form.coverImage || ""}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          coverImage: e.target.value,
+                        }))
+                      }
+                      placeholder="/lovable-uploads/nome-da-imagem.png"
+                    />
+                    <input
+                      ref={coverUploadRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleCoverImageUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={pickCoverImageFromComputer}
+                      disabled={isUploadingCoverImage}
+                      className="gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {isUploadingCoverImage
+                        ? "Enviando..."
+                        : "Enviar imagem do computador"}
+                    </Button>
+                  </div>
+                  <div className="overflow-hidden rounded-lg border bg-card">
+                    {form.coverImage ? (
+                      <img
+                        src={form.coverImage}
+                        alt="Preview da imagem de capa"
+                        className="aspect-video w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-video items-center justify-center px-3 text-center text-xs text-muted-foreground">
+                        Preview da capa
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="rounded-xl border bg-background">
                 <input
                   ref={imageUploadRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={handleImageUpload}
                 />
+                <div className="flex flex-col gap-3 border-b bg-card p-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">
+                      Editor e previa
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Escreva no Editor. Alterne para Previa renderizada para
+                      ver como o artigo ficara publicado.
+                    </p>
+                  </div>
+                  <div className="inline-flex rounded-lg border bg-background p-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowPreview(false)}
+                      className={[
+                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        !showPreview
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      Editor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        syncEditorHtml();
+                        setShowPreview(true);
+                      }}
+                      className={[
+                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        showPreview
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      Previa renderizada
+                    </button>
+                  </div>
+                </div>
                 <div
-                  className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b bg-muted/95 p-3 shadow-sm backdrop-blur-sm"
+                  className={[
+                    "sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b bg-muted/95 p-3 shadow-sm backdrop-blur-sm",
+                    showPreview ? "hidden" : "",
+                  ].join(" ")}
                   onMouseDown={(event) => {
                     const target = event.target as HTMLElement;
                     if (target.closest("button")) event.preventDefault();
@@ -1100,53 +1305,29 @@ export default function BlogAdminPage() {
 
                   <div className="mx-1 h-6 w-px bg-border" />
 
-                  <select
-                    value={blockType}
-                    onChange={(e) => {
-                      const nextType = e.target.value as BlockType;
-                      setBlockType(nextType);
-                      applyBlock(nextType);
-                    }}
-                    className="h-9 rounded-lg border bg-background px-2 text-sm outline-none"
-                  >
-                    <option value="p">Texto normal</option>
-                    <option value="h1">H1</option>
-                    <option value="h2">H2</option>
-                    <option value="h3">H3</option>
-                  </select>
                   <button
-                    onClick={() => applyBlock()}
-                    className={toolbarButtonClass()}
+                    onClick={() => applyBlock("p")}
+                    className={toolbarButtonClass(blockType === "p")}
+                    title="Texto normal"
                   >
-                    Inserir bloco
+                    Texto
+                  </button>
+                  <button
+                    onClick={() => applyBlock("h2")}
+                    className={toolbarButtonClass(blockType === "h2")}
+                    title="Secao principal"
+                  >
+                    H2
+                  </button>
+                  <button
+                    onClick={() => applyBlock("h3")}
+                    className={toolbarButtonClass(blockType === "h3")}
+                    title="Subsecao"
+                  >
+                    H3
                   </button>
 
-                  <select
-                    value={editorFont}
-                    onChange={(e) =>
-                      setEditorFont(e.target.value as EditorFont)
-                    }
-                    className="h-9 rounded-lg border bg-background px-2 text-sm outline-none"
-                  >
-                    <option value="theme">Fonte do tema</option>
-                    <option value="arial">Arial</option>
-                    <option value="georgia">Georgia</option>
-                    <option value="times">Times New Roman</option>
-                  </select>
-
-                  <select
-                    value={String(editorFontSize)}
-                    onChange={(e) => setEditorFontSize(Number(e.target.value))}
-                    className="h-9 rounded-lg border bg-background px-2 text-sm outline-none"
-                  >
-                    {FONT_SIZE_OPTIONS.map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-
-                  <div ref={spacingMenuRef} className="relative">
+                  <div ref={spacingMenuRef} className="relative hidden">
                     <button
                       onClick={() => {
                         setIsSpacingMenuOpen((v) => !v);
@@ -1324,47 +1505,10 @@ export default function BlogAdminPage() {
                     <Italic className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => runCommand("underline")}
-                    className={toolbarButtonClass(isUnderlineActive)}
-                    title="Sublinhado"
-                  >
-                    <Underline className="h-4 w-4" />
-                  </button>
-
-                  <button
                     onClick={() => runCommand("formatBlock", "blockquote")}
                     className={toolbarButtonClass()}
                   >
                     Citacao
-                  </button>
-
-                  <button
-                    onClick={() => runCommand("justifyLeft")}
-                    className={toolbarButtonClass(textAlign === "left")}
-                    title="Alinhar a esquerda"
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => runCommand("justifyCenter")}
-                    className={toolbarButtonClass(textAlign === "center")}
-                    title="Centralizar"
-                  >
-                    <AlignCenter className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => runCommand("justifyRight")}
-                    className={toolbarButtonClass(textAlign === "right")}
-                    title="Alinhar a direita"
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => runCommand("justifyFull")}
-                    className={toolbarButtonClass(textAlign === "justify")}
-                    title="Justificar"
-                  >
-                    <AlignJustify className="h-4 w-4" />
                   </button>
 
                   <button
@@ -1407,19 +1551,15 @@ export default function BlogAdminPage() {
                   >
                     Remover imagem
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowPreview((v) => !v);
-                      syncEditorHtml();
-                    }}
-                    className={toolbarButtonClass(showPreview)}
-                  >
-                    {showPreview ? "Ocultar preview" : "Mostrar preview"}
-                  </button>
                 </div>
 
                 <div className="bg-muted/20 p-3 md:p-6">
-                  <div className="mx-auto flex w-full justify-center">
+                  <div
+                    className={[
+                      "mx-auto flex w-full justify-center",
+                      showPreview ? "hidden" : "",
+                    ].join(" ")}
+                  >
                     <div className="w-full max-w-[980px] rounded-md border bg-white shadow-[0_12px_35px_rgba(24,16,50,0.08)]">
                       <div
                         ref={editorRef}
@@ -1440,7 +1580,7 @@ export default function BlogAdminPage() {
                   </div>
 
                   {showPreview && (
-                    <div className="mx-auto mt-6 w-full max-w-[980px] rounded-md border bg-white p-8 shadow-[0_12px_35px_rgba(24,16,50,0.08)] md:p-10">
+                    <div className="mx-auto w-full max-w-[980px] rounded-md border bg-white p-8 shadow-[0_12px_35px_rgba(24,16,50,0.08)] md:p-10">
                       {editorHtml.trim() ? (
                         <article
                           className={previewClassName}
@@ -1457,19 +1597,40 @@ export default function BlogAdminPage() {
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.published}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      published: e.target.checked,
-                    }))
-                  }
-                />
-                Publicado
-              </label>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-xl border bg-background/80 p-4">
+                  <div className="text-sm font-semibold text-foreground">
+                    Publicacao
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Mantenha como rascunho enquanto revisa o artigo no frontend.
+                  </p>
+                  <label className="mt-3 flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.published}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          published: e.target.checked,
+                        }))
+                      }
+                    />
+                    Publicado
+                  </label>
+                </div>
+
+                <div className="rounded-xl border bg-background/80 p-4">
+                  <div className="text-sm font-semibold text-foreground">
+                    SEO
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Enquanto nao ha campos dedicados no banco, o site usa o
+                    titulo e o resumo como fallback de SEO. Revise esses dois
+                    campos antes de publicar.
+                  </p>
+                </div>
+              </div>
 
               <div className="mt-2 flex justify-end gap-2">
                 <Button variant="outline" onClick={closeModal}>
@@ -1487,17 +1648,21 @@ export default function BlogAdminPage() {
               <div className="w-full max-w-xl rounded-2xl border bg-card p-5 shadow-2xl">
                 <div className="text-lg font-bold">Inserir imagem</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Escolha um arquivo no computador ou insira uma URL.
+                  Envie uma imagem do computador para gerar uma URL publica ou
+                  informe uma URL/caminho ja existente.
                 </p>
 
                 <div className="mt-4">
                   <Button
                     variant="outline"
                     onClick={pickImageFromComputer}
+                    disabled={isUploadingBodyImage}
                     className="gap-2"
                   >
                     <Upload className="h-4 w-4" />
-                    Escolher arquivo do computador
+                    {isUploadingBodyImage
+                      ? "Enviando..."
+                      : "Escolher arquivo do computador"}
                   </Button>
                 </div>
 
@@ -1512,6 +1677,11 @@ export default function BlogAdminPage() {
                     onChange={(e) => setImageAltDraft(e.target.value)}
                     placeholder="Texto alternativo (opcional)"
                   />
+                  <Input
+                    value={imageCaptionDraft}
+                    onChange={(e) => setImageCaptionDraft(e.target.value)}
+                    placeholder="Legenda opcional"
+                  />
                 </div>
 
                 <div className="mt-4 flex justify-end gap-2">
@@ -1520,7 +1690,7 @@ export default function BlogAdminPage() {
                   </Button>
                   <Button
                     onClick={insertImageByUrlDraft}
-                    disabled={!imageUrlDraft.trim()}
+                    disabled={!imageUrlDraft.trim() || isUploadingBodyImage}
                   >
                     Inserir por URL
                   </Button>

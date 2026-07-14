@@ -74,7 +74,7 @@ const AboutSection = () => {
             <div className="mt-10 grid grid-cols-2 gap-4">
               {[
                 { value: "200+", label: "Projetos entregues" },
-                { value: "R$25M+", label: "em receita gerada" },
+                { value: "R$50M+", label: "em receita gerada" },
                 { value: "30", label: "Segmentos atendidos" },
                 { value: "8x", label: "ROI médio dos projetos" },
               ].map((item, i) => (
