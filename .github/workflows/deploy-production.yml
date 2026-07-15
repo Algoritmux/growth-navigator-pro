@@ -1,0 +1,61 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy to HostGator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Prepare deploy package
+        run: |
+          mkdir -p deploy-package
+
+          cp -r dist/* deploy-package/
+
+          mkdir -p deploy-package/backend
+          rsync -av backend/ deploy-package/backend/ \
+            --exclude 'config/' \
+            --exclude '.env' \
+            --exclude '*.log'
+
+      - name: Deploy files to server
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTGATOR_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.HOSTGATOR_HOST }}
+          REMOTE_USER: ${{ secrets.HOSTGATOR_USER }}
+          REMOTE_PORT: ${{ secrets.HOSTGATOR_PORT }}
+          SOURCE: deploy-package/
+          TARGET: ${{ secrets.HOSTGATOR_PATH }}
+          ARGS: "-rlgoDzvc -i"
+          EXCLUDE: "/backend/config/, /.env, /node_modules/, /.git/, /materials/, /lovable-uploads/, /public_html/, /.well-known/, /cgi-bin/"
