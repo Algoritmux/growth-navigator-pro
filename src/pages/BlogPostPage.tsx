@@ -8,10 +8,14 @@ import React, {
 import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
+import BlogContentRenderer from "@/components/blog/BlogContentRenderer";
+import { resolveBlogMediaUrl } from "@/lib/blogMedia";
+import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
 import { contentToHtml, extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 import authorAvatar from "@/assets/guilherme-about-new.jpeg";
 import {
   ArrowRight,
+  BookOpen,
   Link2,
   Linkedin,
   Mail,
@@ -85,10 +89,13 @@ export default function BlogPostPage() {
   const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
 
   const coverImage = useMemo(
-    () =>
+    () => {
+      const src =
       post?.coverImage ||
       extractCoverImageSrc(post?.content ?? "") ||
-      extractFirstImageSrc(post?.content ?? ""),
+      extractFirstImageSrc(post?.content ?? "");
+      return src ? resolveBlogMediaUrl(src) : undefined;
+    },
     [post?.coverImage, post?.content],
   );
   const articleHtml = useMemo(() => {
@@ -132,21 +139,6 @@ export default function BlogPostPage() {
     "--post-p-before": `${postEditorSettings.paragraphSpaceBefore}px`,
     "--post-p-after": `${postEditorSettings.paragraphSpaceAfter}px`,
   };
-
-  const articleClassName = [
-    "prose prose-base sm:prose-lg max-w-none",
-    "prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground",
-    "prose-h1:text-3xl sm:prose-h1:text-4xl",
-    "prose-h2:mt-10 prose-h2:border-t prose-h2:pt-7 prose-h2:text-2xl sm:prose-h2:mt-12 sm:prose-h2:pt-8 sm:prose-h2:text-3xl",
-    "prose-h3:mt-7 prose-h3:text-xl sm:prose-h3:mt-8 sm:prose-h3:text-2xl",
-    "prose-strong:text-foreground prose-a:font-semibold prose-a:text-primary",
-    "prose-li:text-foreground/90 prose-blockquote:rounded-xl prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/40 prose-blockquote:px-4 prose-blockquote:py-3 prose-blockquote:text-muted-foreground sm:prose-blockquote:px-5",
-    "[&_p]:text-foreground/90",
-    "[&_p]:[margin-top:var(--post-p-before)] [&_p]:[margin-bottom:var(--post-p-after)]",
-    "prose-ul:space-y-2 prose-ol:space-y-2 prose-ul:pl-0 prose-ol:pl-0",
-    "prose-hr:my-10 prose-hr:border-border",
-    "prose-img:mx-auto prose-img:my-8 prose-img:block prose-img:h-auto prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:object-contain prose-img:shadow-sm sm:prose-img:rounded-2xl",
-  ].join(" ");
 
   useEffect(() => {
     let active = true;
@@ -283,7 +275,7 @@ export default function BlogPostPage() {
     );
   }
 
-  if (!post || !post.published) {
+  if (!post || !isPubliclyVisibleBlogPost(post)) {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <section className="mx-auto w-full max-w-3xl px-5 py-10">
@@ -438,11 +430,17 @@ export default function BlogPostPage() {
         </header>
 
         {coverImage && (
-          <div className="mt-7 overflow-hidden bg-card">
+          <div className="relative mt-7 overflow-hidden bg-card">
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-secondary via-background to-muted text-primary/45">
+              <BookOpen className="h-10 w-10" aria-hidden="true" />
+            </div>
             <img
               src={coverImage}
-              alt={post.title}
-              className="h-[180px] w-full object-cover md:h-[250px] lg:h-[320px]"
+              alt=""
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+              className="relative h-[180px] w-full object-cover md:h-[250px] lg:h-[320px]"
             />
           </div>
         )}
@@ -503,10 +501,13 @@ export default function BlogPostPage() {
 
             <article
               ref={articleRef}
-              className={articleClassName}
-              style={articleStyle}
-              dangerouslySetInnerHTML={{ __html: articleHtml }}
-            />
+            >
+              <BlogContentRenderer
+                content={post.content}
+                style={articleStyle}
+                stripLeadingImage
+              />
+            </article>
           </div>
 
           <aside className="mt-10 lg:col-start-3 lg:mt-0">

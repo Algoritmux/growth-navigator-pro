@@ -1,103 +1,261 @@
 # Guia do editor de blog
 
-Voce nao precisa saber programacao para criar um artigo. Use o formulario, escreva no editor visual e confira a previa antes de publicar.
+O editor do blog foi pensado para ser simples e previsivel. O conteudo deve ficar legivel no campo de texto e o visual final vem do CSS do site.
 
 ## Criar um post
 
 1. Abra o admin do blog e clique em Novo Post.
-2. Preencha o titulo.
-3. Preencha o slug ou deixe em branco para gerar automaticamente.
-4. Escreva um resumo curto, idealmente entre 140 e 250 caracteres.
-5. Escolha a categoria ou tema principal e informe o tempo de leitura.
-6. Escreva o corpo do post no editor visual.
-7. Salve como rascunho enquanto revisa.
-8. Abra o post no frontend para conferir o resultado.
-9. Publique quando estiver pronto.
+2. Preencha o titulo com a promessa principal do artigo.
+3. Deixe o slug em branco para gerar automaticamente, ou preencha com palavras curtas separadas por hifen.
+4. Escreva um resumo de 140 a 250 caracteres.
+5. Escolha categoria, tempo de leitura e imagem de capa.
+6. Escreva o corpo no editor.
+7. Escolha o status: Rascunho, Publicado ou Agendado.
+8. Use Previa renderizada para revisar.
+9. Salve como rascunho, reabra e confira se o texto continua igual.
+10. Publique ou agende apenas quando o post estiver revisado.
 
-## Escrever o corpo do artigo
+## Publicar, salvar ou agendar
 
-Use texto normal e a barra do editor:
+O blog usa o fuso `America/Sao_Paulo`.
 
-- Negrito para mensagens-chave.
-- Italico com moderacao.
-- H2 para secoes principais.
-- H3 para subsecoes.
-- Lista para topicos simples.
-- Lista numerada para sequencias.
-- Link para referencias e materiais.
-- Citacao para destacar uma frase.
-- Imagem para inserir midias no corpo.
+Para salvar como rascunho:
 
-Mantenha paragrafos curtos para melhorar a leitura no celular.
+1. Em Publicacao, selecione `Rascunho`.
+2. Salve o post.
+3. Ele aparece no admin, mas nao aparece no blog publico.
 
-## Categoria ou tema
+Para publicar imediatamente:
 
-Use a secao Classificacao para escolher o tema principal do artigo, como Growth, IA, Vendas ou Marketing. Tags antigas continuam compatíveis internamente, mas nao sao necessarias para criar um novo post.
+1. Em Data de publicacao, escolha hoje.
+2. Em Horario de publicacao, escolha um horario atual ou passado.
+3. Em Publicacao, selecione `Publicado`.
+4. Salve e abra `/blog` para conferir.
 
-## Inserir imagem
+Para agendar:
 
-Clique em Imagem na barra do editor e preencha:
+1. Escolha uma data futura.
+2. Escolha o horario de publicacao.
+3. Em Publicacao, selecione `Agendado`.
+4. Salve o post.
 
-- Envie uma imagem do computador para gerar a URL publica automaticamente.
-- Ou informe uma URL/caminho publico da imagem.
-- Texto alternativo.
-- Legenda opcional.
+Posts agendados aparecem no admin com status `Agendado`, mas nao aparecem na home, em `/blog` nem na URL publica do artigo antes do horario definido. Quando a data/hora chega, o post passa a aparecer publicamente sem precisar de cron.
 
-Use uma pasta publica persistente do projeto, como:
+Se voce selecionar `Publicado` com uma data/hora futura, o admin avisa que o post ficara agendado ate o horario escolhido.
 
-```text
-public/lovable-uploads/
+## Titulo e subtitulos
+
+Use apenas um titulo principal no campo Titulo do post. No corpo do artigo, use:
+
+```markdown
+## Secao principal
+
+### Subsecao
 ```
 
-No navegador, essa imagem fica acessivel por um caminho como:
+Evite usar `#` no corpo, porque o titulo do post ja ocupa esse papel na pagina publica.
 
-```text
-/lovable-uploads/nome-da-imagem.png
+## Paragrafos
+
+Escreva paragrafos curtos, separados por uma linha em branco:
+
+```markdown
+Este e um paragrafo.
+
+Este e outro paragrafo.
 ```
 
-Evite caminhos como `/storage` se o servidor nao tiver storage publico configurado.
+## Listas
 
-O upload real usa o endpoint protegido `/backend/api/blog/upload-image.php`, que retorna uma URL publica para o editor preencher automaticamente.
+Lista simples:
+
+```markdown
+- Primeiro ponto
+- Segundo ponto
+- Terceiro ponto
+```
+
+Lista numerada:
+
+```markdown
+1. Diagnosticar o problema
+2. Priorizar a hipotese
+3. Executar o teste
+```
+
+## Imagem interna
+
+Use o botao Imagem no editor. Ele insere um bloco assim:
+
+```html
+<figure>
+  <img src="/lovable-uploads/exemplo.jpg" alt="Descricao da imagem">
+  <figcaption>Legenda da imagem.</figcaption>
+</figure>
+```
+
+Use imagens leves, com texto alternativo claro e legenda quando a imagem precisar de contexto.
 
 ## Imagem de capa
 
-Use o campo Imagem de capa no formulario do post. A capa fica separada das imagens internas do corpo.
+Use o campo Imagem de capa fora do corpo do artigo. Prefira proporcao horizontal, como 1920x1080. A capa nao precisa ser repetida dentro do texto.
 
-- Clique em Enviar imagem do computador para fazer upload real.
-- Ou informe uma URL/caminho publico, como `/lovable-uploads/nome-da-imagem.png`.
-- Use imagem leve e com boa leitura em mobile.
-- Prefira proporcao horizontal, como 1920x1080.
-- As imagens internas continuam sendo inseridas pelo botao Imagem do editor.
+## Destaques
 
-## SEO
+Lead de abertura:
 
-Enquanto nao ha campos dedicados no banco, o site usa:
+```html
+<div class="blog-lead">
+  Texto de abertura forte do artigo.
+</div>
+```
 
-- Titulo do post como titulo SEO.
-- Resumo como descricao SEO.
+Callout:
 
-Antes de publicar:
+```html
+<div class="blog-callout">
+  <strong>Ideia central:</strong> escreva aqui o destaque.
+</div>
+```
 
-- Confira se o titulo esta claro.
-- Confira se o resumo explica o artigo.
-- Evite resumo generico.
+Nota complementar:
 
-## Checklist editorial
+```html
+<div class="blog-note">
+  Observacao importante para apoiar a leitura.
+</div>
+```
 
-- Use H2 para secoes principais.
-- Use H3 para subsecoes.
-- Evite paragrafos longos.
-- Use listas quando houver varios itens.
-- Use lista numerada quando houver ordem.
-- Insira imagens no ponto correto do texto.
-- Revise a previa antes de publicar.
-- Teste o post no frontend em celular e desktop.
-- Mantenha como rascunho ate terminar a revisao.
+## Estatisticas
 
-## Compartilhamento
+```html
+<div class="blog-stat-grid">
+  <div class="blog-stat-card">
+    <strong>70%</strong>
+    <span>texto da estatistica</span>
+  </div>
+  <div class="blog-stat-card">
+    <strong>79%</strong>
+    <span>texto da estatistica</span>
+  </div>
+</div>
+```
 
-Na pagina do artigo, use os botoes de WhatsApp, LinkedIn, X, copiar link ou Compartilhar. O botao Compartilhar usa o menu nativo do navegador quando disponivel; se nao houver suporte, copia o link.
+## CTA de material
+
+```html
+<div class="blog-material-card">
+  <span>Material complementar</span>
+  <strong>Framework de Growth Marketing para crescimento previsivel</strong>
+  <p>Acesse gratuitamente a biblioteca de materiais.</p>
+  <a href="/biblioteca">Ver biblioteca -></a>
+</div>
+```
+
+## Card numerado
+
+```html
+<div class="blog-step-card">
+  <span>01</span>
+  <div>
+    <strong>Diagnostico</strong>
+    <p>Identifique onde o crescimento esta travando antes de criar novas campanhas.</p>
+  </div>
+</div>
+```
+
+## Tabelas
+
+Use tabela Markdown:
+
+```markdown
+| Criterio | Estrategia | Execucao |
+| --- | --- | --- |
+| Foco | Longo prazo | Rotina semanal |
+| Indicador | Receita | Conversao por etapa |
+```
+
+## O que nao fazer
+
+- Nao cole scripts, iframes, embeds ou codigos de terceiros no corpo.
+- Nao use `style="..."` para ajustar visual manualmente.
+- Nao crie classes novas sem alinhar com o time tecnico.
+- Nao use shortcodes em posts novos.
+- Nao cole texto de editores externos sem revisar a previa.
+- Nao transforme listas numeradas em numeros soltos.
+
+## Exemplo completo
+
+```markdown
+<div class="blog-lead">
+  Crescimento previsivel nasce quando estrategia, oferta e rotina comercial deixam de competir entre si.
+</div>
+
+## Por que bons produtos travam
+
+Um bom produto pode fracassar quando a mensagem nao chega ao cliente certo, pelo canal certo, com uma proposta de valor clara.
+
+<div class="blog-callout">
+  <strong>Ideia central:</strong> antes de escalar campanhas, valide ICP, oferta e caminho de compra.
+</div>
+
+## Sinais de desalinhamento
+
+- O time vende para qualquer perfil.
+- A mensagem muda a cada campanha.
+- O comercial nao sabe priorizar objecoes.
+
+| Sintoma | Causa provavel | Ajuste |
+| --- | --- | --- |
+| Muitos leads ruins | ICP amplo demais | Refinar segmento |
+| Baixa conversao | Oferta pouco clara | Reescrever promessa |
+
+<div class="blog-stat-grid">
+  <div class="blog-stat-card">
+    <strong>70%</strong>
+    <span>dos testes devem partir de uma hipotese clara.</span>
+  </div>
+  <div class="blog-stat-card">
+    <strong>3x</strong>
+    <span>mais aprendizado quando marketing e vendas revisam juntos.</span>
+  </div>
+</div>
+
+## Como organizar o plano
+
+<div class="blog-step-card">
+  <span>01</span>
+  <div>
+    <strong>Diagnostico</strong>
+    <p>Mapeie ICP, oferta, canais e gargalos do funil.</p>
+  </div>
+</div>
+
+<div class="blog-step-card">
+  <span>02</span>
+  <div>
+    <strong>Prioridade</strong>
+    <p>Escolha os pontos com maior impacto sobre receita e aprendizado.</p>
+  </div>
+</div>
+
+<figure>
+  <img src="/lovable-uploads/exemplo.jpg" alt="Mapa de funil de crescimento">
+  <figcaption>Exemplo de leitura visual do funil antes da priorizacao.</figcaption>
+</figure>
+
+<div class="blog-material-card">
+  <span>Material complementar</span>
+  <strong>Framework de Growth Marketing para crescimento previsivel</strong>
+  <p>Acesse gratuitamente a biblioteca de materiais.</p>
+  <a href="/biblioteca">Ver biblioteca -></a>
+</div>
+
+## Proximo passo
+
+Revise o plano semanalmente e mantenha apenas os testes que geram aprendizado real para o negocio.
+```
 
 ## Compatibilidade antiga
 
-Posts antigos que usam blocos especiais continuam sendo renderizados para nao quebrar conteudo ja publicado. Para posts novos, prefira o editor visual e os botoes de formatacao.
+Shortcodes antigos continuam renderizando para proteger posts publicados. Para posts novos, use os botoes do editor e os templates HTML simples acima.

@@ -5,10 +5,39 @@ import {
   extractFirstImageSrc,
   withCoverImageMeta,
 } from "./markdown";
+import { resolveBlogMediaUrl } from "./blogMedia";
 
 function parseHtml(html: string) {
   return new DOMParser().parseFromString(html, "text/html");
 }
+
+function expectNoHtmlToken(html: string) {
+  expect(html).not.toMatch(/BLOG_?HTML_?TOKEN/i);
+}
+
+describe("resolveBlogMediaUrl", () => {
+  const apiBaseUrl = "https://guilhermecorreia.com.br/backend/api";
+
+  it("resolves server absolute upload paths against the public backend origin", () => {
+    expect(resolveBlogMediaUrl("/lovable-uploads/blog-fundo.jpg", apiBaseUrl)).toBe(
+      "https://guilhermecorreia.com.br/lovable-uploads/blog-fundo.jpg",
+    );
+  });
+
+  it("keeps absolute and data urls untouched", () => {
+    expect(resolveBlogMediaUrl("https://cdn.example.com/image.jpg", apiBaseUrl)).toBe(
+      "https://cdn.example.com/image.jpg",
+    );
+    expect(resolveBlogMediaUrl("data:image/png;base64,abc", apiBaseUrl)).toBe(
+      "data:image/png;base64,abc",
+    );
+  });
+
+  it("returns an empty string for empty media urls", () => {
+    expect(resolveBlogMediaUrl("", apiBaseUrl)).toBe("");
+    expect(resolveBlogMediaUrl("   ", apiBaseUrl)).toBe("");
+  });
+});
 
 describe("contentToHtml special blog blocks", () => {
   it("stores cover image metadata without rendering it in the article body", () => {
@@ -61,6 +90,115 @@ Crescimento previsível é a capacidade de gerar oportunidades, vendas e receita
     );
   });
 
+  it("renders allowed inline HTML instead of showing tags as text", () => {
+    const html = contentToHtml(`
+Texto com <strong>parte importante</strong>, <em>enfase</em> e <a href="https://example.com">link externo</a>.
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("strong")?.textContent).toBe("parte importante");
+    expect(doc.querySelector("em")?.textContent).toBe("enfase");
+    expect(doc.querySelector("a")?.getAttribute("href")).toBe("https://example.com");
+    expect(doc.body.textContent).not.toContain("<strong>");
+    expect(doc.body.textContent).not.toContain("</strong>");
+    expectNoHtmlToken(html);
+  });
+
+  it("renders inline strong without leaking internal tokens", () => {
+    const html = contentToHtml("Antes <strong>texto importante</strong> depois");
+
+    expect(html).toContain("<strong>texto importante</strong>");
+    expect(html).not.toContain("&lt;strong&gt;");
+    expectNoHtmlToken(html);
+  });
+
+  it("renders inline em without leaking internal tokens", () => {
+    const html = contentToHtml("<em>texto em italico</em>");
+
+    expect(html).toContain("<em>texto em italico</em>");
+    expectNoHtmlToken(html);
+  });
+
+  it("renders allowed inline links without leaking internal tokens", () => {
+    const html = contentToHtml('<a href="https://example.com">link</a>');
+
+    expect(html).toContain("<a");
+    expect(html).toContain('href="https://example.com"');
+    expectNoHtmlToken(html);
+  });
+
+  it("preserves allowed div blocks and nested inline html without leaking tokens", () => {
+    const html = contentToHtml(
+      '<div class="blog-callout"><strong>Ideia:</strong> texto</div>',
+    );
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-callout")).not.toBeNull();
+    expect(doc.querySelector(".blog-callout strong")?.textContent).toBe("Ideia:");
+    expectNoHtmlToken(html);
+  });
+
+  it("preserves figure markup without leaking tokens", () => {
+    const html = contentToHtml(
+      '<figure><img src="/lovable-uploads/teste.jpg" alt="Teste"><figcaption>Legenda</figcaption></figure>',
+    );
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("figure")).not.toBeNull();
+    expect(doc.querySelector("img")?.getAttribute("src")).toBe(
+      "https://guilhermecorreia.com.br/lovable-uploads/teste.jpg",
+    );
+    expect(doc.querySelector("figcaption")?.textContent).toBe("Legenda");
+    expectNoHtmlToken(html);
+  });
+
+  it("renders the real validation snippet without visible html or tokens", () => {
+    const html = contentToHtml(`
+## O que muda quando marketing vira sistema?
+
+Um sistema de crescimento conecta varias areas da empresa.
+
+Marketing deixa de trabalhar apenas para gerar atencao.  
+Vendas deixa de trabalhar apenas para fechar contratos.  
+Customer Success deixa de trabalhar apenas para apagar incendios.  
+Produto deixa de trabalhar apenas para entregar funcionalidades.
+
+Tudo passa a responder uma pergunta central:
+
+<strong>qual parte da jornada esta impedindo o cliente de perceber valor e continuar avancando?</strong>
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector("h2")?.textContent).toBe(
+      "O que muda quando marketing vira sistema?",
+    );
+    expect(doc.querySelector("strong")?.textContent).toBe(
+      "qual parte da jornada esta impedindo o cliente de perceber valor e continuar avancando?",
+    );
+    expect(doc.body.textContent).not.toContain("<strong>");
+    expectNoHtmlToken(html);
+  });
+
+  it("resolves rendered markdown and html image urls to the backend public origin", () => {
+    const html = contentToHtml(`
+![Fundo](/lovable-uploads/blog-fundo.jpg)
+
+<figure>
+  <img src="/uploads/interna.jpg" alt="Fundo">
+  <figcaption>Fundo</figcaption>
+</figure>
+`);
+    const doc = parseHtml(html);
+    const images = Array.from(doc.querySelectorAll("img")).map((image) =>
+      image.getAttribute("src"),
+    );
+
+    expect(images).toEqual([
+      "https://guilhermecorreia.com.br/lovable-uploads/blog-fundo.jpg",
+      "https://guilhermecorreia.com.br/uploads/interna.jpg",
+    ]);
+  });
+
   it("renders simple lists, numbered lists, links and separators with editorial classes", () => {
     const html = contentToHtml(`
 ## Checklist
@@ -77,6 +215,12 @@ Crescimento previsível é a capacidade de gerar oportunidades, vendas e receita
 
     expect(doc.querySelector("ul.blog-editorial-list")).not.toBeNull();
     expect(doc.querySelector("ol.blog-numbered-list")).not.toBeNull();
+    expect(doc.querySelector("ul.blog-editorial-list")?.getAttribute("class")).toBe(
+      "blog-editorial-list",
+    );
+    expect(doc.querySelector("ol.blog-numbered-list")?.getAttribute("class")).toBe(
+      "blog-numbered-list",
+    );
     expect(doc.querySelector("a")?.getAttribute("href")).toBe("/biblioteca");
     expect(doc.querySelector("hr")).not.toBeNull();
     expect(doc.querySelectorAll("li")).toHaveLength(4);
@@ -187,7 +331,7 @@ Mantenha clientes ativos.
     expect(doc.querySelectorAll(".blog-special-step")).toHaveLength(2);
     expect(doc.querySelector(".blog-special-list")).not.toBeNull();
     expect(doc.querySelector(".blog-special-image img")?.getAttribute("src")).toBe(
-      "/lovable-uploads/exemplo.png",
+      "https://guilhermecorreia.com.br/lovable-uploads/exemplo.png",
     );
     expect(doc.querySelector(".blog-special-image figcaption")?.textContent).toBe(
       "Legenda curta",
@@ -204,16 +348,16 @@ Mantenha clientes ativos.
     );
     const doc = parseHtml(html);
 
-    expect(doc.querySelector(".blog-special-image img")?.getAttribute("src")).toBe(
-      "/lovable-uploads/grafico.png",
+    expect(doc.querySelector("figure img")?.getAttribute("src")).toBe(
+      "https://guilhermecorreia.com.br/lovable-uploads/grafico.png",
     );
-    expect(doc.querySelector(".blog-special-image img")?.getAttribute("alt")).toBe(
+    expect(doc.querySelector("figure img")?.getAttribute("alt")).toBe(
       "Grafico de crescimento",
     );
-    expect(doc.querySelector(".blog-special-image figcaption")?.textContent).toBe(
+    expect(doc.querySelector("figure figcaption")?.textContent).toBe(
       "Legenda do grafico",
     );
-    expect(html).not.toContain("<figure><img");
+    expect(html).toContain("<figure>");
   });
 
   it("renders mixed editor HTML headings and special blocks", () => {
@@ -403,5 +547,139 @@ Continue estudando.
     expect(links[1].getAttribute("target")).toBeNull();
     expect(links[2].getAttribute("target")).toBe("_blank");
     expect(links[2].getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("preserves safe editorial HTML classes", () => {
+    const html = contentToHtml(`
+<div class="blog-callout">
+  <strong>Ideia central:</strong> texto do destaque.
+</div>
+<div class="blog-stat-grid">
+  <div class="blog-stat-card">
+    <strong>70%</strong>
+    <span>texto da estatistica</span>
+  </div>
+</div>
+<div class="blog-step-card">
+  <span>01</span>
+  <div><strong>Diagnostico</strong><p>Texto.</p></div>
+</div>
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-callout strong")?.textContent).toBe(
+      "Ideia central:",
+    );
+    expect(doc.querySelector(".blog-stat-grid .blog-stat-card strong")?.textContent).toBe(
+      "70%",
+    );
+    expect(doc.querySelector(".blog-step-card > span")?.textContent).toBe("01");
+  });
+
+  it("renders markdown tables", () => {
+    const html = contentToHtml(`
+| Criterio | Estrategia | Execucao |
+| --- | --- | --- |
+| Foco | Longo prazo | Rotina |
+`);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelector(".blog-table-wrap table")).not.toBeNull();
+    expect(doc.querySelectorAll("th")).toHaveLength(3);
+    expect(doc.querySelector("td")?.textContent).toBe("Foco");
+  });
+
+  it("removes unsafe html, events, javascript urls, inline style and unknown classes", () => {
+    const html = contentToHtml(`
+<div class="blog-callout unknown-class" onclick="alert(1)" style="color:red">
+  <script>alert(1)</script>
+  <a href="javascript:alert(1)" onmouseover="alert(2)">Link</a>
+  <img src="/lovable-uploads/grafico.png" onerror="alert(3)" alt="Grafico">
+</div>
+`);
+    const doc = parseHtml(html);
+    const callout = doc.querySelector("div");
+    const link = doc.querySelector("a");
+    const image = doc.querySelector("img");
+
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("javascript:alert");
+    expect(callout?.getAttribute("class")).toBe("blog-callout");
+    expect(callout?.hasAttribute("style")).toBe(false);
+    expect(callout?.hasAttribute("onclick")).toBe(false);
+    expect(link?.getAttribute("href")).toBe("#");
+    expect(link?.hasAttribute("onmouseover")).toBe(false);
+    expect(image?.getAttribute("src")).toBe("https://guilhermecorreia.com.br/lovable-uploads/grafico.png");
+    expect(image?.hasAttribute("onerror")).toBe(false);
+    expectNoHtmlToken(html);
+  });
+
+  it("renders long editorial content without duplicating list numbering", () => {
+    const sections = Array.from({ length: 20 }, (_section, index) => `
+## Secao ${index + 1}
+
+### Subsecao ${index + 1}
+
+${Array.from({ length: 55 }, (_p, pIndex) => `Paragrafo ${index + 1}.${pIndex + 1} com conteudo suficiente para simular artigo longo.`).join("\n\n")}
+
+1. Diagnostico ${index + 1}
+2. Execucao ${index + 1}
+
+<div class="blog-step-card">
+  <span>${String(index + 1).padStart(2, "0")}</span>
+  <div><strong>Etapa ${index + 1}</strong><p>Texto da etapa.</p></div>
+</div>
+`).join("\n\n");
+
+    const images = Array.from({ length: 5 }, (_image, index) => `
+<figure>
+  <img src="/lovable-uploads/imagem-${index + 1}.png" alt="Imagem ${index + 1}">
+  <figcaption>Legenda da imagem ${index + 1}.</figcaption>
+</figure>
+`).join("\n");
+    const tables = Array.from({ length: 3 }, (_table, index) => `
+| Criterio ${index + 1} | Estrategia | Execucao |
+| --- | --- | --- |
+| Foco | Longo prazo | Rotina |
+| Indicador | Receita | Conversao |
+`).join("\n");
+    const statGrids = Array.from({ length: 2 }, (_grid, index) => `
+<div class="blog-stat-grid">
+  <div class="blog-stat-card"><strong>${70 + index}%</strong><span>texto da estatistica</span></div>
+  <div class="blog-stat-card"><strong>${79 + index}%</strong><span>texto da estatistica</span></div>
+</div>
+`).join("\n");
+    const callouts = Array.from({ length: 3 }, (_callout, index) => `
+<div class="blog-callout"><strong>Ideia central ${index + 1}:</strong> destaque do artigo.</div>
+`).join("\n");
+    const ctas = Array.from({ length: 2 }, (_cta, index) => `
+<div class="blog-material-card">
+  <span>Material complementar</span>
+  <strong>Framework ${index + 1}</strong>
+  <p>Acesse gratuitamente a biblioteca de materiais.</p>
+  <a href="/biblioteca">Ver biblioteca</a>
+</div>
+`).join("\n");
+    const content = `
+${sections}
+
+${images}
+${tables}
+${statGrids}
+${callouts}
+${ctas}
+`;
+    const html = contentToHtml(content);
+    const doc = parseHtml(html);
+
+    expect(doc.querySelectorAll("h2").length).toBeGreaterThanOrEqual(20);
+    expect(doc.querySelectorAll("figure img")).toHaveLength(5);
+    expect(doc.querySelectorAll(".blog-table-wrap table")).toHaveLength(3);
+    expect(doc.querySelectorAll(".blog-step-card")).toHaveLength(20);
+    expect(doc.querySelectorAll(".blog-stat-grid")).toHaveLength(2);
+    expect(doc.querySelectorAll(".blog-callout")).toHaveLength(3);
+    expect(doc.querySelectorAll(".blog-material-card")).toHaveLength(2);
+    expect(doc.querySelectorAll("ol.blog-numbered-list")).toHaveLength(20);
+    expect(html).not.toContain("blog-loose-step-number");
   });
 });

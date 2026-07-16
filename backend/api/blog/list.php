@@ -8,10 +8,13 @@ require_once __DIR__ . '/../../config/response.php';
 require_once __DIR__ . '/../../config/auth.php';
 
 applyCors();
+date_default_timezone_set('America/Sao_Paulo');
 
 try {
     $connection = getConnection();
     $publishedOnly = ($_GET['published'] ?? '') === '1';
+    $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    $nowSql = $now->format('Y-m-d H:i:s');
 
     if (!$publishedOnly) {
         requireAdmin();
@@ -20,12 +23,17 @@ try {
     $sql = 'SELECT * FROM blog_posts';
 
     if ($publishedOnly) {
-        $sql .= ' WHERE is_published = 1';
+        $sql .= ' WHERE is_published = 1 AND published_at <= :now';
     }
 
     $sql .= ' ORDER BY COALESCE(published_at, created_at) DESC, id DESC';
 
-    $statement = $connection->query($sql);
+    if ($publishedOnly) {
+        $statement = $connection->prepare($sql);
+        $statement->execute(['now' => $nowSql]);
+    } else {
+        $statement = $connection->query($sql);
+    }
     $posts = $statement->fetchAll();
 
     $posts = array_map(function (array $post): array {

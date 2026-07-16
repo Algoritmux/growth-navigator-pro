@@ -1,3 +1,5 @@
+import { resolveBlogMediaUrl } from "./blogMedia";
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -18,6 +20,11 @@ function sanitizeImageUrl(url: string) {
   if (/^(https?:\/\/|\/)/i.test(trimmed)) return trimmed;
   if (/^data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/=\s]+$/i.test(trimmed)) return trimmed;
   return "";
+}
+
+function resolveSafeImageUrl(url: string) {
+  const safe = sanitizeImageUrl(url);
+  return safe ? resolveBlogMediaUrl(safe) : "";
 }
 
 function isExternalUrl(url: string) {
@@ -92,6 +99,73 @@ function looksLikeHtml(content: string) {
   return /<\/?[a-z][\s\S]*>/i.test(withoutQuotedValues);
 }
 
+function hasMarkdownBlockSyntax(content: string) {
+  return /(^|\n)\s*(#{1,3}\s+|[-*]\s+|\d+\.\s+|>\s?|!\[[^\]]*]\(|\|.+\|)/.test(
+    content,
+  );
+}
+
+function hasPreservedHtmlStructure(content: string) {
+  if (/(<figure\b|<table\b|<thead\b|<tbody\b|<tr\b|<img\b)/i.test(content)) {
+    return true;
+  }
+
+  const classMatches = content.match(/class=(["'])(.*?)\1/gi) || [];
+  return classMatches.some((match) =>
+    match
+      .replace(/^class=(["'])|(["'])$/gi, "")
+      .split(/\s+/)
+      .some((className) => ALLOWED_BLOG_CLASSES.has(className)),
+  );
+}
+
+function hasEditorMarkdownHtml(content: string) {
+  return /<(?:p|div|span)[^>]*>\s*(#{1,3}\s+|\[(?:bloco-destaque|card-numero|material|citacao|passos|lista|imagem)\b|\d+\.\s+|[-*]\s+)/i.test(
+    content,
+  );
+}
+
+const ALLOWED_BLOG_CLASSES = new Set([
+  "blog-lead",
+  "blog-callout",
+  "blog-note",
+  "blog-stat-grid",
+  "blog-stat-card",
+  "blog-material-card",
+  "blog-step-card",
+  "blog-card-list",
+  "blog-table-wrap",
+  "blog-quote",
+  "blog-section-divider",
+  "blog-content",
+  "blog-editorial-list",
+  "blog-numbered-list",
+  "blog-loose-steps",
+  "blog-loose-step",
+  "blog-loose-step-number",
+  "not-prose",
+  "blog-special-block",
+  "blog-special-highlight",
+  "blog-special-highlight-marker",
+  "blog-special-number-card",
+  "blog-special-number",
+  "blog-special-number-content",
+  "blog-special-title",
+  "blog-special-material",
+  "blog-special-material-content",
+  "blog-special-material-title",
+  "blog-special-material-button",
+  "blog-special-quote",
+  "blog-special-list",
+  "blog-special-list-marker",
+  "blog-special-steps",
+  "blog-special-step",
+  "blog-special-step-number",
+  "blog-special-step-content",
+  "blog-special-image",
+  "blog-special-body",
+]);
+
 function stripHtmlTags(value: string) {
   return value
     .replace(/<br\s*\/?>/gi, "\n")
@@ -115,6 +189,8 @@ function sanitizeHtml(html: string) {
   const blockedTags = new Set(["script", "style", "iframe", "object", "embed", "meta", "link"]);
   const allowedTags = new Set([
     "a",
+    "article",
+    "aside",
     "b",
     "blockquote",
     "br",
@@ -137,12 +213,20 @@ function sanitizeHtml(html: string) {
     "p",
     "pre",
     "s",
+    "section",
     "span",
     "strong",
+    "table",
+    "tbody",
+    "td",
+    "tfoot",
+    "th",
+    "thead",
+    "tr",
     "u",
     "ul",
   ]);
-  const globalAttrs = new Set(["title"]);
+  const globalAttrs = new Set(["title", "class", "id", "aria-hidden", "value"]);
   const linkAttrs = new Set(["href", "target", "rel", "title"]);
   const imageAttrs = new Set(["src", "alt", "title", "width", "height"]);
 
@@ -183,6 +267,11 @@ function sanitizeHtml(html: string) {
         continue;
       }
 
+      if (name === "style") {
+        el.removeAttribute(attr.name);
+        continue;
+      }
+
       if ((name === "href" || name === "src") && /^\s*javascript:/i.test(value)) {
         el.removeAttribute(attr.name);
         continue;
@@ -190,6 +279,19 @@ function sanitizeHtml(html: string) {
 
       if (!keepGlobal && !keepLink && !keepImage) {
         el.removeAttribute(attr.name);
+      }
+    }
+
+    if (el.hasAttribute("class")) {
+      const safeClasses = (el.getAttribute("class") || "")
+        .split(/\s+/)
+        .map((className) => className.trim())
+        .filter((className) => ALLOWED_BLOG_CLASSES.has(className));
+
+      if (safeClasses.length > 0) {
+        el.setAttribute("class", safeClasses.join(" "));
+      } else {
+        el.removeAttribute("class");
       }
     }
 
@@ -208,7 +310,7 @@ function sanitizeHtml(html: string) {
     }
 
     if (tag === "img") {
-      const src = sanitizeImageUrl(el.getAttribute("src") || "");
+      const src = resolveSafeImageUrl(el.getAttribute("src") || "");
       if (!src) {
         el.remove();
         continue;
@@ -224,10 +326,23 @@ function sanitizeHtml(html: string) {
 }
 
 function parseInline(text: string) {
-  let result = escapeHtml(text);
+  const htmlTokens: string[] = [];
+  const tokenized = text
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(
+      /<(strong|em|b|i|a|span|code)\b[^>]*>[\s\S]*?<\/\1>|<br\s*\/?>/gi,
+      (match) => {
+        const safeHtml = sanitizeHtml(match);
+        if (!safeHtml) return "";
+        const token = `\uE000${htmlTokens.length}\uE001`;
+        htmlTokens.push(safeHtml);
+        return token;
+      },
+    );
+  let result = escapeHtml(tokenized);
 
   result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
-    const safeUrl = sanitizeImageUrl(url);
+    const safeUrl = resolveSafeImageUrl(url);
     if (!safeUrl) return "";
     const safeAlt = escapeHtml(alt || "");
     return `<img src="${safeUrl}" alt="${safeAlt}" />`;
@@ -239,6 +354,9 @@ function parseInline(text: string) {
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, url) => {
     const safeUrl = sanitizeUrl(url);
     return `<a href="${safeUrl}"${externalUrlAttributes(safeUrl)}>${label}</a>`;
+  });
+  result = result.replace(/\uE000(\d+)\uE001/g, (_match, index) => {
+    return htmlTokens[Number(index)] || "";
   });
 
   return result;
@@ -255,6 +373,58 @@ function parseAttributes(source: string) {
   }
 
   return attrs;
+}
+
+function isMarkdownTableSeparator(line: string) {
+  const cells = line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function isMarkdownTableStart(lines: string[], index: number) {
+  return (
+    lines[index]?.includes("|") &&
+    Boolean(lines[index + 1]) &&
+    isMarkdownTableSeparator(lines[index + 1])
+  );
+}
+
+function parseMarkdownTableRow(line: string) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function renderMarkdownTable(lines: string[]) {
+  const headers = parseMarkdownTableRow(lines[0]);
+  const rows = lines.slice(2).map(parseMarkdownTableRow);
+
+  return [
+    '<div class="blog-table-wrap">',
+    "<table>",
+    "<thead><tr>",
+    headers.map((header) => `<th>${parseInline(header)}</th>`).join(""),
+    "</tr></thead>",
+    "<tbody>",
+    rows
+      .map((row) =>
+        `<tr>${headers
+          .map((_header, index) => `<td>${parseInline(row[index] || "")}</td>`)
+          .join("")}</tr>`,
+      )
+      .join(""),
+    "</tbody>",
+    "</table>",
+    "</div>",
+  ].join("");
 }
 
 function parseSpecialBlockOpen(line: string): SpecialBlockMatch | null {
@@ -386,7 +556,7 @@ function renderSpecialBlock(
 }
 
 function renderImageBlock(attrs: Record<string, string>) {
-  const src = sanitizeImageUrl(attrs.src || "");
+  const src = resolveSafeImageUrl(attrs.src || "");
   if (!src) return "";
 
   const alt = escapeHtml(attrs.alt || attrs.descricao || "");
@@ -717,10 +887,27 @@ function isBlockStart(line: string) {
     /^>\s?/.test(line) ||
     /^[-*]\s+/.test(line) ||
     /^\d+\.\s+/.test(line) ||
+    line.includes("|") ||
     /^(-{3,}|\*{3,}|_{3,})$/.test(line.trim()) ||
     Boolean(parseSpecialBlockOpen(line)) ||
-    Boolean(parseImageBlockOpen(line))
+    Boolean(parseImageBlockOpen(line)) ||
+    isRawHtmlBlock(line)
   );
+}
+
+function isRawHtmlBlock(line: string) {
+  return /^<(div|figure|table|thead|tbody|tr|blockquote|p|img|hr)\b/i.test(
+    line.trim(),
+  );
+}
+
+function countTagOccurrences(line: string, tag: string) {
+  const openRe = new RegExp(`<${tag}\\b`, "gi");
+  const closeRe = new RegExp(`</${tag}>`, "gi");
+  return {
+    open: (line.match(openRe) || []).length,
+    close: (line.match(closeRe) || []).length,
+  };
 }
 
 export function markdownToHtml(markdown: string) {
@@ -785,6 +972,54 @@ export function markdownToHtml(markdown: string) {
     if (imageBlockAttrs) {
       html.push(renderImageBlock(imageBlockAttrs));
       i += 1;
+      continue;
+    }
+
+    if (isRawHtmlBlock(line)) {
+      const rawLines = [line];
+      const openTag = line.trim().match(/^<([a-z0-9]+)/i)?.[1]?.toLowerCase();
+      const isVoidTag = openTag === "img" || openTag === "hr";
+      const closeRe = openTag && !isVoidTag && !/\/>\s*$/.test(line.trim())
+        ? new RegExp(`</${openTag}>`, "i")
+        : null;
+      i += 1;
+
+      if (closeRe && !closeRe.test(line)) {
+        const initialCount = countTagOccurrences(line, openTag);
+        let depth = initialCount.open - initialCount.close;
+        while (i < lines.length) {
+          rawLines.push(lines[i]);
+          const count = countTagOccurrences(lines[i], openTag);
+          depth += count.open - count.close;
+          i += 1;
+          if (depth <= 0) break;
+        }
+      } else {
+        while (
+          i < lines.length &&
+          lines[i].trim() &&
+          !isBlockStart(lines[i].trim()) &&
+          !isRawHtmlBlock(lines[i])
+        ) {
+          rawLines.push(lines[i]);
+          i += 1;
+        }
+      }
+
+      html.push(sanitizeHtml(rawLines.join("\n")));
+      continue;
+    }
+
+    if (isMarkdownTableStart(lines, i)) {
+      const tableLines = [lines[i], lines[i + 1]];
+      i += 2;
+
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) {
+        tableLines.push(lines[i]);
+        i += 1;
+      }
+
+      html.push(renderMarkdownTable(tableLines));
       continue;
     }
 
@@ -886,12 +1121,23 @@ export function markdownToHtml(markdown: string) {
 export function contentToHtml(content: string) {
   const trimmed = stripCoverImageMeta(content).trim();
   if (!trimmed) return "";
+  let rendered = "";
   if (looksLikeHtml(trimmed)) {
-    return renderSpecialBlocksInHtml(
-      markdownToHtml(normalizeHtmlToMarkdown(sanitizeHtml(trimmed))),
-    );
+    if (hasMarkdownBlockSyntax(trimmed)) {
+      rendered = renderSpecialBlocksInHtml(markdownToHtml(trimmed));
+      return sanitizeHtml(rendered).replace(/BLOG_?HTML_?TOKEN_?\d*/gi, "");
+    }
+    if (hasEditorMarkdownHtml(trimmed) && !hasPreservedHtmlStructure(trimmed)) {
+      rendered = renderSpecialBlocksInHtml(
+        markdownToHtml(normalizeHtmlToMarkdown(sanitizeHtml(trimmed))),
+      );
+      return sanitizeHtml(rendered).replace(/BLOG_?HTML_?TOKEN_?\d*/gi, "");
+    }
+    rendered = renderSpecialBlocksInHtml(sanitizeHtml(trimmed));
+    return sanitizeHtml(rendered).replace(/BLOG_?HTML_?TOKEN_?\d*/gi, "");
   }
-  return renderSpecialBlocksInHtml(markdownToHtml(trimmed));
+  rendered = renderSpecialBlocksInHtml(markdownToHtml(trimmed));
+  return sanitizeHtml(rendered).replace(/BLOG_?HTML_?TOKEN_?\d*/gi, "");
 }
 
 export function extractFirstImageSrc(content: string) {
