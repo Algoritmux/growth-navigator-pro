@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import guilhermeAbout from "@/assets/guilherme-about-new.jpg";
+import guilhermeAbout from "@/assets/guilherme-about-new.jpeg";
 import logoGC from "@/assets/logo-gc.png";
 
 const AboutSection = () => {
