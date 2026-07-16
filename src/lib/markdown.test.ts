@@ -15,27 +15,35 @@ function expectNoHtmlToken(html: string) {
   expect(html).not.toMatch(/BLOG_?HTML_?TOKEN/i);
 }
 
-describe("resolveBlogMediaUrl", () => {
-  const apiBaseUrl = "https://guilhermecorreia.com.br/backend/api";
+const TEST_API_BASE_URL = "http://localhost/backend/api";
+const TEST_PUBLIC_ORIGIN = "http://localhost";
+const PRODUCTION_API_BASE_URL = "https://guilhermecorreia.com.br/backend/api";
 
-  it("resolves server absolute upload paths against the public backend origin", () => {
-    expect(resolveBlogMediaUrl("/lovable-uploads/blog-fundo.jpg", apiBaseUrl)).toBe(
+describe("resolveBlogMediaUrl", () => {
+  it("resolves server absolute upload paths against a controlled test origin", () => {
+    expect(resolveBlogMediaUrl("/lovable-uploads/blog-fundo.jpg", TEST_API_BASE_URL)).toBe(
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/blog-fundo.jpg`,
+    );
+  });
+
+  it("resolves production upload paths against the production public origin", () => {
+    expect(resolveBlogMediaUrl("/lovable-uploads/blog-fundo.jpg", PRODUCTION_API_BASE_URL)).toBe(
       "https://guilhermecorreia.com.br/lovable-uploads/blog-fundo.jpg",
     );
   });
 
   it("keeps absolute and data urls untouched", () => {
-    expect(resolveBlogMediaUrl("https://cdn.example.com/image.jpg", apiBaseUrl)).toBe(
+    expect(resolveBlogMediaUrl("https://cdn.example.com/image.jpg", TEST_API_BASE_URL)).toBe(
       "https://cdn.example.com/image.jpg",
     );
-    expect(resolveBlogMediaUrl("data:image/png;base64,abc", apiBaseUrl)).toBe(
+    expect(resolveBlogMediaUrl("data:image/png;base64,abc", TEST_API_BASE_URL)).toBe(
       "data:image/png;base64,abc",
     );
   });
 
   it("returns an empty string for empty media urls", () => {
-    expect(resolveBlogMediaUrl("", apiBaseUrl)).toBe("");
-    expect(resolveBlogMediaUrl("   ", apiBaseUrl)).toBe("");
+    expect(resolveBlogMediaUrl("", TEST_API_BASE_URL)).toBe("");
+    expect(resolveBlogMediaUrl("   ", TEST_API_BASE_URL)).toBe("");
   });
 });
 
@@ -146,7 +154,7 @@ Texto com <strong>parte importante</strong>, <em>enfase</em> e <a href="https://
 
     expect(doc.querySelector("figure")).not.toBeNull();
     expect(doc.querySelector("img")?.getAttribute("src")).toBe(
-      "https://guilhermecorreia.com.br/lovable-uploads/teste.jpg",
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/teste.jpg`,
     );
     expect(doc.querySelector("figcaption")?.textContent).toBe("Legenda");
     expectNoHtmlToken(html);
@@ -194,8 +202,8 @@ Tudo passa a responder uma pergunta central:
     );
 
     expect(images).toEqual([
-      "https://guilhermecorreia.com.br/lovable-uploads/blog-fundo.jpg",
-      "https://guilhermecorreia.com.br/uploads/interna.jpg",
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/blog-fundo.jpg`,
+      `${TEST_PUBLIC_ORIGIN}/uploads/interna.jpg`,
     ]);
   });
 
@@ -331,7 +339,7 @@ Mantenha clientes ativos.
     expect(doc.querySelectorAll(".blog-special-step")).toHaveLength(2);
     expect(doc.querySelector(".blog-special-list")).not.toBeNull();
     expect(doc.querySelector(".blog-special-image img")?.getAttribute("src")).toBe(
-      "https://guilhermecorreia.com.br/lovable-uploads/exemplo.png",
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/exemplo.png`,
     );
     expect(doc.querySelector(".blog-special-image figcaption")?.textContent).toBe(
       "Legenda curta",
@@ -349,7 +357,7 @@ Mantenha clientes ativos.
     const doc = parseHtml(html);
 
     expect(doc.querySelector("figure img")?.getAttribute("src")).toBe(
-      "https://guilhermecorreia.com.br/lovable-uploads/grafico.png",
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/grafico.png`,
     );
     expect(doc.querySelector("figure img")?.getAttribute("alt")).toBe(
       "Grafico de crescimento",
@@ -609,7 +617,7 @@ Continue estudando.
     expect(callout?.hasAttribute("onclick")).toBe(false);
     expect(link?.getAttribute("href")).toBe("#");
     expect(link?.hasAttribute("onmouseover")).toBe(false);
-    expect(image?.getAttribute("src")).toBe("https://guilhermecorreia.com.br/lovable-uploads/grafico.png");
+    expect(image?.getAttribute("src")).toBe(`${TEST_PUBLIC_ORIGIN}/lovable-uploads/grafico.png`);
     expect(image?.hasAttribute("onerror")).toBe(false);
     expectNoHtmlToken(html);
   });
