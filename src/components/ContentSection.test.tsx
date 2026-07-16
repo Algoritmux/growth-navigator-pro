@@ -10,6 +10,7 @@ import ContentSection from "./ContentSection";
 import { fetchPublishedBlogPosts } from "@/lib/blogApi";
 
 const mockedFetchPublishedBlogPosts = vi.mocked(fetchPublishedBlogPosts);
+const TEST_PUBLIC_ORIGIN = "http://localhost";
 
 describe("ContentSection", () => {
   beforeAll(() => {
@@ -63,7 +64,7 @@ describe("ContentSection", () => {
     const image = container.querySelector("img");
 
     expect(image?.getAttribute("src")).toBe(
-      "https://guilhermecorreia.com.br/lovable-uploads/blog-fundo.jpg",
+      `${TEST_PUBLIC_ORIGIN}/lovable-uploads/blog-fundo.jpg`,
     );
   });
 
