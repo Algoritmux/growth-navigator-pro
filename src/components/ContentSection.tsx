@@ -12,6 +12,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { BlogPost } from "@/lib/blogStore";
 import { fetchPublishedBlogPosts } from "@/lib/blogApi";
+import { resolveBlogMediaUrl } from "@/lib/blogMedia";
+import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
 import { extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 import { useEffect, useState } from "react";
 
@@ -57,7 +59,7 @@ const ContentSection = () => {
 
     fetchPublishedBlogPosts()
       .then((data) => {
-        if (active) setPosts(data);
+        if (active) setPosts(data.filter((post) => isPubliclyVisibleBlogPost(post)));
       })
       .catch((error) => {
         console.error(error);
@@ -96,10 +98,12 @@ const ContentSection = () => {
       title: p.title,
       excerpt: p.excerpt,
       readTime: p.readTime,
-      image:
+      image: resolveBlogMediaUrl(
         p.coverImage ||
-        extractCoverImageSrc(p.content) ||
-        extractFirstImageSrc(p.content),
+          extractCoverImageSrc(p.content) ||
+          extractFirstImageSrc(p.content) ||
+          "",
+      ),
     }));
 
   return (
@@ -161,16 +165,25 @@ const ContentSection = () => {
             >
               <Link to={`/blog/${article.slug}`} className="block">
                 <article className="group p-6 rounded-2xl bg-card border border-border hover:shadow-elevated transition-all duration-300 cursor-pointer">
-                  {article.image && (
-                    <div className="relative mb-4 overflow-hidden rounded-xl border border-border/70 bg-muted/30">
+                  <div className="relative mb-4 h-44 overflow-hidden rounded-xl border border-border/70 bg-muted/30">
+                    <div
+                      className="absolute inset-0 z-0 grid place-items-center bg-gradient-to-br from-secondary via-background to-muted text-primary/45"
+                      data-testid="blog-card-image-fallback"
+                    >
+                      <BookOpen className="h-9 w-9" aria-hidden="true" />
+                    </div>
+                    {article.image && (
                       <img
                         src={article.image}
-                        alt={article.title}
+                        alt=""
                         loading="lazy"
-                        className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                        className="relative z-10 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                       />
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <span className="text-xs font-semibold text-accent uppercase tracking-wider">
                     {article.category}
                   </span>

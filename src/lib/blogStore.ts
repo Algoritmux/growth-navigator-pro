@@ -1,6 +1,7 @@
 import { getAdminAuthHeaders } from "./authSession";
 import { API_BASE_URL } from "./api";
 import { extractCoverImageSrc } from "./markdown";
+import { getBlogPublicationStatus, type BlogPublicationStatus } from "./blogSchedule";
 
 export type BlogCategory = "GTM" | "ICP" | "Oferta" | "Sales" | "Growth" | "IA";
 
@@ -10,6 +11,7 @@ export type BlogPost = {
     title: string;
     excerpt: string;
     dateISO: string; // "YYYY-MM-DD"
+    publishTime?: string; // "HH:MM"
     readTime: string; // "6 min"
     category: BlogCategory;
     tags: string[];
@@ -23,6 +25,7 @@ export type BlogPost = {
         paragraphSpaceAfter?: number;
     };
     published: boolean;
+    status?: BlogPublicationStatus;
     updatedAtISO: string;
 };
 
@@ -140,18 +143,20 @@ export function deletePost(id: string) {
 
 function mapApiPost(post: Record<string, any>): BlogPost {
     const publishedDate = String(post.published_at || post.created_at || "").slice(0, 10);
+    const publishTime = String(post.published_at || "").slice(11, 16);
     const updatedDate = String(post.updated_at || post.created_at || "").slice(0, 10);
     const content = String(post.content || "");
     const coverImage =
         String(post.cover_image || post.coverImage || "").trim() ||
         extractCoverImageSrc(content);
 
-    return {
+    const mappedPost: BlogPost = {
         id: String(post.id),
         slug: String(post.slug || ""),
         title: String(post.title || ""),
         excerpt: String(post.excerpt || ""),
         dateISO: publishedDate || new Date().toISOString().slice(0, 10),
+        publishTime: publishTime || "09:00",
         readTime: String(post.read_time || "5 min"),
         category: (post.category || "GTM") as BlogCategory,
         tags: Array.isArray(post.tags) ? post.tags : [],
@@ -166,6 +171,11 @@ function mapApiPost(post: Record<string, any>): BlogPost {
         },
         published: Boolean(post.published),
         updatedAtISO: updatedDate || publishedDate || new Date().toISOString().slice(0, 10),
+    };
+
+    return {
+        ...mappedPost,
+        status: getBlogPublicationStatus(mappedPost),
     };
 }
 
@@ -182,6 +192,7 @@ async function readApiResponse<T>(response: Response): Promise<T> {
 export async function fetchPostsFromApi(publishedOnly = false): Promise<BlogPost[]> {
     const url = `${API_BASE_URL}/blog/list.php${publishedOnly ? "?published=1" : ""}`;
     const response = await fetch(url, {
+        cache: "no-store",
         headers: publishedOnly ? undefined : getAdminAuthHeaders(),
     });
     const data = await readApiResponse<{ posts: Record<string, any>[] }>(response);
@@ -190,7 +201,9 @@ export async function fetchPostsFromApi(publishedOnly = false): Promise<BlogPost
 }
 
 export async function fetchPostBySlugFromApi(slug: string): Promise<BlogPost | undefined> {
-    const response = await fetch(`${API_BASE_URL}/blog/show.php?slug=${encodeURIComponent(slug)}`);
+    const response = await fetch(`${API_BASE_URL}/blog/show.php?slug=${encodeURIComponent(slug)}`, {
+        cache: "no-store",
+    });
     const data = await readApiResponse<{ post: Record<string, any> }>(response);
 
     return mapApiPost(data.post);
