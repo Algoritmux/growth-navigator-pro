@@ -9,7 +9,7 @@ import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO from "@/components/SEO";
 import { contentToHtml, extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
-import authorAvatar from "@/assets/guilherme-about-new.jpg";
+import authorAvatar from "@/assets/guilherme-about-new.jpeg";
 import {
   ArrowRight,
   Link2,
