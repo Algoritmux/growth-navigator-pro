@@ -3,7 +3,10 @@ import { fetchPublishedBlogPosts } from "@/lib/blogApi";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { resolveBlogMediaUrl } from "@/lib/blogMedia";
+import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
 import { extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
+import { BookOpen } from "lucide-react";
 
 const CATEGORIES = [
   "Todos",
@@ -38,7 +41,7 @@ export default function BlogPage() {
 
     fetchPublishedBlogPosts()
       .then((data) => {
-        if (active) setPosts(data);
+        if (active) setPosts(data.filter((post) => isPubliclyVisibleBlogPost(post)));
       })
       .catch((error) => {
         console.error(error);
@@ -126,6 +129,9 @@ export default function BlogPage() {
               p.coverImage ||
               extractCoverImageSrc(p.content) ||
               extractFirstImageSrc(p.content);
+            const resolvedCoverImage = coverImage
+              ? resolveBlogMediaUrl(coverImage)
+              : "";
 
             return (
               <Link
@@ -133,16 +139,25 @@ export default function BlogPage() {
                 to={`/blog/${p.slug}`}
                 className="group rounded-2xl border bg-card p-4 transition hover:bg-muted"
               >
-                {coverImage && (
-                  <div className="relative mb-3 overflow-hidden rounded-xl border bg-background">
-                    <img
-                      src={coverImage}
-                      alt={p.title}
-                      loading="lazy"
-                      className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                    />
+                <div className="relative mb-3 h-40 overflow-hidden rounded-xl border bg-background">
+                  <div
+                    className="absolute inset-0 z-0 grid place-items-center bg-gradient-to-br from-secondary via-background to-muted text-primary/45"
+                    data-testid="blog-card-image-fallback"
+                  >
+                    <BookOpen className="h-8 w-8" aria-hidden="true" />
                   </div>
-                )}
+                  {resolvedCoverImage && (
+                    <img
+                      src={resolvedCoverImage}
+                      alt=""
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                      className="relative z-10 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                  )}
+                </div>
 
                 <div className="text-xs text-muted-foreground">
                   <span className="rounded-full border bg-background px-2 py-1">

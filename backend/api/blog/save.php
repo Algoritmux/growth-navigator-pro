@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../config/auth.php';
 applyCors();
 requirePost();
 requireAdmin();
+date_default_timezone_set('America/Sao_Paulo');
 
 function makeSlugFromTitle(string $title): string
 {
@@ -20,6 +21,42 @@ function makeSlugFromTitle(string $title): string
     $slug = preg_replace('/[\s-]+/', '-', trim($slug ?? ''));
 
     return trim($slug ?? '', '-');
+}
+
+function normalizeDate(string $value): string
+{
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1) {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        if ($date && $date->format('Y-m-d') === $value) {
+            return $value;
+        }
+    }
+
+    return date('Y-m-d');
+}
+
+function normalizeTime(string $value): string
+{
+    if (preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $value) === 1) {
+        return $value;
+    }
+
+    return date('H:i');
+}
+
+function makePublicationDateTime(string $date, string $time): DateTimeImmutable
+{
+    $publicationDateTime = DateTimeImmutable::createFromFormat(
+        '!Y-m-d H:i:s',
+        sprintf('%s %s:00', $date, $time),
+        new DateTimeZone('America/Sao_Paulo')
+    );
+
+    if (!$publicationDateTime) {
+        return new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    }
+
+    return $publicationDateTime;
 }
 
 try {
@@ -33,7 +70,15 @@ try {
     $category = trim((string) ($data['category'] ?? 'GTM'));
     $readTime = trim((string) ($data['read_time'] ?? $data['readTime'] ?? '5 min'));
     $tags = $data['tags'] ?? [];
-    $published = (bool) ($data['published'] ?? false);
+    $status = trim((string) ($data['status'] ?? ''));
+    $published = $status === 'draft' ? false : (bool) ($data['published'] ?? false);
+    if ($status === 'published' || $status === 'scheduled') {
+        $published = true;
+    }
+    $publicationDate = normalizeDate(trim((string) ($data['dateISO'] ?? $data['publishedDate'] ?? '')));
+    $publicationTime = normalizeTime(trim((string) ($data['publishTime'] ?? $data['publishedTime'] ?? '')));
+    $publicationDateTime = makePublicationDateTime($publicationDate, $publicationTime);
+    $publishedAt = $publicationDateTime->format('Y-m-d H:i:s');
     $editorSettings = is_array($data['editorSettings'] ?? null) ? $data['editorSettings'] : [];
 
     if ($title === '') {
@@ -50,6 +95,13 @@ try {
 
     if ($slug === '') {
         sendError('Slug inválido.');
+    }
+
+    if ($status === 'scheduled') {
+        $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+        if ($publicationDateTime <= $now) {
+            sendError('Para agendar, escolha uma data e horario futuros em America/Sao_Paulo.');
+        }
     }
 
     $allowedCategories = ['GTM', 'ICP', 'Oferta', 'Sales', 'Growth', 'IA'];
@@ -77,7 +129,7 @@ try {
         'paragraph_space_before' => (int) ($editorSettings['paragraphSpaceBefore'] ?? 8),
         'paragraph_space_after' => (int) ($editorSettings['paragraphSpaceAfter'] ?? 12),
         'is_published' => $published ? 1 : 0,
-        'published_at' => $published ? date('Y-m-d H:i:s') : null,
+        'published_at' => $publishedAt,
     ];
 
     if ($id) {
@@ -118,11 +170,21 @@ try {
         $savedId = (int) $connection->lastInsertId();
     }
 
+    $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    $computedStatus = !$published ? 'draft' : ($publicationDateTime > $now ? 'scheduled' : 'published');
+
     sendJson([
         'success' => true,
         'message' => 'Post salvo com sucesso.',
         'id' => $savedId,
         'slug' => $slug,
+        'is_published' => $published ? 1 : 0,
+        'published' => $published,
+        'published_at' => $publishedAt,
+        'dateISO' => $publicationDate,
+        'publishTime' => $publicationTime,
+        'status' => $computedStatus,
+        'computed_status' => $computedStatus,
     ]);
 } catch (PDOException $error) {
     $isDuplicate = $error->getCode() === '23000';

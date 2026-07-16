@@ -48,8 +48,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/AdminHeader";
+import BlogContentRenderer from "@/components/blog/BlogContentRenderer";
+import { resolveBlogMediaUrl } from "@/lib/blogMedia";
 import {
-  contentToHtml,
+  BLOG_PUBLICATION_TIMEZONE,
+  getBlogPublicationStatus,
+  getBlogPublicationStatusLabel,
+  getCurrentLocalDate,
+  getCurrentLocalTime,
+  isFuturePublication,
+  type BlogPublicationStatus,
+} from "@/lib/blogSchedule";
+import {
   extractFirstImageSrc,
   stripCoverImageMeta,
   withCoverImageMeta,
@@ -95,12 +105,14 @@ function newPostTemplate(): BlogPost {
     slug: "",
     excerpt: "",
     dateISO: today,
+    publishTime: getCurrentLocalTime(),
     readTime: "5 min",
     category: "GTM",
     tags: [],
     content: "",
     coverImage: "",
     published: false,
+    status: "draft",
     updatedAtISO: today,
   };
 }
@@ -199,6 +211,7 @@ export default function BlogAdminPage() {
   const [form, setForm] = useState<BlogPost>(newPostTemplate());
   const [editorHtml, setEditorHtml] = useState("");
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const textEditorRef = useRef<HTMLTextAreaElement | null>(null);
   const coverUploadRef = useRef<HTMLInputElement | null>(null);
   const imageUploadRef = useRef<HTMLInputElement | null>(null);
   const selectedImageRef = useRef<HTMLImageElement | null>(null);
@@ -214,8 +227,6 @@ export default function BlogAdminPage() {
       return hay.includes(s);
     });
   }, [posts, q]);
-
-  const previewHtml = useMemo(() => contentToHtml(editorHtml), [editorHtml]);
 
   async function refreshList() {
     setIsLoadingPosts(true);
@@ -255,9 +266,11 @@ export default function BlogAdminPage() {
     setBlockType("p");
     setForm({
       ...post,
+      status: getBlogPublicationStatus(post),
+      publishTime: post.publishTime || "09:00",
       coverImage: post.coverImage || extractFirstImageSrc(post.content || "") || "",
     });
-    setEditorHtml(contentToHtml(stripCoverImageMeta(post.content || "")));
+    setEditorHtml(stripCoverImageMeta(post.content || ""));
     setEditorFont(post.editorSettings?.font ?? DEFAULT_EDITOR_SETTINGS.font);
     setEditorFontSize(
       post.editorSettings?.fontSize ?? DEFAULT_EDITOR_SETTINGS.fontSize,
@@ -322,11 +335,11 @@ export default function BlogAdminPage() {
   }, [isOpen]);
 
   function currentEditorHtml() {
-    return editorRef.current?.innerHTML?.trim() || editorHtml || "";
+    return textEditorRef.current?.value?.trim() || editorHtml.trim();
   }
 
   function currentEditorText() {
-    return editorRef.current?.textContent?.trim() || "";
+    return currentEditorHtml().replace(/<[^>]*>/g, "").trim();
   }
 
   async function save() {
@@ -342,7 +355,18 @@ export default function BlogAdminPage() {
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getCurrentLocalDate();
+    const requestedPublicationStatus =
+      form.status || (form.published ? "published" : "draft");
+    const publicationDate = form.dateISO || today;
+    const publicationTime = form.publishTime || getCurrentLocalTime();
+    const publicationStatus =
+      requestedPublicationStatus === "draft"
+        ? "draft"
+        : isFuturePublication(publicationDate, publicationTime)
+          ? "scheduled"
+          : "published";
+    const willBePublicable = publicationStatus !== "draft";
     const payload: BlogPost = {
       ...form,
       id: editingId ?? form.id,
@@ -350,6 +374,10 @@ export default function BlogAdminPage() {
       slug: form.slug.trim() || makeSlug(title),
       excerpt: form.excerpt.trim(),
       coverImage: form.coverImage?.trim() || "",
+      published: willBePublicable,
+      status: publicationStatus,
+      dateISO: publicationDate,
+      publishTime: publicationTime,
       content: withCoverImageMeta(content, form.coverImage),
       editorSettings: {
         font: editorFont,
@@ -394,10 +422,14 @@ export default function BlogAdminPage() {
   }
 
   async function togglePublish(post: BlogPost) {
+    const nextPublished = !post.published;
     try {
       await savePostToApi({
         ...post,
-        published: !post.published,
+        published: nextPublished,
+        status: nextPublished ? "published" : "draft",
+        dateISO: nextPublished ? getCurrentLocalDate() : post.dateISO,
+        publishTime: nextPublished ? getCurrentLocalTime() : post.publishTime,
         updatedAtISO: new Date().toISOString().slice(0, 10),
       });
       await refreshList();
@@ -452,10 +484,7 @@ export default function BlogAdminPage() {
   }
 
   function syncEditorHtml() {
-    const html = editorRef.current?.innerHTML ?? "";
-    setEditorHtml(html);
-    saveCurrentSelection();
-    updateToolbarFromSelection();
+    setEditorHtml(textEditorRef.current?.value ?? editorHtml);
   }
 
   function toolbarButtonClass(active = false) {
@@ -648,12 +677,79 @@ export default function BlogAdminPage() {
     selection.addRange(range);
   }
 
+  function insertAtCursor(template: string, selectText?: string) {
+    const textarea = textEditorRef.current;
+    const source = textarea?.value ?? editorHtml;
+    const start = textarea?.selectionStart ?? source.length;
+    const end = textarea?.selectionEnd ?? source.length;
+    const next = `${source.slice(0, start)}${template}${source.slice(end)}`;
+
+    setEditorHtml(next);
+
+    window.setTimeout(() => {
+      const target = textEditorRef.current;
+      if (!target) return;
+      target.focus();
+      const selectionStart = selectText
+        ? start + template.indexOf(selectText)
+        : start + template.length;
+      const selectionEnd = selectText
+        ? selectionStart + selectText.length
+        : selectionStart;
+      target.setSelectionRange(selectionStart, selectionEnd);
+    }, 0);
+  }
+
+  function wrapSelection(prefix: string, suffix = prefix, placeholder = "texto") {
+    const textarea = textEditorRef.current;
+    const source = textarea?.value ?? editorHtml;
+    const start = textarea?.selectionStart ?? source.length;
+    const end = textarea?.selectionEnd ?? source.length;
+    const selected = source.slice(start, end) || placeholder;
+    insertAtCursor(`${prefix}${selected}${suffix}`, selected);
+  }
+
   function runCommand(command: string, value?: string) {
-    focusEditor();
-    restoreSelection();
-    document.execCommand(command, false, value);
-    syncEditorHtml();
-    updateToolbarFromSelection();
+    if (command === "bold") {
+      wrapSelection("**", "**", "texto em negrito");
+      return;
+    }
+    if (command === "italic") {
+      wrapSelection("*", "*", "texto em italico");
+      return;
+    }
+    if (command === "insertUnorderedList") {
+      insertAtCursor("\n- primeiro item\n- segundo item\n", "primeiro item");
+      return;
+    }
+    if (command === "insertOrderedList") {
+      insertAtCursor("\n1. primeira etapa\n2. segunda etapa\n", "primeira etapa");
+      return;
+    }
+    if (command === "formatBlock" && value === "blockquote") {
+      insertAtCursor("\n> Escreva a citacao aqui.\n", "Escreva a citacao aqui.");
+      return;
+    }
+    if (command === "insertHTML" && value) {
+      insertAtCursor(`\n${value.trim()}\n`);
+      return;
+    }
+    if (command === "removeFormat") {
+      const textarea = textEditorRef.current;
+      const source = textarea?.value ?? editorHtml;
+      const start = textarea?.selectionStart ?? 0;
+      const end = textarea?.selectionEnd ?? source.length;
+      const selected = source.slice(start, end) || source;
+      const cleaned = selected
+        .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .replace(/\*([^*]+)\*/g, "$1")
+        .replace(/<[^>]+>/g, "");
+      if (start === end) {
+        setEditorHtml(cleaned);
+      } else {
+        insertAtCursor(cleaned);
+      }
+    }
   }
 
   function removeSelectedImage() {
@@ -714,19 +810,23 @@ export default function BlogAdminPage() {
   function applyBlock(nextType?: BlockType) {
     const type = nextType ?? blockType;
     const map: Record<BlockType, string> = {
-      p: "<p>",
-      h1: "<h1>",
-      h2: "<h2>",
-      h3: "<h3>",
+      p: "\nTexto do paragrafo.\n",
+      h1: "\n# Titulo principal\n",
+      h2: "\n## Titulo da secao\n",
+      h3: "\n### Subtitulo da secao\n",
     };
-    runCommand("formatBlock", map[type]);
+    insertAtCursor(map[type], map[type].trim().replace(/^#+\s*/, ""));
   }
 
   function insertLink() {
-    focusEditor();
     const url = prompt("URL do link (https://...)");
     if (!url) return;
-    runCommand("createLink", url);
+    const textarea = textEditorRef.current;
+    const source = textarea?.value ?? editorHtml;
+    const start = textarea?.selectionStart ?? source.length;
+    const end = textarea?.selectionEnd ?? source.length;
+    const selected = source.slice(start, end) || "texto do link";
+    insertAtCursor(`[${selected}](${url})`, selected);
   }
 
   function openImageDialog() {
@@ -819,12 +919,93 @@ export default function BlogAdminPage() {
     const safeCaption = escapeHtmlForEditor(caption.trim());
     const imageHtml = [
       '<figure>',
-      `<img src="${safeSrc}" alt="${safeAlt}" />`,
+      `  <img src="${safeSrc}" alt="${safeAlt}">`,
       safeCaption ? `<figcaption>${safeCaption}</figcaption>` : "",
-      "</figure><p><br /></p>",
-    ].join("");
+      "</figure>",
+    ].join("\n");
     runCommand("insertHTML", imageHtml);
     closeImageDialog();
+  }
+
+  function insertLeadTemplate() {
+    insertAtCursor(
+      [
+        '<div class="blog-lead">',
+        "  Texto de abertura forte do artigo.",
+        "</div>",
+      ].join("\n"),
+      "Texto de abertura forte do artigo.",
+    );
+  }
+
+  function insertCalloutTemplate() {
+    insertAtCursor(
+      [
+        '<div class="blog-callout">',
+        "  <strong>Ideia central:</strong> escreva aqui o destaque.",
+        "</div>",
+      ].join("\n"),
+      "escreva aqui o destaque",
+    );
+  }
+
+  function insertStatTemplate() {
+    insertAtCursor(
+      [
+        '<div class="blog-stat-grid">',
+        '  <div class="blog-stat-card">',
+        "    <strong>70%</strong>",
+        "    <span>texto da estatistica</span>",
+        "  </div>",
+        '  <div class="blog-stat-card">',
+        "    <strong>79%</strong>",
+        "    <span>texto da estatistica</span>",
+        "  </div>",
+        "</div>",
+      ].join("\n"),
+      "70%",
+    );
+  }
+
+  function insertStepTemplate() {
+    insertAtCursor(
+      [
+        '<div class="blog-step-card">',
+        "  <span>01</span>",
+        "  <div>",
+        "    <strong>Diagnostico</strong>",
+        "    <p>Identifique onde o crescimento esta travando antes de criar novas campanhas.</p>",
+        "  </div>",
+        "</div>",
+      ].join("\n"),
+      "Diagnostico",
+    );
+  }
+
+  function insertMaterialTemplate() {
+    insertAtCursor(
+      [
+        '<div class="blog-material-card">',
+        "  <span>Material complementar</span>",
+        "  <strong>Framework de Growth Marketing para crescimento previsivel</strong>",
+        "  <p>Acesse gratuitamente a biblioteca de materiais.</p>",
+        '  <a href="/biblioteca">Ver biblioteca -></a>',
+        "</div>",
+      ].join("\n"),
+      "Framework de Growth Marketing para crescimento previsivel",
+    );
+  }
+
+  function insertTableTemplate() {
+    insertAtCursor(
+      [
+        "| Criterio | Estrategia | Execucao |",
+        "| --- | --- | --- |",
+        "| Foco | Decisoes de longo prazo | Rotina e indicadores |",
+        "| Pergunta | Para onde crescer? | O que fazer esta semana? |",
+      ].join("\n"),
+      "Criterio",
+    );
   }
 
   function insertImageByUrlDraft() {
@@ -970,8 +1151,13 @@ export default function BlogAdminPage() {
                       {p.category}
                     </span>
                     <span className="rounded-full border bg-background px-2 py-1">
-                      {p.published ? "Publicado" : "Rascunho"}
+                      {getBlogPublicationStatusLabel(getBlogPublicationStatus(p))}
                     </span>
+                    {getBlogPublicationStatus(p) === "scheduled" && (
+                      <span className="rounded-full border bg-background px-2 py-1">
+                        {p.dateISO} {p.publishTime || "09:00"}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-2 text-base font-bold">{p.title}</div>
@@ -993,7 +1179,7 @@ export default function BlogAdminPage() {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    {p.published ? "Despublicar" : "Publicar"}
+                    {p.published ? "Despublicar" : "Publicar agora"}
                   </Button>
 
                   <Button
@@ -1107,7 +1293,7 @@ export default function BlogAdminPage() {
                 className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
               />
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_140px]">
                 <input
                   value={form.slug}
                   onChange={(e) =>
@@ -1123,6 +1309,15 @@ export default function BlogAdminPage() {
                   }
                   className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
                   type="date"
+                />
+                <input
+                  value={form.publishTime || "09:00"}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, publishTime: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-xl border bg-background px-3 outline-none"
+                  type="time"
+                  aria-label="Horario de publicacao"
                 />
               </div>
 
@@ -1216,11 +1411,19 @@ export default function BlogAdminPage() {
                   </div>
                   <div className="overflow-hidden rounded-lg border bg-card">
                     {form.coverImage ? (
-                      <img
-                        src={form.coverImage}
-                        alt="Preview da imagem de capa"
-                        className="aspect-video w-full object-cover"
-                      />
+                      <div className="relative aspect-video">
+                        <div className="absolute inset-0 flex items-center justify-center px-3 text-center text-xs text-muted-foreground">
+                          Preview indisponivel
+                        </div>
+                        <img
+                          src={resolveBlogMediaUrl(form.coverImage)}
+                          alt=""
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                          className="relative h-full w-full object-cover"
+                        />
+                      </div>
                     ) : (
                       <div className="flex aspect-video items-center justify-center px-3 text-center text-xs text-muted-foreground">
                         Preview da capa
@@ -1510,6 +1713,42 @@ export default function BlogAdminPage() {
                   >
                     Citacao
                   </button>
+                  <button
+                    onClick={insertLeadTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    Lead
+                  </button>
+                  <button
+                    onClick={insertCalloutTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    Destaque
+                  </button>
+                  <button
+                    onClick={insertStatTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    Estatistica
+                  </button>
+                  <button
+                    onClick={insertStepTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    Card numerado
+                  </button>
+                  <button
+                    onClick={insertMaterialTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    CTA material
+                  </button>
+                  <button
+                    onClick={insertTableTemplate}
+                    className={toolbarButtonClass()}
+                  >
+                    Tabela
+                  </button>
 
                   <button
                     onClick={() => runCommand("insertUnorderedList")}
@@ -1561,18 +1800,11 @@ export default function BlogAdminPage() {
                     ].join(" ")}
                   >
                     <div className="w-full max-w-[980px] rounded-md border bg-white shadow-[0_12px_35px_rgba(24,16,50,0.08)]">
-                      <div
-                        ref={editorRef}
-                        contentEditable
-                        suppressContentEditableWarning
-                        onInput={syncEditorHtml}
-                        onBlur={syncEditorHtml}
-                        onMouseUp={saveCurrentSelection}
-                        onKeyUp={saveCurrentSelection}
-                        onFocus={saveCurrentSelection}
-                        onClick={handleEditorClick}
-                        onKeyDown={handleEditorKeyDown}
-                        onPaste={handleEditorPaste}
+                      <textarea
+                        ref={textEditorRef}
+                        value={editorHtml}
+                        onChange={(event) => setEditorHtml(event.target.value)}
+                        placeholder="Escreva o artigo em Markdown simples. HTML seguro com classes do blog tambem e permitido."
                         className={editorClassName}
                         style={editorStyle}
                       />
@@ -1582,10 +1814,10 @@ export default function BlogAdminPage() {
                   {showPreview && (
                     <div className="mx-auto w-full max-w-[980px] rounded-md border bg-white p-8 shadow-[0_12px_35px_rgba(24,16,50,0.08)] md:p-10">
                       {editorHtml.trim() ? (
-                        <article
+                        <BlogContentRenderer
+                          content={editorHtml}
                           className={previewClassName}
                           style={previewStyle}
-                          dangerouslySetInnerHTML={{ __html: previewHtml }}
                         />
                       ) : (
                         <div className="text-sm text-muted-foreground">
@@ -1603,21 +1835,31 @@ export default function BlogAdminPage() {
                     Publicacao
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Mantenha como rascunho enquanto revisa o artigo no frontend.
+                    Use o fuso {BLOG_PUBLICATION_TIMEZONE}. Datas futuras ficam agendadas.
                   </p>
-                  <label className="mt-3 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={form.published}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          published: e.target.checked,
-                        }))
-                      }
-                    />
-                    Publicado
-                  </label>
+                  <select
+                    value={form.status || (form.published ? "published" : "draft")}
+                    onChange={(e) => {
+                      const status = e.target.value as BlogPublicationStatus;
+                      setForm((prev) => ({
+                        ...prev,
+                        status,
+                        published: status !== "draft",
+                      }));
+                    }}
+                    className="mt-3 h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none"
+                  >
+                    <option value="draft">Rascunho</option>
+                    <option value="published">Publicado</option>
+                    <option value="scheduled">Agendado</option>
+                  </select>
+                  {(form.status === "scheduled" ||
+                    (form.status === "published" &&
+                      isFuturePublication(form.dateISO, form.publishTime))) && (
+                    <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                      A data/hora esta no futuro. Este post so aparecera no blog no horario definido.
+                    </p>
+                  )}
                 </div>
 
                 <div className="rounded-xl border bg-background/80 p-4">

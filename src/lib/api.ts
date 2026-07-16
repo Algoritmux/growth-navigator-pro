@@ -13,6 +13,7 @@ type RequestOptions = {
   method?: "GET" | "POST";
   body?: unknown;
   auth?: boolean;
+  cache?: RequestCache;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -20,6 +21,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const response = await fetch(url, {
     method: options.method ?? "GET",
+    cache: options.cache,
     headers: {
       "Content-Type": "application/json",
       ...(options.auth ? getAdminAuthHeaders() : {}),

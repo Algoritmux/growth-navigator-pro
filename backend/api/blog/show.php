@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../config/response.php';
 require_once __DIR__ . '/../../config/auth.php';
 
 applyCors();
+date_default_timezone_set('America/Sao_Paulo');
 
 try {
     $slug = trim($_GET['slug'] ?? '');
@@ -25,7 +26,13 @@ try {
         sendError('Post não encontrado.', 404);
     }
 
-    if ((int) ($post['is_published'] ?? 0) !== 1) {
+    $isPublished = (int) ($post['is_published'] ?? 0) === 1;
+    $publishedAt = (string) ($post['published_at'] ?? '');
+    $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    $nowSql = $now->format('Y-m-d H:i:s');
+    $isPubliclyVisible = $isPublished && $publishedAt !== '' && $publishedAt <= $nowSql;
+
+    if (!$isPubliclyVisible) {
         requireAdmin();
     }
 
