@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CONSENT_CHANGE_EVENT,
@@ -11,8 +10,12 @@ import {
   saveConsent,
 } from "./consent";
 import { buildLeadSource, captureAttribution, currentPath, getAttribution, trackEvent } from "./analytics";
+import { resolve } from "node:path";
 
-const indexHtml = readFileSync(fileURLToPath(new URL("../../index.html", import.meta.url)), "utf8");
+const indexHtml = readFileSync(
+  resolve(process.cwd(), "index.html"),
+  "utf8"
+);
 const bootstrap = indexHtml.match(/<script id="gc-consent-bootstrap">([\s\S]*?)<\/script>/)?.[1] ?? "";
 
 type GtagWindow = Window & { dataLayer?: unknown[]; [key: string]: unknown };
