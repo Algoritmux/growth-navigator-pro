@@ -7,6 +7,7 @@ import { resolveBlogMediaUrl } from "@/lib/blogMedia";
 import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
 import { extractCoverImageSrc, extractFirstImageSrc } from "@/lib/markdown";
 import { BookOpen } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const CATEGORIES = [
   "Todos",
@@ -77,6 +78,11 @@ export default function BlogPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <SEO
+        title="Blog"
+        description="Artigos sobre growth marketing, go-to-market, vendas B2B e inteligência artificial aplicada a empresas, por Guilherme Correia."
+        path="/blog"
+      />
       <section className="mx-auto w-full max-w-6xl px-5 py-10">
         <div className="rounded-2xl border bg-card p-6">
           <div className="flex justify-end">

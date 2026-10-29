@@ -20,7 +20,8 @@ try {
         'phone' => trim((string) ($data['phone'] ?? '')),
         'message' => trim((string) ($data['message'] ?? '')),
         'service' => trim((string) ($data['service'] ?? '')),
-        'source' => trim((string) ($data['source'] ?? 'site')),
+        // A coluna source tem 120 caracteres; a origem agora inclui a página.
+        'source' => mb_substr(trim((string) ($data['source'] ?? 'site')), 0, 120),
     ];
 
     if ($lead['name'] === '') {

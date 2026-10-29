@@ -153,7 +153,8 @@ try {
     $subscriber = [
         'name' => trim((string) ($data['name'] ?? '')),
         'email' => trim((string) ($data['email'] ?? '')),
-        'source' => trim((string) ($data['source'] ?? 'newsletter')),
+        // A coluna source tem 120 caracteres; a origem agora inclui a página.
+        'source' => mb_substr(trim((string) ($data['source'] ?? 'newsletter')), 0, 120),
     ];
 
     if (!filter_var($subscriber['email'], FILTER_VALIDATE_EMAIL)) {
@@ -176,6 +177,9 @@ try {
         'source' => $subscriber['source'] !== '' ? $subscriber['source'] : 'newsletter',
     ]);
 
+    // MySQL: 1 linha afetada = inscrição nova; 2 = e-mail já existia (ON DUPLICATE KEY UPDATE).
+    $isNewSubscriber = $statement->rowCount() === 1;
+
     $listmonkSync = syncSubscriberToListmonk($subscriber);
 
     $emailSent = false;
@@ -190,6 +194,7 @@ try {
     sendJson([
         'success' => true,
         'message' => 'Inscrição salva com sucesso.',
+        'is_new' => $isNewSubscriber,
         'email_sent' => $emailSent,
         'email_error' => isDevelopmentEnvironment() ? $emailError : null,
         'listmonk_synced' => $listmonkSync['success'] ?? false,

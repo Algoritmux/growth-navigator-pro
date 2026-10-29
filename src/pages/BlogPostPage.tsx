@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
-import SEO from "@/components/SEO";
+import SEO, { SITE_URL, absoluteImageUrl, canonicalUrl } from "@/components/SEO";
 import BlogContentRenderer from "@/components/blog/BlogContentRenderer";
 import { resolveBlogMediaUrl } from "@/lib/blogMedia";
 import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
@@ -278,6 +278,7 @@ export default function BlogPostPage() {
   if (!post || !isPubliclyVisibleBlogPost(post)) {
     return (
       <main className="min-h-screen bg-background text-foreground">
+        <SEO title="Post não encontrado" noindex />
         <section className="mx-auto w-full max-w-3xl px-5 py-10">
           <Link
             to="/blog"
@@ -378,20 +379,54 @@ export default function BlogPostPage() {
       <SEO
         title={post.title}
         description={post.excerpt}
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          headline: post.title,
-          description: post.excerpt,
-          author: {
-            "@type": "Person",
-            name: "Guilherme Correia",
+        path={`/blog/${post.slug}`}
+        image={coverImage}
+        type="article"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: post.title,
+            description: post.excerpt,
+            url: canonicalUrl(`/blog/${post.slug}`),
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": canonicalUrl(`/blog/${post.slug}`),
+            },
+            image: [absoluteImageUrl(coverImage)],
+            author: {
+              "@type": "Person",
+              "@id": `${SITE_URL}/#guilherme-correia`,
+              name: "Guilherme Correia",
+              url: `${SITE_URL}/`,
+            },
+            publisher: {
+              "@type": "Person",
+              "@id": `${SITE_URL}/#guilherme-correia`,
+              name: "Guilherme Correia",
+              url: `${SITE_URL}/`,
+            },
+            datePublished: post.dateISO,
+            dateModified: post.updatedAtISO || post.dateISO,
+            articleSection: post.category,
+            keywords: post.tags.join(", "),
+            inLanguage: "pt-BR",
           },
-          datePublished: post.dateISO,
-          dateModified: post.updatedAtISO || post.dateISO,
-          articleSection: post.category,
-          keywords: post.tags.join(", "),
-        }}
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Início", item: `${SITE_URL}/` },
+              { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: post.title,
+                item: canonicalUrl(`/blog/${post.slug}`),
+              },
+            ],
+          },
+        ]}
       />
 
       <section className="mx-auto w-full max-w-[1360px] px-4 py-8 sm:px-5 sm:py-10">
