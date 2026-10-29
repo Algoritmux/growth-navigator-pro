@@ -51,16 +51,6 @@ export default function PrivacyPage() {
 
         <h1 className="mt-6 text-3xl font-bold sm:text-4xl">Política de Privacidade</h1>
         <p className="mt-2 text-sm text-muted-foreground">Última atualização: {PRIVACY_POLICY_UPDATED_AT}</p>
-
-        {PRIVACY_POLICY_DRAFT && (
-          <p
-            role="note"
-            className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          >
-            Versão preliminar, em revisão jurídica. Alguns pontos ainda serão confirmados e este texto pode mudar.
-          </p>
-        )}
-
         <section className={sectionClass}>
           <h2 className={h2Class}>1. Quem é responsável pelos seus dados</h2>
           <p className={pClass}>
