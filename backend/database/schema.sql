@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS leads (
   message TEXT NULL,
   service VARCHAR(180) NULL,
   source VARCHAR(120) NOT NULL DEFAULT 'site',
+  marketing_opt_in TINYINT(1) NOT NULL DEFAULT 0,
+  marketing_opt_in_at DATETIME NULL,
   status ENUM('novo', 'contatado', 'convertido', 'descartado') NOT NULL DEFAULT 'novo',
   crm_synced TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

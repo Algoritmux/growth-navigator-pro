@@ -1,19 +1,59 @@
 ﻿<!doctype html>
 <html lang="pt-BR">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-8PJTEYT1PV"
-    ></script>
-    <script>
+    <!--
+      Google Analytics 4 com Consent Mode v2 (modo básico).
+      Tudo começa negado e o gtag.js só é baixado depois do aceite do visitante.
+      Constantes iguais às de src/lib/consent.ts (conferidas em src/lib/consent.test.ts).
+    -->
+    <script id="gc-consent-bootstrap">
       window.dataLayer = window.dataLayer || [];
       function gtag() {
-        dataLayer.push(arguments);
+        window.dataLayer.push(arguments);
       }
-      gtag("js", new Date());
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        functionality_storage: "denied",
+        personalization_storage: "denied",
+        security_storage: "granted"
+      });
+      (function () {
+        var GA_ID = "G-8PJTEYT1PV";
+        var CONSENT_KEY = "gc_consent";
+        var CONSENT_VERSION = 1;
+        var CONSENT_MAX_AGE_DAYS = 365;
 
-      gtag("config", "G-8PJTEYT1PV");
+        window.gcLoadAnalytics = function () {
+          if (window.gcAnalyticsLoaded) return;
+          window.gcAnalyticsLoaded = true;
+          window["ga-disable-" + GA_ID] = false;
+          gtag("consent", "update", { analytics_storage: "granted" });
+          gtag("js", new Date());
+          gtag("config", GA_ID);
+          var script = document.createElement("script");
+          script.async = true;
+          script.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+          document.head.appendChild(script);
+        };
+
+        try {
+          var saved = JSON.parse(window.localStorage.getItem(CONSENT_KEY) || "null");
+          var age = saved ? Date.now() - Date.parse(saved.decidedAt) : Infinity;
+          if (
+            saved &&
+            saved.version === CONSENT_VERSION &&
+            saved.analytics === true &&
+            age <= CONSENT_MAX_AGE_DAYS * 24 * 60 * 60 * 1000
+          ) {
+            window.gcLoadAnalytics();
+          }
+        } catch (error) {
+          // Sem localStorage: segue negado.
+        }
+      })();
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

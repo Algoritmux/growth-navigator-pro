@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import logoGC from "@/assets/logo-gc.png";
+import CookiePreferencesButton from "@/components/privacy/CookiePreferencesButton";
 
 const Footer = () => {
   return (
@@ -33,6 +35,12 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-background/10 text-center">
+          <nav aria-label="Privacidade" className="mb-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-background/50">
+            <Link to="/privacidade" className="hover:text-accent transition-colors">
+              Política de Privacidade
+            </Link>
+            <CookiePreferencesButton className="hover:text-accent transition-colors" />
+          </nav>
           <p className="text-xs text-background/30">
             © {new Date().getFullYear()} Guilherme Correia. Todos os direitos reservados.
           </p>

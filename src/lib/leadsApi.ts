@@ -8,6 +8,8 @@ export type LeadPayload = {
   message?: string;
   service?: string;
   source?: string;
+  /** Opção separada e opcional para comunicações de marketing (fase 2.1). */
+  marketing_opt_in?: boolean;
 };
 
 export type NewsletterPayload = {
@@ -28,6 +30,9 @@ export type Lead = {
   source: string;
   status: LeadStatus;
   crm_synced: number;
+  /** Ausentes até aplicar docs/privacy-marketing-opt-in-migration.sql. */
+  marketing_opt_in?: number | boolean | null;
+  marketing_opt_in_at?: string | null;
   created_at: string;
   updated_at: string;
 };

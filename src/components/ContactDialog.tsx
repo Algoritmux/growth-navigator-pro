@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { createLead } from "@/lib/leadsApi";
 import { leadEventParams, trackEvent } from "@/lib/analytics";
+import { ContactPrivacyNotice, MarketingOptIn } from "@/components/privacy/FormPrivacy";
 
 interface ContactDialogProps {
     children: React.ReactNode;
@@ -29,6 +30,8 @@ export function ContactDialog({
 }: ContactDialogProps) {
     const [open, setOpen] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
+    const [marketingOptIn, setMarketingOptIn] = React.useState(false);
+    const optInId = React.useId();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -43,6 +46,7 @@ export function ContactDialog({
             message: String(formData.get("message") || ""),
             service: title,
             source: "contact-dialog",
+            marketing_opt_in: marketingOptIn,
         };
 
         try {
@@ -53,6 +57,7 @@ export function ContactDialog({
             });
 
             form.reset();
+            setMarketingOptIn(false);
             setOpen(false);
         } catch (error) {
             toast.error("Não foi possível enviar a solicitação.", {
@@ -106,6 +111,7 @@ export function ContactDialog({
                             required
                         />
                     </div>
+                    <MarketingOptIn id={optInId} checked={marketingOptIn} onCheckedChange={setMarketingOptIn} />
                     <Button type="submit" variant="accent" className="w-full h-12 rounded-xl mt-2 font-bold" disabled={loading}>
                         {loading ? (
                             "Enviando..."
@@ -115,6 +121,7 @@ export function ContactDialog({
                             </>
                         )}
                     </Button>
+                    <ContactPrivacyNotice />
                 </form>
             </DialogContent>
         </Dialog>
