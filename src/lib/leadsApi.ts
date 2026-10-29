@@ -96,12 +96,16 @@ export async function subscribeToNewsletter(payload: NewsletterPayload) {
     body: JSON.stringify({ ...payload, source }),
   });
 
-  const result = await readApiResponse(response);
-  trackEvent("sign_up", {
-    ...leadEventParams(base),
-    method: "newsletter",
-    form_id: base,
-  });
+  const result = await readApiResponse<{ is_new?: boolean }>(response);
+  // Reinscrição de e-mail já cadastrado não conta como conversão nova.
+  // Sem o campo (backend antigo), considera nova.
+  if (result.is_new !== false) {
+    trackEvent("sign_up", {
+      ...leadEventParams(base),
+      method: "newsletter",
+      form_id: base,
+    });
+  }
 
   return result;
 }
