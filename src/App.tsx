@@ -13,12 +13,18 @@ import MaterialPage from "./pages/MaterialPage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
+import PrivacyPage from "./pages/PrivacyPage";
+import ConsentBanner from "./components/privacy/ConsentBanner";
+import LegalLinks from "./components/privacy/LegalLinks";
 
 export default function App() {
   return (
     <>
       <Routes>
         <Route path="/" element={<Index />} />
+
+        {/* Privacidade */}
+        <Route path="/privacidade" element={<PrivacyPage />} />
 
         {/* Blog */}
         <Route path="/blog" element={<BlogPage />} />
@@ -69,6 +75,8 @@ export default function App() {
         {/* 404 (sempre por último) */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <LegalLinks />
+      <ConsentBanner />
       <Toaster position="top-center" richColors />
     </>
   );

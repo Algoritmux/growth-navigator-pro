@@ -1,4 +1,4 @@
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth";
 import { validateAdminToken } from "@/lib/adminApi";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,26 @@ import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-const LoginPage = () => {
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+const PLACEHOLDER_GOOGLE_CLIENT_ID = "your-google-client-id.apps.googleusercontent.com";
+
+// Ignore placeholder values from .env to avoid invalid_client at runtime.
+const RESOLVED_GOOGLE_CLIENT_ID =
+    GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== PLACEHOLDER_GOOGLE_CLIENT_ID
+        ? GOOGLE_CLIENT_ID
+        : "934848081124-584769e5ibh5jgrjptmaka4tpa9uvq1k.apps.googleusercontent.com";
+
+/**
+ * O script do Google Sign-In só é carregado aqui, e não em todo o site
+ * (antes o provedor envolvia o app inteiro em main.tsx).
+ */
+const LoginPage = () => (
+    <GoogleOAuthProvider clientId={RESOLVED_GOOGLE_CLIENT_ID}>
+        <LoginContent />
+    </GoogleOAuthProvider>
+);
+
+const LoginContent = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 

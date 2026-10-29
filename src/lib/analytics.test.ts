@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CONSENT_KEY, CONSENT_VERSION } from "./consent";
 import {
   buildLeadSource,
   captureAttribution,
@@ -55,6 +56,11 @@ describe("buildLeadSource", () => {
 describe("atribuição e eventos", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    // Fase 2.1: eventos e atribuição só com consentimento analítico.
+    window.localStorage.setItem(
+      CONSENT_KEY,
+      JSON.stringify({ version: CONSENT_VERSION, analytics: true, decidedAt: new Date().toISOString() }),
+    );
     window.gtag = vi.fn();
   });
 

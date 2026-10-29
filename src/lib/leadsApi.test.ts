@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createLead, subscribeToNewsletter } from "./leadsApi";
+import { CONSENT_KEY, CONSENT_VERSION } from "./consent";
 
 function mockFetch(body: unknown, ok = true) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -17,6 +18,11 @@ function sentEvents() {
 describe("eventos de conversão nos formulários", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    // Fase 2.1: eventos só com consentimento analítico.
+    window.localStorage.setItem(
+      CONSENT_KEY,
+      JSON.stringify({ version: CONSENT_VERSION, analytics: true, decidedAt: new Date().toISOString() }),
+    );
     window.gtag = vi.fn();
   });
 

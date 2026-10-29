@@ -22,6 +22,7 @@ import {
 } from "@/lib/materials-store";
 import { createLead } from "@/lib/leadsApi";
 import SEO from "@/components/SEO";
+import { ContactPrivacyNotice, MarketingOptIn } from "@/components/privacy/FormPrivacy";
 
 const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
 
@@ -39,6 +40,7 @@ export default function MaterialPage() {
         phone: "",
         role: "",
     });
+    const [marketingOptIn, setMarketingOptIn] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -151,6 +153,7 @@ export default function MaterialPage() {
                     `Cargo: ${leadForm.role.trim()}`,
                     `Tipo de acesso: ${accessLabel}`,
                 ].join("\n"),
+                marketing_opt_in: marketingOptIn,
             });
 
             if (access === "free") {
@@ -390,9 +393,12 @@ export default function MaterialPage() {
                                 </div>
                             ) : null}
 
+                            <MarketingOptIn id="material-marketing-opt-in" checked={marketingOptIn} onCheckedChange={setMarketingOptIn} />
+
                             <Button type="submit" disabled={isSubmittingLead || !isLeadFormValid} variant="accent" className="text-white hover:text-white">
                                 {isSubmittingLead ? "Enviando..." : access === "paid" ? "Tenho interesse" : downloadButtonLabel}
                             </Button>
+                            <ContactPrivacyNotice />
                         </form>
                     )}
                 </DialogContent>
