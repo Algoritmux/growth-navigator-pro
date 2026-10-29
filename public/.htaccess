@@ -1,0 +1,28 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Força HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # RSS dinâmico do blog
+  RewriteRule ^rss\.xml$ backend/api/blog/rss.php [L]
+
+  # Sitemap dinâmico (posts publicados e materiais)
+  RewriteRule ^sitemap\.xml$ backend/seo/sitemap.php [L]
+
+  # HTML com título, canonical, Open Graph, JSON-LD e conteúdo para buscadores.
+  # O React carrega por cima normalmente. Se o PHP falhar, ele devolve o index.html.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(blog|servicos|biblioteca)(/[^/]+)?/?$ backend/seo/render.php [L]
+
+  # React/Vite SPA fallback
+  RewriteBase /
+
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
