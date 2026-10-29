@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { createLead } from "@/lib/leadsApi";
+import { leadEventParams, trackEvent } from "@/lib/analytics";
 
 interface ContactDialogProps {
     children: React.ReactNode;
@@ -63,7 +64,15 @@ export function ContactDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (next) {
+                    trackEvent("open_contact_form", { ...leadEventParams("contact-dialog"), service: title });
+                }
+                setOpen(next);
+            }}
+        >
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>

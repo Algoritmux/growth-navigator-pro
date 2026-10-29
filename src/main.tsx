@@ -4,7 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./lib/auth";
 import App from "./App";
+import { captureAttribution, installClickTracking } from "./lib/analytics";
 import "./index.css";
+
+captureAttribution();
+installClickTracking();
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 const PLACEHOLDER_GOOGLE_CLIENT_ID = "your-google-client-id.apps.googleusercontent.com";

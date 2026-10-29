@@ -27,6 +27,7 @@ import {
     MaterialCategoryValue,
 } from "@/lib/materials-store";
 import logoGC from "@/assets/logo-gc.png";
+import SEO from "@/components/SEO";
 
 const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
 
@@ -131,6 +132,11 @@ export default function Biblioteca() {
 
     return (
         <SidebarProvider>
+            <SEO
+                title="Biblioteca de materiais"
+                description="Biblioteca gratuita de livros, frameworks, guias e pesquisas sobre growth, go-to-market, vendas e inteligência artificial."
+                path="/biblioteca"
+            />
             <div className="min-h-screen flex w-full bg-background">
                 <BibliotecaSidebar
                     activeCategory={activeCategory}

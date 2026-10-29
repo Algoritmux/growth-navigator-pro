@@ -1,4 +1,5 @@
 import { getAdminAuthHeaders } from "./authSession";
+import { buildLeadSource, currentPath, getAttribution, leadEventParams, trackEvent } from "./analytics";
 
 export type LeadPayload = {
   name: string;
@@ -57,28 +58,56 @@ async function readApiResponse<T>(response: Response): Promise<T> {
   return data as T;
 }
 
+function withPageSource(source: string | undefined, fallback: string) {
+  const base = source?.trim() || fallback;
+  return {
+    base,
+    source: buildLeadSource(base, currentPath(), getAttribution()),
+  };
+}
+
 export async function createLead(payload: LeadPayload) {
+  const { base, source } = withPageSource(payload.source, "site");
   const response = await fetch(`${API_BASE_URL}/leads/create.php`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, source }),
   });
 
-  return readApiResponse(response);
+  const result = await readApiResponse(response);
+  trackEvent("generate_lead", {
+    ...leadEventParams(base),
+    form_id: base,
+    service: payload.service,
+  });
+
+  return result;
 }
 
 export async function subscribeToNewsletter(payload: NewsletterPayload) {
+  const { base, source } = withPageSource(payload.source, "newsletter");
   const response = await fetch(`${API_BASE_URL}/newsletter/subscribe.php`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, source }),
   });
 
-  return readApiResponse(response);
+  const result = await readApiResponse<{ is_new?: boolean }>(response);
+  // Reinscrição de e-mail já cadastrado não conta como conversão nova.
+  // Sem o campo (backend antigo), considera nova.
+  if (result.is_new !== false) {
+    trackEvent("sign_up", {
+      ...leadEventParams(base),
+      method: "newsletter",
+      form_id: base,
+    });
+  }
+
+  return result;
 }
 
 export async function fetchLeads(): Promise<Lead[]> {
