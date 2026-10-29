@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { subscribeToNewsletter } from "@/lib/leadsApi";
+import { NewsletterPrivacyNotice } from "@/components/privacy/FormPrivacy";
 
 const LeadMagnetSection = () => {
   const [name, setName] = useState("");
@@ -89,9 +90,7 @@ const LeadMagnetSection = () => {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </form>
-          <p className="text-sm sm:text-xs text-muted-foreground mt-5 sm:mt-4">
-            Sem spam. Cancele quando quiser.
-          </p>
+          <NewsletterPrivacyNotice className="mx-auto mt-5 max-w-lg text-sm sm:mt-4 sm:text-xs" />
         </motion.div>
       </div>
     </section>

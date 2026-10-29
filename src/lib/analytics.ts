@@ -4,15 +4,13 @@
  *
  * Nada aqui pode quebrar a página: sem gtag, sem sessionStorage ou com
  * qualquer erro, as funções simplesmente não registram.
+ *
+ * Tudo depende do consentimento analítico (src/lib/consent.ts).
  */
 
-type EventParams = Record<string, string | number | boolean | undefined | null>;
+import { CONSENT_CHANGE_EVENT, hasAnalyticsConsent, type ConsentState } from "./consent";
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+type EventParams = Record<string, string | number | boolean | undefined | null>;
 
 const ATTRIBUTION_KEY = "gc_attribution";
 const SOURCE_MAX_LENGTH = 120; // leads.source e newsletter_subscribers.source
@@ -27,6 +25,9 @@ export type Attribution = {
 
 export function trackEvent(name: string, params: EventParams = {}) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  // Sem consentimento o evento é descartado, e não enfileirado: o gtag.js
+  // processaria a fila ao carregar e enviaria eventos anteriores ao aceite.
+  if (!hasAnalyticsConsent()) return;
 
   const clean: Record<string, string | number | boolean> = {};
   for (const [key, value] of Object.entries(params)) {
@@ -60,28 +61,60 @@ function externalReferrerHost(referrer: string, ownHost: string): string {
   }
 }
 
-/** Grava a página de entrada e a origem uma única vez por sessão. */
+/** Entrada desta aba, mantida só em memória até haver consentimento. */
+let pendingAttribution: Attribution | null = null;
+let consentListenerInstalled = false;
+
+function persistAttribution(attribution: Attribution): Attribution {
+  try {
+    const stored = window.sessionStorage.getItem(ATTRIBUTION_KEY);
+    if (stored) return JSON.parse(stored) as Attribution;
+    window.sessionStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(attribution));
+  } catch {
+    // sessionStorage bloqueado (aba anônima, cookies desligados).
+  }
+  return attribution;
+}
+
+function installConsentListener() {
+  if (consentListenerInstalled || typeof window === "undefined") return;
+  consentListenerInstalled = true;
+  window.addEventListener(CONSENT_CHANGE_EVENT, (event) => {
+    const granted = (event as CustomEvent<ConsentState>).detail?.analytics === true;
+    if (granted) {
+      if (pendingAttribution) persistAttribution(pendingAttribution);
+      return;
+    }
+    try {
+      window.sessionStorage.removeItem(ATTRIBUTION_KEY);
+    } catch {
+      // Nada a apagar.
+    }
+  });
+}
+
+/**
+ * Página de entrada e origem da sessão. Só são gravadas no navegador com
+ * consentimento analítico; antes disso ficam apenas em memória, e são
+ * gravadas se o visitante aceitar nesta mesma aba.
+ */
 export function captureAttribution(
   location: Pick<Location, "pathname" | "search" | "hostname"> = window.location,
   referrer: string = document.referrer,
 ): Attribution {
+  installConsentListener();
+
   const fresh: Attribution = {
     landing: landingFromLocation(location),
     referrer: externalReferrerHost(referrer, location.hostname),
   };
+  pendingAttribution ??= fresh;
 
-  try {
-    const stored = window.sessionStorage.getItem(ATTRIBUTION_KEY);
-    if (stored) return JSON.parse(stored) as Attribution;
-    window.sessionStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(fresh));
-  } catch {
-    // sessionStorage bloqueado (aba anônima, cookies desligados).
-  }
-
-  return fresh;
+  return hasAnalyticsConsent() ? persistAttribution(fresh) : fresh;
 }
 
 export function getAttribution(): Attribution {
+  if (!hasAnalyticsConsent()) return { landing: currentPath(), referrer: "" };
   try {
     const stored = window.sessionStorage.getItem(ATTRIBUTION_KEY);
     if (stored) return JSON.parse(stored) as Attribution;

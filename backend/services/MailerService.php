@@ -32,6 +32,7 @@ final class MailerService
             'Telefone' => (string) ($lead['phone'] ?? ''),
             'Servico' => (string) ($lead['service'] ?? ''),
             'Origem' => (string) ($lead['source'] ?? ''),
+            'Aceita marketing' => !empty($lead['marketing_opt_in']) ? 'Sim' : 'Nao',
             'Mensagem' => (string) ($lead['message'] ?? ''),
         ]);
 

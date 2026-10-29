@@ -8,6 +8,7 @@ import React, {
 import { Link, useParams } from "react-router-dom";
 import { fetchPostBySlugFromApi, type BlogPost } from "@/lib/blogStore";
 import SEO, { SITE_URL, absoluteImageUrl, canonicalUrl } from "@/components/SEO";
+import { NewsletterPrivacyNotice } from "@/components/privacy/FormPrivacy";
 import BlogContentRenderer from "@/components/blog/BlogContentRenderer";
 import { resolveBlogMediaUrl } from "@/lib/blogMedia";
 import { isPubliclyVisibleBlogPost } from "@/lib/blogSchedule";
@@ -590,9 +591,7 @@ export default function BlogPostPage() {
                   </button>
                 </form>
 
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  Sem spam. Cancele quando quiser.
-                </p>
+                <NewsletterPrivacyNotice className="mt-3" />
               </div>
 
               <div className="rounded-2xl border bg-primary text-primary-foreground p-5 shadow-sm">

@@ -237,6 +237,12 @@ export default function LeadsAdminPage() {
                     <div>
                       <span className="font-medium">Origem:</span> {lead.source || "-"}
                     </div>
+                    <div>
+                      <span className="font-medium">Aceita marketing:</span>{" "}
+                      {Number(lead.marketing_opt_in) === 1
+                        ? `Sim${lead.marketing_opt_in_at ? ` (desde ${lead.marketing_opt_in_at})` : ""}`
+                        : "Não"}
+                    </div>
                   </div>
 
                   {lead.message && (
